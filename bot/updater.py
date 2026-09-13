@@ -9,8 +9,8 @@ import subprocess
 from bot.clogger import log
 
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
-REPO_VERSION = "https://raw.githubusercontent.com/evyshape/L2Monad/main/bot/version.txt"
-REPO_ZIP = "https://github.com/evyshape/L2Monad/archive/refs/heads/main.zip"
+REPO_VERSION = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt"  # MY REPO
+REPO_ZIP = "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip"  # MY REPO
 
 def get_my_version():
     try:
@@ -68,46 +68,6 @@ def install_req(req_path):
     except Exception as e:
         log(f"Ошибка при установке зависимостей: {e}")
 
-def merge(local_path, new_path):
-    try:
-        with open(local_path, "r", encoding="utf-8") as f:
-            local_lines = f.readlines()
-        with open(new_path, "r", encoding="utf-8") as f:
-            new_lines = f.readlines()
-
-        local_map = {}
-        for line in local_lines:
-            if "=" in line and line.split("=")[0].strip().isupper():
-                key = line.split("=")[0].strip()
-                local_map[key] = line
-
-        merged = []
-        seen = set()
-
-        for line in new_lines:
-            if "=" in line and line.split("=")[0].strip().isupper():
-                key = line.split("=")[0].strip()
-                if key in local_map:
-                    merged.append(local_map[key].rstrip() + "\n")
-                else:
-                    merged.append(line)
-                seen.add(key)
-            else:
-                merged.append(line)
-
-        for key, line in local_map.items():
-            if key not in seen:
-                merged.append("\n" + line)
-
-        with open(local_path, "w", encoding="utf-8") as f:
-            f.writelines(merged)
-
-        log(f"Обновил и смержил: {local_path}")
-
-    except Exception as e:
-        log(f"Шось злое: {e}")
-
-
 def ini(local_path, new_path):
     config_local = configparser.ConfigParser()
     config_new = configparser.ConfigParser()
@@ -139,7 +99,7 @@ def update():
         os.makedirs(temp_dir, exist_ok=True)
 
         z.extractall(temp_dir)
-        main_repo = os.path.join(temp_dir, "L2Monad-main")
+        main_repo = os.path.join(temp_dir, "L2Mauto-main")  # MY REPO: имя папки из zip
 
         _cleanup(root_dir)
 
@@ -178,13 +138,8 @@ def update():
                     ini(dst_path, os.path.join(root, file))
                     continue
 
-                if dst_path.endswith("bot{}delays.py".format(os.sep)) and os.path.exists(dst_path):
-                    merge(dst_path, os.path.join(root, file))
-                    continue
-
-                if dst_path.endswith("bot{}misc.py".format(os.sep)) and os.path.exists(dst_path):
-                    merge(dst_path, os.path.join(root, file))
-                    continue
+                # MY RULE: delays.py и misc.py НЕ мержим — ставим из обновы как есть.
+                # Наши тайминги = часть бота, одинаковые на всех ПК. (merge-ветки удалены)
 
                 os.makedirs(os.path.dirname(dst_path), exist_ok=True)
                 shutil.copy2(os.path.join(root, file), dst_path)
