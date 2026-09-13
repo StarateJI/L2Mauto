@@ -30,6 +30,11 @@ class Claims(GameAction):
         if await self._menu_open():
             return True
         await self.wait_and_click("main_menu_gui", timeout=timeout)
+        if await self._menu_open(timeout=3):
+            return True
+        # v2: одна повторная попытка входа в меню (лаг на старте — частый гость)
+        await asyncio.sleep(1.5)
+        await self.wait_and_click("main_menu_gui", timeout=3)
         return await self._menu_open(timeout=3)
 
     async def _close_menu(self):
@@ -62,11 +67,13 @@ class Claims(GameAction):
                 ok = await self.profile.energo.turn_off()
             if not ok:
                 return False
-            await asyncio.sleep(3)
+            await asyncio.sleep(2)  # v2: было 3 -> 2 равнозначно-стабильно
 
         if not await self._open_menu(timeout=7):
             log("Не удалось открыть главное меню", self.window_id)
             return False
+
+        await asyncio.sleep(1.5)  # v2: пауза после меню — вкладки дорисуются
 
         if not await self.wait_and_click("red_dot_mail_menu", timeout=1, thr=10, dx=-5, dy=5):
             log("Не найден значок почты", self.window_id)
@@ -196,7 +203,7 @@ class Claims(GameAction):
                     else:
                         log(f"Собираю награду тут: {(x_c, y_c)}", self.window_id)
                         await self.mouse.click(self.window_info, x_c, y_c)
-                        await asyncio.sleep(0.5)
+                        await asyncio.sleep(1)  # v2: было 0.5 — клику по награде даём отработать
                         await self.skip_vitality("claim")
 
                 return ["claimed"]
@@ -253,6 +260,7 @@ class Claims(GameAction):
                 ok = await self.profile.energo.turn_off()
             if not ok:
                 return False
+            await asyncio.sleep(2)  # v2: пауза после сна — экран дорисуется
 
         if not await self._open_menu(timeout=5):
             log("Не удалось открыть главное меню", self.window_id)
@@ -261,13 +269,13 @@ class Claims(GameAction):
             log("Не нашел красной точки, скипаю", self.window_id)
             return False
 
-        await asyncio.sleep(3.5)
+        await asyncio.sleep(5)  # v2: было 3.5 — вкладки дейлика прогрузятся с запасом
         tabs = await find_daily_tabs(left, top, height)
         summary = 0
 
         if tabs:
             for tab in tabs:
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)  # v2: было 1 — вкладке надо осесть после клика
                 if len(tab) >= 2:
                     x, y = map(int, tab[0].split(", "))
                     log(f"Перешел на вкладку: {(x, y)}", self.window_id)
@@ -291,6 +299,7 @@ class Claims(GameAction):
                 ok = await self.profile.energo.turn_off()
             if not ok:
                 return False
+            await asyncio.sleep(2)  # v2: пауза после сна
 
         if not await self.wait_and_click("red_dot_achiv", timeout=5, thr=1):
             log("Нет красной точки на иконке достижений", self.window_id)
@@ -302,13 +311,13 @@ class Claims(GameAction):
             await self.wait_and_click("npc_global_quit_button", timeout=5, thr=1)
             return False
 
-        await asyncio.sleep(2)
+        await asyncio.sleep(2.5)  # v2: было 2 — меню ачивок дорисуется
 
         for _ in range(MAX_CLAIM_ACHIEVEMENTS):
             if not await self.wait_and_click("achiv_claim_1", timeout=2, thr=5):
                 log("Ачивок больше нет", self.window_id)
                 break
-            await asyncio.sleep(SLEEP_AFTER_CLAIM_ACHIVMENTS)
+            await asyncio.sleep(0.3)  # v2: было SLEEP_AFTER_CLAIM_ACHIVMENTS(0.1) — клики перестанут теряться
 
         await self.wait_and_click("npc_global_quit_button", timeout=5, thr=1)
         return True
@@ -321,7 +330,7 @@ class Claims(GameAction):
                 ok = await self.profile.energo.turn_off()
             if not ok:
                 return False
-            await asyncio.sleep(1)
+            await asyncio.sleep(1.5)  # v2: было 1 — экран после сна дорисуется
 
         if not await self._open_menu(timeout=5):
             log("Не удалось открыть главное меню", self.window_id)
@@ -337,10 +346,14 @@ class Claims(GameAction):
             await self.wait_and_click("npc_global_quit_button", timeout=5)
             return False
 
+        await asyncio.sleep(1)  # v2: пауза между кнопками доната — интерфейсу дышать
+
         if not await self.wait_and_click("clan_2", timeout=3):
             log("Не нашел clan_2", self.window_id)
             await self.wait_and_click("npc_global_quit_button", timeout=5)
             return False
+
+        await asyncio.sleep(1)  # v2
 
         if not await self.wait_and_click("clan_3", timeout=3):
             log("Не нашел clan_3", self.window_id)
@@ -350,10 +363,14 @@ class Claims(GameAction):
             return False
         await self.skip_vitality("claim")
 
+        await asyncio.sleep(1)  # v2
+
         if not await self.wait_and_click("clan_5", timeout=3):
             log("Не нашел clan_5", self.window_id)
             await self.wait_and_click("npc_global_quit_button", timeout=5)
             return False
+
+        await asyncio.sleep(1)  # v2
 
         if not await self.wait_and_click("clan_6", timeout=3):
             log("Не нашел clan_6", self.window_id)
@@ -364,7 +381,7 @@ class Claims(GameAction):
             await self.wait_and_click("npc_global_quit_button", timeout=5)
             return False
 
-        await asyncio.sleep(0.3)
+        await asyncio.sleep(0.8)  # v2: было 0.3
         return True
 
     async def alliance(self) -> bool:
@@ -381,13 +398,13 @@ class Claims(GameAction):
                 ok = await self.profile.energo.turn_off()
             if not ok:
                 return False
-            await asyncio.sleep(1)
+            await asyncio.sleep(1.5)  # v2: было 1
 
         if not await self._open_menu(timeout=5):
             log("Не удалось открыть главное меню", self.window_id)
             return False
 
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(2)  # v2: было 1.5 — меню альянса прогрузится
         if not await self.wait_and_click("alliance_menu_gui", timeout=3):
             log("Не нашел кнопку альянса в меню", self.window_id)
             return False
@@ -398,12 +415,12 @@ class Claims(GameAction):
             await self.wait_and_click("npc_global_quit_button", timeout=5)
             return False
 
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(1)  # v2: было 0.2 — окно доната открывается медленнее
 
         if not await self.wait_and_click(f"alliance_donate_{num}_button", timeout=3):
             log(f"Не нашел alliance_donate_{num}_button", self.window_id)
             await self.wait_and_click("alliance_close_donate", timeout=3)
-            await asyncio.sleep(1.2)
+            await asyncio.sleep(1.5)  # v2: было 1.2
             await self.wait_and_click("npc_global_quit_button", timeout=5)
             return False
         await self.skip_vitality("claim")
@@ -412,7 +429,7 @@ class Claims(GameAction):
             return False
         await self.wait_and_click("npc_global_quit_button", timeout=5)
 
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.8)  # v2: было 0.2
         return True
 
     async def battle_pass(self) -> bool:
@@ -467,7 +484,7 @@ class Claims(GameAction):
         async def find_BP_2(t=8, step=3, distance=20):
             window = self.window_info[self.window_id]
             left, top = window["Position"]
-            height = window["Height"]
+            width, height = window["Width"], window["Height"]
             x_search = BATTLE_PASS["x_podvkladki"]
             red_rgb = tuple(map(int, BATTLE_PASS["red_dot_clr_podvkladka"][0].split(', ')))
 
@@ -505,9 +522,9 @@ class Claims(GameAction):
                 ok = await self.profile.energo.turn_off()
             if not ok:
                 return False
-            await asyncio.sleep(0.2)
+            await asyncio.sleep(1.5)  # v2: было 0.2 — после сна экрану нужно время
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(1.5)  # v2: было 1
 
         if not await self._open_menu(timeout=5):
             log("Не удалось открыть главное меню", self.window_id)
@@ -518,7 +535,7 @@ class Claims(GameAction):
             return False
         log("Нашел бп", self.window_id)
 
-        await asyncio.sleep(1)
+        await asyncio.sleep(1.5)  # v2: было 1 — БП-окно тяжёлое, прогрузится
         log("Пробую чекнуть вкладочки бп", self.window_id)
         tabs = await find_BP_1()
         log(f"Обнаружил вкладок бп: {len(tabs)}, начинаю чекать...", self.window_id)
@@ -526,7 +543,7 @@ class Claims(GameAction):
         for i, tab in enumerate(tabs, 1):
             x, y = map(int, tab[0].split(", "))
             await self.mouse.click(self.window_info, x, y)
-            await asyncio.sleep(1)
+            await asyncio.sleep(1.5)  # v2: было 1 — вкладка БП перерисовывается
 
             podtabs = await find_BP_2()
             log(f"Подвкладок найдено: {len(podtabs)}", self.window_id)
@@ -534,6 +551,7 @@ class Claims(GameAction):
             for q, podtab in enumerate(podtabs, 1):
                 x, y = map(int, podtab[0].split(", "))
                 await self.mouse.click(self.window_info, x, y)
+                await asyncio.sleep(1)  # v2: пауза после подвкладки — список наград перерисуется
 
                 max_bp_claims = 30
                 bp_claimed = 0
@@ -542,26 +560,26 @@ class Claims(GameAction):
                         log(f"Собираю награду [{i}.{q}]", self.window_id)
                         await self.mouse.click(self.window_info, *xy_sbor1)
                         bp_claimed += 1
-                        await asyncio.sleep(1)
+                        await asyncio.sleep(1.5)  # v2: было 1 — кнопка «собрать» с анимацией
                     else:
                         log(f"Нет наград во вкладке {i}, под {q}", self.window_id)
                         break
 
-            await asyncio.sleep(0.3)
+            await asyncio.sleep(0.8)  # v2: было 0.3
 
             if await self.profile.check_pixel(xy_sbor2, rgb_sbor2, timeout=1):
                 await self.mouse.click(self.window_info, *xy_sbor2)
-                await asyncio.sleep(1)
+                await asyncio.sleep(1.5)  # v2: было 1
                 await self.skip_vitality("claim")
             elif await self.profile.check_pixel(xy_sbor22, rgb_sbor22, timeout=1):
                 await self.mouse.click(self.window_info, *xy_sbor22)
-                await asyncio.sleep(1)
+                await asyncio.sleep(1.5)  # v2: было 1
                 await self.skip_vitality("claim")
             else:
                 log("Собирать нечего, проверяю следующую вкладку", self.window_id)
 
         log("Закрываю баттл пасс", self.window_id)
-        await asyncio.sleep(1.5)
+        await asyncio.sleep(2)  # v2: было 1.5 — окно БП закрывается с анимацией
         await self.wait_and_click("npc_global_quit_button", timeout=5)
 
         return bool(tabs)
@@ -575,7 +593,7 @@ class Claims(GameAction):
         async def go_to_tab(tab_num):
             tag = f"magaz_str_{tab_num}"
             result = await self.wait_and_click(tag, timeout=5, thr=2)
-            await asyncio.sleep(1)
+            await asyncio.sleep(1.5)  # v2: было 1 — вкладка магазина перерисовывается
             return result
 
         if await self.profile.energo.is_on():
@@ -585,12 +603,12 @@ class Claims(GameAction):
                 ok = await self.profile.energo.turn_off()
             if not ok:
                 return False
-            await asyncio.sleep(2)
+            await asyncio.sleep(2.5)  # v2: было 2
 
         if not await self.wait_and_click("magaz_gui_open", timeout=5, thr=2):
             return False
 
-        await asyncio.sleep(2.5)
+        await asyncio.sleep(3)  # v2: было 2.5 — магазин тяжёлый
 
         xy_close, rgb_close = parseCBT("magaz_monetka_reklama", profile=self.profile)
         if await self.profile.check_pixel(
@@ -608,18 +626,18 @@ class Claims(GameAction):
                 xy_google, rgb_google,
                 timeout=DELAY_WAIT_ADENA_SHOP_GOOGLE, thr=2, wsize="2x2",
             ):
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.5)  # v2: было 0.2
                 if await self.wait_and_click("magaz_google_close", timeout=2, thr=2):
                     log("Вылез гугл, закрыл гадость", self.window_id)
 
-        await asyncio.sleep(0.6)
+        await asyncio.sleep(1.2)  # v2: было 0.6 — после реклам интерфейс оседает
         await self.wait_and_click("3_vkladka", timeout=2, thr=2)
 
         for tab in tabs:
             if not await go_to_tab(tab):
                 continue
 
-            await asyncio.sleep(1)
+            await asyncio.sleep(1.5)  # v2: было 1
 
             if not await self.wait_and_click("purc_all_magaz", timeout=5, thr=2):
                 await self.wait_and_click("npc_global_quit_button", timeout=2, thr=2)
@@ -632,7 +650,7 @@ class Claims(GameAction):
 
             xy_check, rgb_check = parseCBT("purc_all_magaz", profile=self.profile)
             if await self.profile.check_pixel(xy_check, rgb_check, timeout=10):
-                await asyncio.sleep(0.2)
+                await asyncio.sleep(0.5)  # v2: было 0.2
             else:
                 log("Что-то пошло не так, не трогаю окно, зырь в него", self.window_id)
                 return False
@@ -641,5 +659,5 @@ class Claims(GameAction):
             await self.wait_and_click("npc_global_quit_button", timeout=2, thr=2)
             return False
 
-        await asyncio.sleep(0.2)
+        await asyncio.sleep(0.8)  # v2: было 0.2
         return True
