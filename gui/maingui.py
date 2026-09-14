@@ -403,25 +403,26 @@ class NedoGui(QWidget):
             self.start_windows(profile_class, windows)
             return
 
-        # Для Auction ВСЕГДА дефолт = 1 (не брать из cache — там может быть 2 или 10).
-        # Причина: 2 окна 1280x720 перекрывают друг друга → клики летят не туда.
+        # Для Auction ВСЕГДА batch = 1, игнорируем cache полностью.
+        # Если в кэше было 2 или 10 — игнорируем, перезаписываем на 1.
         if profile_name == "Auction":
-            # Принудительно сбрасываем cache для Auction
-            self.cache["Auction"] = 1
-            save_cache(self.cache)
-            last_value = 1
+            if self.cache.get("Auction", 1) != 1:
+                log(f"start_all: Auction cache был {self.cache.get('Auction')} → сброс на 1")
+                self.cache["Auction"] = 1
+                save_cache(self.cache)
+            num = 1  # ЖЁСТКО — не спрашиваем пользователя, сразу 1
+            log(f"start_all: Auction batch = {num} (hardcoded)")
         else:
             last_value = self.cache.get(profile_name, 1)
-        num, ok = QInputDialog.getInt(
-            self, "Батчер для ВСЕХ",
-            f"Сколько окон запускать одновременно для {profile_name}?",
-            last_value, 1
-        )
-        if not ok:
-            return
-
-        self.cache[profile_name] = num
-        save_cache(self.cache)
+            num, ok = QInputDialog.getInt(
+                self, "Батчер для ВСЕХ",
+                f"Сколько окон запускать одновременно для {profile_name}?",
+                last_value, 1
+            )
+            if not ok:
+                return
+            self.cache[profile_name] = num
+            save_cache(self.cache)
 
         batches = [windows[i:i + num] for i in range(0, len(windows), num)]
         self.controller.reset_batch_cancel()
@@ -473,21 +474,32 @@ class NedoGui(QWidget):
         process_batch()
 
     def stop_profile(self):
+        """ЖЁСТКАЯ остановка всего. Один клик — всё встанет."""
         try:
-            # ЖЁСТКАЯ остановка — убиваем цепочку process_batch
+            log(f"СТОП ВСЕ: нажато, останавливаю...")
+            # 1. ЖЁСТКИЙ флаг — убивает цепочку process_batch/wait_c/wait_f
             self._batch_stop = True
             self.controller.cancel_batch()
+
+            # 2. Остановить алхимию если была
             if hasattr(self, '_alchemy_timer') and self._alchemy_timer.isActive():
                 self._alchemy_timer.stop()
             if hasattr(self, '_alchemy_pending'):
                 self._alchemy_pending.clear()
             if hasattr(self, '_alchemy_running'):
                 self._alchemy_running.clear()
-            # Остановить все запущенные боты
+
+            # 3. Остановить ВСЕ запущенные боты — копируем список, т.к. он меняется
             nicks = list(self.controller.bot_manager.bots.copy())
-            self.stop_windows(nicks)
-            log(f"СТОП ВСЕ: остановлено {len(nicks)} окон")
-        except Exception:
+            log(f"СТОП ВСЕ: останавливаю {len(nicks)} окон: {nicks}")
+            if nicks:
+                self.stop_windows(nicks)
+
+            log(f"СТОП ВСЕ: команда отправлена")
+        except Exception as e:
+            log(f"СТОП ВСЕ: exception: {e}", level="ERROR")
+            import traceback
+            log(traceback.format_exc(), level="ERROR")
             self._batch_stop = True
             self.controller.cancel_batch()
 
