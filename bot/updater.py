@@ -10,8 +10,17 @@ import time
 from bot.clogger import log
 
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
-REPO_VERSION = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt"  # MY REPO
-REPO_ZIP = "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip"  # MY REPO
+
+# Список URL для проверки версии (пробуем по очереди):
+# 1. jsdelivr CDN — не кеширует долго, работает в РФ, быстрый
+# 2. raw.githubusercontent.com — оригинал, но кеширует 5 мин
+# 3. GitHub API — самый точный, но rate limit 60/час
+REPO_VERSION_URLS = [
+    "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/bot/version.txt",
+    "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt",
+    "https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main",
+]
+REPO_ZIP = "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip"
 
 def get_my_version():
     try:
@@ -36,28 +45,64 @@ def _load_github_token() -> str | None:
         pass
     return None
 
+def _fetch_remote_version() -> str | None:
+    """
+    Попробовать получить remote версию из нескольких источников.
+    Возвращает строку с версией или None если все источники упали.
+    """
+    headers = {
+        "Cache-Control": "no-cache, no-store, max-age=0",
+        "Pragma": "no-cache",
+    }
+    tok = _load_github_token()
+    if tok:
+        headers["Authorization"] = f"token {tok}"
+
+    # Cache-buster — уникальный URL для каждого запроса
+    cache_buster = f"?ts={int(time.time())}"
+
+    for url in REPO_VERSION_URLS:
+        try:
+            # Для API GitHub — другой формат ответа (JSON с base64)
+            if "api.github.com" in url:
+                r = requests.get(url, timeout=8, headers=headers)
+                r.raise_for_status()
+                import base64
+                data = r.json()
+                content = base64.b64decode(data["content"]).decode().strip()
+                log(f"needs_update: fetched from API GitHub: {content}",
+                    level="DEBUG")
+                return content
+            else:
+                # raw / jsdelivr — простой текст
+                full_url = url + cache_buster
+                r = requests.get(full_url, timeout=8, headers=headers)
+                r.raise_for_status()
+                content = r.text.strip()
+                if content and content[0].isdigit():
+                    log(f"needs_update: fetched from {url.split('/')[2]}: {content}",
+                        level="DEBUG")
+                    return content
+        except Exception as e:
+            log(f"needs_update: {url.split('/')[2]} failed: {type(e).__name__}: {e}",
+                level="DEBUG")
+            continue
+
+    return None
+
+
 def needs_update() -> bool:
     """
     Сравнить локальную версию с remote. Возвращает True если есть обнова.
-    Использует токен из tg.ini [github] если есть (приватные репо, rate limit).
-    Логирует ошибки — больше не молчит в except.
-
-    Анти-кеш: добавляем ?ts=<timestamp> к URL — GitHub CDN отдаёт свежую версию.
+    Пробует 3 источника: jsdelivr CDN → raw.githubusercontent → GitHub API.
+    Если все упали — возвращает False (не блокируем бота).
     """
     try:
         local = parse_version(get_my_version())
-        headers = {
-            "Authorization": f"token {_load_github_token()}" if _load_github_token() else "",
-            "Cache-Control": "no-cache, no-store, max-age=0",
-            "Pragma": "no-cache",
-        }
-        # Cache-buster — уникальный URL для каждого запроса
-        cache_buster = f"?ts={int(time.time())}"
-        r = requests.get(REPO_VERSION + cache_buster, timeout=10, headers=headers)
-        r.raise_for_status()
-        remote_text = r.text.strip()
+        remote_text = _fetch_remote_version()
         if not remote_text:
-            log("needs_update: пустой ответ от GitHub", level="WARNING")
+            log("needs_update: все источники версии упали — пропускаю проверку",
+                level="WARNING")
             return False
         remote = parse_version(remote_text)
         has_update = remote > local
