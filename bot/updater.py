@@ -12,13 +12,15 @@ from bot.clogger import log
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
 
 # Список URL для проверки версии (пробуем по очереди):
-# 1. jsdelivr CDN — не кеширует долго, работает в РФ, быстрый
-# 2. raw.githubusercontent.com — оригинал, но кеширует 5 мин
-# 3. GitHub API — самый точный, но rate limit 60/час
+# 1. raw.githubusercontent.com с cache-buster — оригинал, свежая версия
+# 2. GitHub API — JSON, no cache, всегда свежая (rate limit 60/час анонимно)
+# 3. cdn.jsdelivr.net — ОСТОРОЖНО: кеширует 7 дней (max-age=604800),
+#    используем только как последний fallback
+#    (для РФ где raw может быть недоступен)
 REPO_VERSION_URLS = [
-    "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/bot/version.txt",
     "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt",
     "https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main",
+    "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/bot/version.txt",
 ]
 REPO_ZIP = "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip"
 
@@ -49,6 +51,9 @@ def _fetch_remote_version() -> str | None:
     """
     Попробовать получить remote версию из нескольких источников.
     Возвращает строку с версией или None если все источники упали.
+
+    Сравнивает версии из всех источников и берёт МАКСИМАЛЬНУЮ —
+    так мы не зависим от того что jsdelivr закешировал старую версию.
     """
     headers = {
         "Cache-Control": "no-cache, no-store, max-age=0",
@@ -61,6 +66,8 @@ def _fetch_remote_version() -> str | None:
     # Cache-buster — уникальный URL для каждого запроса
     cache_buster = f"?ts={int(time.time())}"
 
+    versions_found: list[tuple[int, str, str]] = []  # (порядок, источник, версия)
+
     for url in REPO_VERSION_URLS:
         try:
             # Для API GitHub — другой формат ответа (JSON с base64)
@@ -70,9 +77,9 @@ def _fetch_remote_version() -> str | None:
                 import base64
                 data = r.json()
                 content = base64.b64decode(data["content"]).decode().strip()
-                log(f"needs_update: fetched from API GitHub: {content}",
-                    level="DEBUG")
-                return content
+                if content and content[0].isdigit():
+                    versions_found.append((len(versions_found), "API", content))
+                    log(f"needs_update: API GitHub → {content}", level="DEBUG")
             else:
                 # raw / jsdelivr — простой текст
                 full_url = url + cache_buster
@@ -80,15 +87,31 @@ def _fetch_remote_version() -> str | None:
                 r.raise_for_status()
                 content = r.text.strip()
                 if content and content[0].isdigit():
-                    log(f"needs_update: fetched from {url.split('/')[2]}: {content}",
-                        level="DEBUG")
-                    return content
+                    src = "jsdelivr" if "jsdelivr" in url else "raw"
+                    versions_found.append((len(versions_found), src, content))
+                    log(f"needs_update: {src} → {content}", level="DEBUG")
         except Exception as e:
-            log(f"needs_update: {url.split('/')[2]} failed: {type(e).__name__}: {e}",
+            src = "API" if "api.github.com" in url else (
+                "jsdelivr" if "jsdelivr" in url else "raw")
+            log(f"needs_update: {src} failed: {type(e).__name__}: {e}",
                 level="DEBUG")
             continue
 
-    return None
+    if not versions_found:
+        return None
+
+    # Взять МАКСИМАЛЬНУЮ версию из всех полученных — чтобы закешированный
+    # jsdelivr не блокировал обновление если raw уже отдаёт новую.
+    def _vk(v: str):
+        try:
+            return tuple(int(x) for x in v.split("."))
+        except Exception:
+            return (0, 0, 0)
+
+    best = max(versions_found, key=lambda x: _vk(x[2]))
+    log(f"needs_update: лучший источник {best[1]} → {best[2]} "
+        f"(из {len(versions_found)})", level="DEBUG")
+    return best[2]
 
 
 def needs_update() -> bool:
