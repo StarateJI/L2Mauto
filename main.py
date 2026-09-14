@@ -6,10 +6,12 @@ import os
 
 # ── ФИКС memory allocation of 14745616 bytes failed ──────────────────────
 # 14745616 = 2560×1440×4 (один фрейм фуллскрина). Это Rust-захват capture_rs.pyd
-# пытается выделить буфер. На одном ПК падает. Отключаем Rust, оставляем mss.
-# mss медленнее на ~50ms но не падает. В аукционе уже используется mss напрямую.
+# пытается выделить буфер и падает на одном ПК.
+# Решение: env var L2M_NO_RUST=1 — RustBackend.__init__ проверяет эту переменную
+# и сразу поднимает BackendUnavailable → backend.py возьмёт mss как fallback.
+# mss медленнее на ~50ms но не падает. Аукцион и так использует mss напрямую.
 # Ставим ДО любого импорта bot.* чтобы RustBackend не инициализировался.
-os.environ.setdefault("L2M_CAPTURE_BACKEND", "mss")
+os.environ.setdefault("L2M_NO_RUST", "1")
 
 from pathlib import Path
 import asyncio

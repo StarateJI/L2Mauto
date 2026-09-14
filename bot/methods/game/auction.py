@@ -36,10 +36,12 @@ _sct = mss.MSS()
 # ── Рабочий размер окна ───────────────────────────────────────────────────
 WORK_W, WORK_H = 1280, 720
 # Две позиции для пачки из 2 окон на мониторе 2560×1440:
-#   окно 1: (0, 0) — левая половина экрана
-#   окно 2: (1280, 0) — правая половина
+#   окно 1: (0, 40) — левая половина (y=40 — Windows не даёт y=0 из-за title bar)
+#   окно 2: (1280, 40) — правая половина
 # _resize_work сам выберет свободную позицию через findAllWindows().
-WORK_POSITIONS = [(0, 0), (1280, 0)]
+WORK_POSITIONS = [(0, 40), (1280, 40)]
+# Допуск по позиции при проверке: Windows может сместить окно на ±10px
+POSITION_TOLERANCE = 15
 REST_W, REST_H = 400, 225  # вернуть обратно после работы
 
 # ── UI кнопки (window-relative, 1280x720) ─────────────────────────────────
@@ -189,6 +191,15 @@ class Auction(GameAction):
                     log(f"Аук: ошибка на предмете {i} — стоп, сделано {made}",
                         self.window_id, level="ERROR")
                     break
+
+        except asyncio.CancelledError:
+            # Пользователь нажал СТОП ВСЕ. finally всё равно выполнится —
+            # окно вернётся, аук закроется, логи уйдут в GitHub.
+            last_error = RuntimeError("Stopped by user (CancelledError)")
+            log("Аук: стопнут пользователем (CancelledError) — запускаю finally",
+                self.window_id, level="WARNING")
+            made = 0
+            # НЕ reraise — finally выполнится, бот вернёт окно и шлёт логи
 
         except Exception as e:
             last_error = e
@@ -343,8 +354,12 @@ class Auction(GameAction):
                 await asyncio.sleep(0.4)
 
                 win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
-                if win.width == WORK_W and win.height == WORK_H \
-                        and win.left == chosen_pos[0] and win.top == chosen_pos[1]:
+                # Проверка с допуском POSITION_TOLERANCE — Windows иногда
+                # смещает окно на несколько пикселей (title bar snapping)
+                size_ok = (win.width == WORK_W and win.height == WORK_H)
+                pos_ok = (abs(win.left - chosen_pos[0]) <= POSITION_TOLERANCE and
+                          abs(win.top - chosen_pos[1]) <= POSITION_TOLERANCE)
+                if size_ok and pos_ok:
                     log(f"Аук: окно в рабочем размере (попытка {attempt}) "
                         f"на ({win.left},{win.top})", self.window_id)
                     self.window_info[self.window_id]["Position"] = (win.left, win.top)
@@ -356,7 +371,8 @@ class Auction(GameAction):
                     return True
                 else:
                     log(f"Аук: resize не совпал: got ({win.left},{win.top}) "
-                        f"{win.width}x{win.height}, retry",
+                        f"{win.width}x{win.height}, wanted {chosen_pos} "
+                        f"{WORK_W}x{WORK_H}, retry",
                         self.window_id, level="WARNING")
             except Exception as e:
                 log(f"Аук: resize попытка {attempt} неудача: {e}",

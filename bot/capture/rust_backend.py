@@ -34,6 +34,15 @@ class RustBackend(CaptureBackend):
     _UNHEALTHY_RECREATE_AFTER = 1.5
 
     def __init__(self, prefer: str | None = "dxgi"):
+        # ФИКС: на одном ПК Rust-захват падает с memory allocation failed
+        # (14745616 = 2560×1440×4 — один фрейм фуллскрина). env var L2M_NO_RUST=1
+        # отключает Rust целиком, backend.py возьмёт mss как fallback.
+        # mss медленнее на ~50ms но не падает. Аукцион использует mss напрямую.
+        if os.environ.get("L2M_NO_RUST", "").strip() in ("1", "true", "yes", "on"):
+            raise BackendUnavailable(
+                "L2M_NO_RUST is set — skipping RustBackend, using mss fallback"
+            )
+
         try:
             import capture_rs
         except ImportError as e:
