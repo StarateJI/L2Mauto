@@ -403,17 +403,15 @@ class NedoGui(QWidget):
             self.start_windows(profile_class, windows)
             return
 
-        # Для Auction дефолт пачки = 1 (было 2).
+        # Для Auction ВСЕГДА дефолт = 1 (не брать из cache — там может быть 2 или 10).
         # Причина: 2 окна 1280x720 перекрывают друг друга → клики летят не туда.
-        # Пользователь может вручную ввести 2 если хочет.
-        # В будущем: если перейдём на 960x540 — можно вернуть 2 (4 окна на 2560x1440).
         if profile_name == "Auction":
-            default_batch = 1
+            # Принудительно сбрасываем cache для Auction
+            self.cache["Auction"] = 1
+            save_cache(self.cache)
+            last_value = 1
         else:
-            default_batch = 1
-
-        # Берём из cache если пользователь уже выбирал, иначе дефолт
-        last_value = self.cache.get(profile_name, default_batch)
+            last_value = self.cache.get(profile_name, 1)
         num, ok = QInputDialog.getInt(
             self, "Батчер для ВСЕХ",
             f"Сколько окон запускать одновременно для {profile_name}?",
@@ -427,18 +425,21 @@ class NedoGui(QWidget):
 
         batches = [windows[i:i + num] for i in range(0, len(windows), num)]
         self.controller.reset_batch_cancel()
+        self._batch_stop = False  # флаг жёсткой остановки process_batch
 
         def process_batch(batch_idx=0):
             if batch_idx >= len(batches):
                 return
             if self.controller.batch_cancelled:
                 return
+            if self._batch_stop:  # жёсткая остановка — выходим из цепочки
+                return
 
             batch = batches[batch_idx]
             self.start_windows(profile_class, batch)
 
             def wait_c(attempts=0):
-                if self.controller.batch_cancelled:
+                if self.controller.batch_cancelled or self._batch_stop:
                     return
                 stalled = [nick for nick in batch
                            if self.controller.bot_manager.get_bot(nick) is None]
@@ -454,7 +455,7 @@ class NedoGui(QWidget):
                 QTimer.singleShot(500, lambda: wait_c(attempts + 1))
 
             def wait_f(attempts=0):
-                if self.controller.batch_cancelled:
+                if self.controller.batch_cancelled or self._batch_stop:
                     return
                 running = [nick for nick in batch
                            if self.controller.is_running(nick)]
@@ -473,6 +474,8 @@ class NedoGui(QWidget):
 
     def stop_profile(self):
         try:
+            # ЖЁСТКАЯ остановка — убиваем цепочку process_batch
+            self._batch_stop = True
             self.controller.cancel_batch()
             if hasattr(self, '_alchemy_timer') and self._alchemy_timer.isActive():
                 self._alchemy_timer.stop()
@@ -480,9 +483,12 @@ class NedoGui(QWidget):
                 self._alchemy_pending.clear()
             if hasattr(self, '_alchemy_running'):
                 self._alchemy_running.clear()
+            # Остановить все запущенные боты
             nicks = list(self.controller.bot_manager.bots.copy())
             self.stop_windows(nicks)
+            log(f"СТОП ВСЕ: остановлено {len(nicks)} окон")
         except Exception:
+            self._batch_stop = True
             self.controller.cancel_batch()
 
     def ask_region(self, new_windows: list[str]) -> dict[str, str]:
