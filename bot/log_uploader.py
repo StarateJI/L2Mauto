@@ -268,11 +268,16 @@ def upload_run_logs(window_id: str, made: int = 0, error: Optional[str] = None) 
                 result = _api_put(repo_path, data, token, commit_msg)
                 if result:
                     uploaded += 1
+                    # Удалить PNG с диска после успешной загрузки (чтобы не забивать память)
+                    try:
+                        os.remove(full)
+                    except Exception:
+                        pass
             except Exception as e:
                 log(f"log_uploader: PNG {name} не загружен: {e}",
                     window_id, level="WARNING")
-        log(f"log_uploader: STEP 2 (PNGs) -> {uploaded}/{len(pngs)}",
-            level="DEBUG")
+        log(f"log_uploader: STEP 2 (PNGs) -> {uploaded}/{len(pngs)} "
+            f"(удалено с диска: {uploaded})", level="DEBUG")
     else:
         log(f"log_uploader: STEP 2 SKIP (no PNGs)", level="DEBUG")
 

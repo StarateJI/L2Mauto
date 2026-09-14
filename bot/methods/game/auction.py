@@ -612,8 +612,55 @@ class Auction(GameAction):
     # КЛИКИ
     # ──────────────────────────────────────────────────────────────────────
     async def _click(self, x: int, y: int) -> None:
-        """Клик по window-relative координатам через очередь мыши."""
+        """Клик по window-relative координатам через очередь мыши.
+        Перед кликом — SetForegroundWindow (активировать окно если перекрыто)."""
+        try:
+            import ctypes
+            hwnd_val = self.window_info[self.window_id].get("ID")
+            if hwnd_val:
+                try:
+                    ctypes.windll.user32.SetForegroundWindow(int(hwnd_val))
+                except Exception:
+                    pass
+        except Exception:
+            pass
         await self.mouse.click(self.window_info, x, y)
+
+    async def _click_and_verify(self, x: int, y: int, label: str = "",
+                               verify_zone: Optional[Tuple[int, int, int, int]] = None) -> bool:
+        """
+        Клик + проверка результата. Делает скрин до и после клика,
+        сравнивает — если экран не изменился, клик не прошёл.
+
+        verify_zone: зона для сравнения (если None — весь INV_SCAN).
+        Возвращает True если экран изменился (клик сработал).
+
+        Сохраняет скрины:
+          au_before_{label}.png — до клика
+          au_after_{label}.png — после клика
+        """
+        zone = verify_zone or INV_SCAN
+        before = self._grab(zone)
+        await self._click(x, y)
+        await asyncio.sleep(2.0)
+        after = self._grab(zone)
+        # Сравнение: насколько изменились картинки
+        diff = cv2.absdiff(before, after)
+        changed_pixels = int(np.sum(diff > 30))  # пиксели изменившиеся >30
+        total = before.shape[0] * before.shape[1] * before.shape[2]
+        change_ratio = changed_pixels / total
+        # Сохраняем для диагностики
+        safe_label = label.replace(" ", "_").lower()
+        await self._save_debug(f"au_before_{safe_label}.png", before)
+        await self._save_debug(f"au_after_{safe_label}.png", after)
+        if change_ratio > 0.01:  # >1% пикселей изменилось
+            log(f"Аук: клик '{label}' сработал (изменение {change_ratio:.1%})",
+                self.window_id)
+            return True
+        else:
+            log(f"Аук: клик '{label}' НЕ сработал (изменение {change_ratio:.1%}) — "
+                f"возможно окно перекрыто", self.window_id, level="WARNING")
+            return False
 
     async def _swipe_inventory(self, direction: str) -> None:
         """
@@ -1046,14 +1093,21 @@ class Auction(GameAction):
         await asyncio.sleep(T_ITEM_WINDOW)
 
         # 6. OCR "Текущая минимальная цена"
+        # ⚠️ КРИТИЧНО: если OCR не смог прочитать цену — СТОП, не выставлять!
+        # Раньше бот ставил 10 аден и «успешно» выставлял предмет за бесценок.
         min_price = self._ocr_price()
         if min_price is None or min_price < 10:
-            log("Аук: не удалось прочитать мин. цену — ставлю 10", self.window_id,
-                level="WARNING")
-            my_price = 10
-        else:
-            my_price = max(min_price - 1, 10)  # не ниже 10 (игровой минимум)
-            log(f"Аук: моя цена = {my_price} (мин={min_price})", self.window_id)
+            log("Аук: не удалось прочитать мин. цену — СТОП, не выставляю "
+                "(защита от продажи за бесценок)", self.window_id, level="ERROR")
+            self.profile.notify("error",
+                               "Аук: OCR цены не сработал — предмет НЕ выставлен")
+            # Закрыть окно цены крестиком (выйти без выставления)
+            await self._click(*BTN_CLOSE)
+            await asyncio.sleep(1)
+            return 'error'
+
+        my_price = max(min_price - 1, 10)  # не ниже 10 (игровой минимум)
+        log(f"Аук: моя цена = {my_price} (мин={min_price})", self.window_id)
 
         # 7. Ввести цену
         await self._type_price(str(my_price))
