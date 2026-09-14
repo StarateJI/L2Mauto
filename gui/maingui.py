@@ -403,10 +403,12 @@ class NedoGui(QWidget):
             self.start_windows(profile_class, windows)
             return
 
-        # Для Auction дефолт пачки = 2 (два окна 1280x720 рядом на 2560x1440)
-        # Окна сами расставятся через _resize_work: одно на (0,0), другое на (1280,0)
+        # Для Auction дефолт пачки = 1 (было 2).
+        # Причина: 2 окна 1280x720 перекрывают друг друга → клики летят не туда.
+        # Пользователь может вручную ввести 2 если хочет.
+        # В будущем: если перейдём на 960x540 — можно вернуть 2 (4 окна на 2560x1440).
         if profile_name == "Auction":
-            default_batch = 2
+            default_batch = 1
         else:
             default_batch = 1
 
@@ -443,8 +445,10 @@ class NedoGui(QWidget):
                 if not stalled:
                     wait_f()
                     return
-                if attempts >= 120:
-                    log(f"Пачка {batch_idx + 1}: не завелись {stalled}, пропускаю дальше", level="WARNING")
+                # Было 120 попыток × 500ms = 60 сек.
+                # Теперь 10 попыток × 500ms = 5 сек — если окно не завелось за 5 сек, пропускаем
+                if attempts >= 10:
+                    log(f"Пачка {batch_idx + 1}: не завелись {stalled} за 5 сек, пропускаю дальше", level="WARNING")
                     wait_f()
                     return
                 QTimer.singleShot(500, lambda: wait_c(attempts + 1))
@@ -455,6 +459,7 @@ class NedoGui(QWidget):
                 running = [nick for nick in batch
                            if self.controller.is_running(nick)]
                 if not running:
+                    # Сразу запускаем следующую пачку — без паузы
                     process_batch(batch_idx + 1)
                     return
                 if attempts >= 8 * 3600:
