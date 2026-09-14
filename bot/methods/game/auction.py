@@ -95,11 +95,13 @@ CALC_DIGITS = {
 INV_CX = 1187      # X центра свайпа (над ячейками, не цепляет предметы)
 SWIPE_STEP = 130   # px за один свайп (клетка ~68px, 130 = ~2 строки)
 
-# ── Тайминги (секунды) — ускорены в 5.0.7 ────────────────────────────────
-T_CONFIRM_SETTLE = 1.5    # было 3.0 — анимация окна подтверждения
-T_ITEM_WINDOW = 2.5       # было 4.0 — прогрузка окна цены после клика по предмету
-T_PAGE_LOAD = 1.5         # было 3.0 — пауза после свайпа страницы
-LONG_PAUSE = 2.5          # было 4.0 — после выставления лота
+# ── Тайминги (секунды) — v5.1.5: умеренные (не рвут цепочку на лагающих ПК) ──
+T_CONFIRM_SETTLE = 2.0    # было 1.5 → 2.0 — анимация окна подтверждения
+T_ITEM_WINDOW = 3.0       # было 2.5 → 3.0 — прогрузка окна цены после клика по предмету
+T_PAGE_LOAD = 2.0          # было 1.5 → 2.0 — пауза после свайпа страницы
+LONG_PAUSE = 3.0           # было 2.5 → 3.0 — после выставления лота
+T_TAB_SELL_OPEN = 3.0     # пауза после клика по вкладке Продажа (до проверки)
+T_AUCTION_CLOSE = 2.5     # пауза после клика по крестику (закрыть аук)
 
 # ── SIFT ──────────────────────────────────────────────────────────────────
 # SIFT оставлен как fallback. Основной метод теперь — multi-scale
@@ -178,9 +180,9 @@ class Auction(GameAction):
                 return False
             resize_done = True
 
-            # 6. Кликнуть вкладку "Продажа"
+            # 6. Кликнуть вкладку "Продажа" + дождаться прогрузки
             await self._click(*BTN_TAB_SELL)
-            await asyncio.sleep(3)
+            await asyncio.sleep(T_TAB_SELL_OPEN)  # 3 сек — на лагающих ПК вкладка открывается
             log("Аук: вкладка Продажа открыта", self.window_id)
 
             # 7. Цикл по предметам
@@ -221,6 +223,7 @@ class Auction(GameAction):
             # 8a. Закрыть аук/меню ДО resize_back (кнопка 1218,46 в окне 1280x720,
             #     после resize_back окно станет 400x225 и клик не попадёт).
             #     Используем SetForegroundWindow для надёжности.
+            #     Ждём T_AUCTION_CLOSE после клика — аук должен успеть закрыться.
             try:
                 import ctypes
                 hwnd_val = self.window_info[self.window_id].get("ID")
@@ -230,15 +233,45 @@ class Auction(GameAction):
                     except Exception:
                         pass
                 await self._click(*BTN_CLOSE)
-                await asyncio.sleep(2)
+                await asyncio.sleep(T_AUCTION_CLOSE)  # 2.5 сек — аук закрывается
                 log("Аук: аук закрыт", self.window_id)
             except Exception as e:
                 log(f"Аук: не удалось закрыть аук: {e}", self.window_id, level="WARNING")
 
-            # 8b. Вернуть размер окна (если увеличивали)
+            # 8b. Вернуть размер окна (если увеличивали) + ПРОВЕРИТЬ что стало 400x225
+            #     Если resize_back не сработал — принудительно SetWindowPos ещё раз.
             if resize_done:
                 try:
                     await self._resize_back()
+                    # Проверка что окно реально 400x225, а не зависло 1280x720
+                    import pygetwindow as gw
+                    try:
+                        win = gw.getWindowsWithTitle(
+                            self.window_info[self.window_id]["Title"])[0]
+                        if win.width != REST_W or win.height != REST_H:
+                            log(f"Аук: окно НЕ вернулось в {REST_W}x{REST_H}, "
+                                f"сейчас {win.width}x{win.height} — принудительный "
+                                f"SetWindowPos",
+                                self.window_id, level="WARNING")
+                            # Принудительно SetWindowPos ещё раз
+                            import ctypes
+                            SWP_NOZORDER = 0x0004
+                            SWP_NOACTIVATE = 0x0010
+                            saved = getattr(self.profile, '_au_saved_pos', None)
+                            if saved:
+                                left, top, w, h = saved
+                            else:
+                                left, top, w, h = win.left, win.top, REST_W, REST_H
+                            ctypes.windll.user32.SetWindowPos(
+                                ctypes.c_void_p(int(win._hWnd)), None,
+                                left, top, REST_W, REST_H,
+                                SWP_NOZORDER | SWP_NOACTIVATE,
+                            )
+                            await asyncio.sleep(0.5)
+                            log(f"Аук: принудительный resize завершён", self.window_id)
+                    except Exception as e:
+                        log(f"Аук: проверка размера не удалась: {e}",
+                            self.window_id, level="WARNING")
                 except Exception as e:
                     log(f"Аук: не удалось вернуть размер окна: {e}",
                         self.window_id, level="WARNING")
