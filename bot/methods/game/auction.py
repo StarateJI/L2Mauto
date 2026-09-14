@@ -68,11 +68,10 @@ INV_SCAN = (915, 173, 345, 424)
 ZONE_PRICE = (868, 306, 80, 20)
 
 # Зона статуса первого лота: где написано «Продаётся» или «3д23ч» (таймер).
-# Эту зону бот OCR-ит ПЕРЕД кликом «Отмена». Если находит «Продаётся» —
-# пропускает лот (return 'empty' → reregister() break) — защита от вечного цикла.
-# Координаты примерные: левее кнопки «Отмена» (867,238), на той же строке.
-# Если не сработает — пользователь подкорректирует.
-STATUS_ZONE = (720, 220, 140, 30)
+# По VLM-анализу скриншота: текст статуса находится СТРОГО НАД кнопкой
+# «Отмена» (867,238), выровнен по центру. Зона: ширина 140px, центр X=867.
+# Y = 190..225 (строго над кнопкой, на той же строке что и название лота).
+STATUS_ZONE = (797, 190, 140, 35)
 
 # Зона проверки окна подтверждения (оранжевая кнопка ОК)
 OK_CHECK_ZONE = (700, 480, 60, 60)
@@ -543,17 +542,29 @@ class Auction(GameAction):
             debug_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                       "au_status.png")
             cv2.imwrite(debug_path, img)
-            # OCR без увеличения — текст в этой зоне и так крупный
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            # OCR с увеличением x2 — текст мелкий, надо подсунуть крупнее
+            h, w = img.shape[:2]
+            big = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_CUBIC)
+            gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
+            # PSM 7 = одна строка текста
             text = pytesseract.image_to_string(
                 gray,
                 lang="rus+eng",
                 config="--psm 7",
             ).strip().lower()
             log(f"Аук: статус лота OCR: '{text}'", self.window_id, level="DEBUG")
+
+            # Если OCR словил «отме» (кусок «Отмена») — зона сползла на кнопку,
+            # проверка ненадёжна. Логируем, но не блокируем.
+            if "отме" in text and "прода" not in text:
+                log("Аук: OCR словил 'Отмена' — зона сползла на кнопку, "
+                    "проверка статуса пропущена (не блокирую)",
+                    self.window_id, level="WARNING")
+                return False
+
             # Проверяем ключевые слова (с буквой ё и без)
             return ("продаёт" in text or "продает" in text or "продаю" in text
-                    or "продажа" in text)
+                    or "продажа" in text or "продаё" in text or "продае" in text)
         except Exception as e:
             log(f"Аук: OCR статуса не удался: {e}", self.window_id, level="WARNING")
             return False  # Если OCR упал — не блокируем, продолжаем
