@@ -35,7 +35,11 @@ _sct = mss.MSS()
 
 # ── Рабочий размер окна ───────────────────────────────────────────────────
 WORK_W, WORK_H = 1280, 720
-WORK_POS = (100, 100)
+# Две позиции для пачки из 2 окон на мониторе 2560×1440:
+#   окно 1: (0, 0) — левая половина экрана
+#   окно 2: (1280, 0) — правая половина
+# _resize_work сам выберет свободную позицию через findAllWindows().
+WORK_POSITIONS = [(0, 0), (1280, 0)]
 REST_W, REST_H = 400, 225  # вернуть обратно после работы
 
 # ── UI кнопки (window-relative, 1280x720) ─────────────────────────────────
@@ -252,9 +256,10 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     async def _resize_work(self) -> bool:
         """
-        Установить окно в 1280x720 на (100,100). До 3 попыток.
-        Сохраняет исходную позицию ДО resize, чтобы потом вернуть обратно.
-        Принудительно использует SetWindowPos если resizeTo не влез в экран.
+        Установить окно в 1280x720. До 3 попыток.
+        Авто-выбор позиции: проверяет какие из WORK_POSITIONS уже заняты
+        другим окном L2M (через findAllWindows) и занимает первую свободную.
+        Это позволяет двум ботам в пачке работать рядом, не перекрывая друг друга.
         """
         import ctypes
         import pygetwindow as gw
@@ -275,10 +280,44 @@ class Auction(GameAction):
                 log(f"Аук: не удалось сохранить позицию: {e}",
                     self.window_id, level="WARNING")
 
+        # ── Авто-выбор позиции ─────────────────────────────────────────────
+        # Найти свободную из WORK_POSITIONS: проверяем все окна L2M, если
+        # какое-то уже стоит 1280x720 в позиции — считаем её занятой.
+        chosen_pos: Optional[Tuple[int, int]] = None
+        try:
+            from bot.utils import findAllWindows as _findAll
+            all_wins = _findAll()
+            occupied: set = set()
+            my_title = self.window_info[self.window_id]["Title"]
+            for nick, info in all_wins.items():
+                # Свой заголовок не считаем занятым
+                if info.get("Title") == my_title:
+                    continue
+                w, h = info.get("Width", 0), info.get("Height", 0)
+                if w == WORK_W and h == WORK_H:
+                    pos = (info.get("Position", (0, 0))[0],
+                           info.get("Position", (0, 0))[1])
+                    occupied.add(pos)
+            for pos in WORK_POSITIONS:
+                if pos not in occupied:
+                    chosen_pos = pos
+                    break
+            if chosen_pos is None:
+                # Все заняты — берём первую (перекрытие, но не падаем)
+                chosen_pos = WORK_POSITIONS[0]
+                log(f"Аук: все рабочие позиции заняты, использую {chosen_pos} "
+                    f"(возможно перекрытие)", self.window_id, level="WARNING")
+            else:
+                log(f"Аук: выбрал позицию {chosen_pos} (занято: {occupied})",
+                    self.window_id)
+        except Exception as e:
+            log(f"Аук: не удалось проверить занятость позиций: {e}, "
+                f"использую {WORK_POSITIONS[0]}", self.window_id, level="WARNING")
+            chosen_pos = WORK_POSITIONS[0]
+
         for attempt in range(1, 4):
             try:
                 win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
-                # restore + unmaximize (иначе resizeTo игнорируется на maximized окнах)
                 try:
                     win.restore()
                 except Exception:
@@ -290,33 +329,30 @@ class Auction(GameAction):
                         pass
                 await asyncio.sleep(0.3)
 
-                # Сначала moveTo в рабочую позицию, потом resize — так окно
-                # точно окажется в видимой части экрана и не будет обрезано.
-                win.moveTo(*WORK_POS)
+                win.moveTo(*chosen_pos)
                 await asyncio.sleep(0.2)
                 win.resizeTo(WORK_W, WORK_H)
                 await asyncio.sleep(0.5)
 
-                # Принудительно через SetWindowPos — надёжнее, фиксит случаи
-                # когда resizeTo оставил окно в обрезанном состоянии.
                 hwnd = win._hWnd
                 SetWindowPos(
                     ctypes.c_void_p(int(hwnd)), None,
-                    WORK_POS[0], WORK_POS[1], WORK_W, WORK_H,
+                    chosen_pos[0], chosen_pos[1], WORK_W, WORK_H,
                     SWP_NOZORDER | SWP_NOACTIVATE,
                 )
                 await asyncio.sleep(0.4)
 
-                # Проверка
                 win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
                 if win.width == WORK_W and win.height == WORK_H \
-                        and win.left == WORK_POS[0] and win.top == WORK_POS[1]:
+                        and win.left == chosen_pos[0] and win.top == chosen_pos[1]:
                     log(f"Аук: окно в рабочем размере (попытка {attempt}) "
                         f"на ({win.left},{win.top})", self.window_id)
                     self.window_info[self.window_id]["Position"] = (win.left, win.top)
                     self.window_info[self.window_id]["Width"] = win.width
                     self.window_info[self.window_id]["Height"] = win.height
                     self.window_info[self.window_id]["Size"] = f"{win.width}x{win.height}"
+                    # Сохранить выбранную позицию для лога в _resize_back
+                    self.profile._au_chosen_pos = chosen_pos
                     return True
                 else:
                     log(f"Аук: resize не совпал: got ({win.left},{win.top}) "

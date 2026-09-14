@@ -356,7 +356,15 @@ class NedoGui(QWidget):
             self.start_windows(profile_class, windows)
             return
 
-        last_value = self.cache.get(profile_name, 1)
+        # Для Auction дефолт пачки = 2 (два окна 1280x720 рядом на 2560x1440)
+        # Окна сами расставятся через _resize_work: одно на (0,0), другое на (1280,0)
+        if profile_name == "Auction":
+            default_batch = 2
+        else:
+            default_batch = 1
+
+        # Берём из cache если пользователь уже выбирал, иначе дефолт
+        last_value = self.cache.get(profile_name, default_batch)
         num, ok = QInputDialog.getInt(
             self, "Батчер для ВСЕХ",
             f"Сколько окон запускать одновременно для {profile_name}?",
