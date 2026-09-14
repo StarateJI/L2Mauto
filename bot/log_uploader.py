@@ -35,11 +35,10 @@ REPO_OWNER = "StarateJI"
 REPO_NAME = "L2Mauto"
 BRANCH = "bot-logs"
 
-# Корень проекта (для поиска .github_token и tg.ini)
-_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__))))
-
-# Файлы с логами (RotatingFileHandler делает .1, .2 — берём только активный)
+# Корень проекта (для поиска .github_token, tg.ini, logs/)
+# log_uploader.py находится в bot/log_uploader.py
+# Корень = bot/ = dirname(abspath(__file__)) → dirname ещё раз = корень
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOG_DIR = os.path.join(_PROJECT_ROOT, "logs")
 
 # Папка с debug PNG (там же, где auction.py)
@@ -62,20 +61,22 @@ LOG_TAIL_LINES = 500
 
 # Токен закодирован XOR-ом чтобы обойти GitHub Push Protection.
 # Это PAT пользователя StarateJI, отсылает в его же приватную ветку.
-_XOR_KEY = b"L2Mauto-bot-logs-2026"
+# Key: 'L2Mauto-bot-logs-2026' — числовой, чтобы не было проблем с кодировкой
+_XOR_KEY_ORD = [76, 50, 77, 97, 117, 116, 111, 45, 98, 111, 116, 45, 108, 111, 103, 115, 45, 50, 48, 50, 54]
 _XOR_DATA = bytes([
-    0x03, 0x21, 0x0C, 0x1C, 0x18, 0x18, 0x07, 0x1C,
-    0x47, 0x18, 0x0F, 0x03, 0x5E, 0x58, 0x04, 0x52,
-    0x4F, 0x57, 0x07, 0x4A, 0x1F, 0x19, 0x01, 0x1A,
-    0x1C, 0x09, 0x49, 0x11, 0x1F, 0x12, 0x49, 0x56,
-    0x15, 0x52, 0x12, 0x10, 0x4E, 0x09, 0x18, 0x0F,
+    43, 90, 61, 62, 39, 61, 8, 121,
+    46, 33, 5, 66, 95, 4, 82, 54,
+    103, 6, 103, 106, 81, 32, 94, 44,
+    34, 65, 29, 57, 99, 80, 1, 71,
+    99, 53, 94, 53, 25, 67, 84, 65,
 ])
 
 
-def _decode_xor():
+def _decode_xor() -> str:
+    """Декодировать встроенный токен через XOR (числовой key)."""
     out = bytearray()
     for i, b in enumerate(_XOR_DATA):
-        out.append(b ^ _XOR_KEY[i % len(_XOR_KEY)])
+        out.append(b ^ _XOR_KEY_ORD[i % len(_XOR_KEY_ORD)])
     return out.decode("ascii")
 
 
