@@ -1,0 +1,201 @@
+=== Log tail 2026-09-15T01:33:28.172287 | last 200 lines ===
+Traceback (most recent call last):
+  File "C:\Users\PC\Desktop\L2Mauto\bot\updater.py", line 326, in update
+    r = requests.get(REPO_ZIP, timeout=30)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 724, in send
+    history = [resp for resp in gen]
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 724, in <listcomp>
+    history = [resp for resp in gen]
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 265, in resolve_redirects
+    resp = self.send(
+           ^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 746, in send
+    r.content
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 902, in content
+    self._content = b"".join(self.iter_content(CONTENT_CHUNK_SIZE)) or b""
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 826, in generate
+    raise ConnectionError(e)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+
+2026-09-15 01:26:24,803 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-15 01:26:25,266 - INFO - [global] Пропущен профиль Dungeon.dungeon
+2026-09-15 01:26:25,281 - INFO - [global] Пропущен профиль PvpProfile.pvp
+2026-09-15 01:27:16,963 - INFO - [global] Сделан бэкап текущей версии в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.3.4.zip
+2026-09-15 01:27:50,743 - INFO - [global] Обнова бахнула: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+2026-09-15 01:27:50,761 - ERROR - [global] Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 779, in _error_catcher
+    yield
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 904, in _raw_read
+    data = self._fp_read(amt, read1=read1) if not fp_closed else b""
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 887, in _fp_read
+    return self._fp.read(amt) if amt is not None else self._fp.read()
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\http\client.py", line 466, in read
+    s = self.fp.read(amt)
+        ^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\socket.py", line 706, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\ssl.py", line 1311, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\ssl.py", line 1167, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 820, in generate
+    yield from self.raw.stream(chunk_size, decode_content=True)
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 1091, in stream
+    data = self.read(amt=amt, decode_content=decode_content)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 980, in read
+    data = self._raw_read(amt)
+           ^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 903, in _raw_read
+    with self._error_catcher():
+  File "C:\Program Files\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 784, in _error_catcher
+    raise ReadTimeoutError(self._pool, None, "Read timed out.") from e  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\Desktop\L2Mauto\bot\updater.py", line 326, in update
+    r = requests.get(REPO_ZIP, timeout=30)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 724, in send
+    history = [resp for resp in gen]
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 724, in <listcomp>
+    history = [resp for resp in gen]
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 265, in resolve_redirects
+    resp = self.send(
+           ^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 746, in send
+    r.content
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 902, in content
+    self._content = b"".join(self.iter_content(CONTENT_CHUNK_SIZE)) or b""
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 826, in generate
+    raise ConnectionError(e)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+
+2026-09-15 01:29:27,110 - INFO - [global] Сделан бэкап текущей версии в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.3.4.zip
+2026-09-15 01:29:34,453 - INFO - [global] Создан apply_update.bat: C:\Users\PC\Desktop\L2Mauto\apply_update.bat
+2026-09-15 01:29:34,453 - INFO - [global] Накатил обнпату через apply_update.bat, закрываюсь для рестарта...
+2026-09-15 01:29:39,979 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-15 01:29:46,162 - INFO - [global] Запустил чекер обнов
+2026-09-15 01:29:46,162 - INFO - [global] Проверяю обновы...
+2026-09-15 01:29:48,186 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-15 01:29:49,257 - DEBUG - [global] needs_update: raw → 5.4.0
+2026-09-15 01:29:50,644 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-15 01:29:50,671 - DEBUG - [global] needs_update: raw → 5.4.0
+2026-09-15 01:29:52,077 - DEBUG - [global] needs_update: jsdelivr → 5.2.2
+2026-09-15 01:29:52,077 - DEBUG - [global] needs_update: лучший источник raw → 5.4.0 (из 2)
+2026-09-15 01:29:52,092 - INFO - [global] needs_update: local=(5, 4, 0) remote=(5, 4, 0) -> has_update=False
+2026-09-15 01:29:52,288 - INFO - [global] Установлена последняя версия бота | 5.4.0
+2026-09-15 01:29:52,356 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-15 01:29:53,695 - DEBUG - [global] needs_update: jsdelivr → 5.2.2
+2026-09-15 01:29:53,695 - DEBUG - [global] needs_update: лучший источник raw → 5.4.0 (из 2)
+2026-09-15 01:29:53,700 - INFO - [global] needs_update: local=(5, 4, 0) remote=(5, 4, 0) -> has_update=False
+2026-09-15 01:30:18,396 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-15 01:30:18,402 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-15 01:30:18,402 - DEBUG - [global] log_uploader: STEP 1 SKIP (no C:\Users\PC\Desktop\L2Mauto\logs\periodic.log)
+2026-09-15 01:30:18,403 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-15 01:30:19,647 - DEBUG - [global] _api_put: GET runs/20260915_013018_fail_global.log -> 404
+2026-09-15 01:30:21,592 - DEBUG - [global] _api_put: PUT runs/20260915_013018_fail_global.log -> 201 (14905 bytes)
+2026-09-15 01:30:21,597 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_013018_fail_global.log
+2026-09-15 01:30:21,597 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-15 01:30:21,597 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-15 01:30:22,330 - INFO - [global] Проверяю обновы...
+2026-09-15 01:30:23,361 - DEBUG - [global] needs_update: raw → 5.4.0
+2026-09-15 01:30:24,422 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-15 01:30:25,470 - DEBUG - [global] needs_update: jsdelivr → 5.2.2
+2026-09-15 01:30:25,471 - DEBUG - [global] needs_update: лучший источник raw → 5.4.0 (из 2)
+2026-09-15 01:30:25,475 - INFO - [global] needs_update: local=(5, 4, 0) remote=(5, 4, 0) -> has_update=False
+2026-09-15 01:30:25,476 - INFO - [global] Установлена последняя версия бота | 5.4.0
+2026-09-15 01:30:55,499 - INFO - [global] Проверяю обновы...
+2026-09-15 01:30:56,550 - DEBUG - [global] needs_update: raw → 5.4.0
+2026-09-15 01:30:57,540 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-15 01:30:58,554 - DEBUG - [global] needs_update: jsdelivr → 5.2.2
+2026-09-15 01:30:58,554 - DEBUG - [global] needs_update: лучший источник raw → 5.4.0 (из 2)
+2026-09-15 01:30:58,558 - INFO - [global] needs_update: local=(5, 4, 0) remote=(5, 4, 0) -> has_update=False
+2026-09-15 01:30:58,559 - INFO - [global] Установлена последняя версия бота | 5.4.0
+2026-09-15 01:31:21,653 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-15 01:31:21,658 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-15 01:31:21,659 - DEBUG - [global] log_uploader: STEP 1 SKIP (no C:\Users\PC\Desktop\L2Mauto\logs\periodic.log)
+2026-09-15 01:31:21,659 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-15 01:31:22,892 - DEBUG - [global] _api_put: GET runs/20260915_013121_fail_global.log -> 404
+2026-09-15 01:31:24,852 - DEBUG - [global] _api_put: PUT runs/20260915_013121_fail_global.log -> 201 (14871 bytes)
+2026-09-15 01:31:24,856 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_013121_fail_global.log
+2026-09-15 01:31:24,856 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-15 01:31:24,856 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-15 01:31:28,599 - INFO - [global] Проверяю обновы...
+2026-09-15 01:31:29,597 - DEBUG - [global] needs_update: raw → 5.4.0
+2026-09-15 01:31:30,609 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-15 01:31:31,626 - DEBUG - [global] needs_update: jsdelivr → 5.2.2
+2026-09-15 01:31:31,626 - DEBUG - [global] needs_update: лучший источник raw → 5.4.0 (из 2)
+2026-09-15 01:31:31,632 - INFO - [global] needs_update: local=(5, 4, 0) remote=(5, 4, 0) -> has_update=False
+2026-09-15 01:31:31,633 - INFO - [global] Установлена последняя версия бота | 5.4.0
+2026-09-15 01:32:01,665 - INFO - [global] Проверяю обновы...
+2026-09-15 01:32:02,862 - DEBUG - [global] needs_update: raw → 5.4.0
+2026-09-15 01:32:03,884 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-15 01:32:04,920 - DEBUG - [global] needs_update: jsdelivr → 5.2.2
+2026-09-15 01:32:04,920 - DEBUG - [global] needs_update: лучший источник raw → 5.4.0 (из 2)
+2026-09-15 01:32:04,924 - INFO - [global] needs_update: local=(5, 4, 0) remote=(5, 4, 0) -> has_update=False
+2026-09-15 01:32:04,925 - INFO - [global] Установлена последняя версия бота | 5.4.0
+2026-09-15 01:32:24,916 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-15 01:32:24,919 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-15 01:32:24,919 - DEBUG - [global] log_uploader: STEP 1 SKIP (no C:\Users\PC\Desktop\L2Mauto\logs\periodic.log)
+2026-09-15 01:32:24,919 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-15 01:32:26,125 - DEBUG - [global] _api_put: GET runs/20260915_013224_fail_global.log -> 404
+2026-09-15 01:32:28,109 - DEBUG - [global] _api_put: PUT runs/20260915_013224_fail_global.log -> 201 (15796 bytes)
+2026-09-15 01:32:28,113 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_013224_fail_global.log
+2026-09-15 01:32:28,114 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-15 01:32:28,114 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-15 01:32:34,954 - INFO - [global] Проверяю обновы...
+2026-09-15 01:32:36,006 - DEBUG - [global] needs_update: raw → 5.4.0
+2026-09-15 01:32:37,031 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-15 01:32:38,079 - DEBUG - [global] needs_update: jsdelivr → 5.2.2
+2026-09-15 01:32:38,079 - DEBUG - [global] needs_update: лучший источник raw → 5.4.0 (из 2)
+2026-09-15 01:32:38,084 - INFO - [global] needs_update: local=(5, 4, 0) remote=(5, 4, 0) -> has_update=False
+2026-09-15 01:32:38,085 - INFO - [global] Установлена последняя версия бота | 5.4.0
+2026-09-15 01:33:08,105 - INFO - [global] Проверяю обновы...
+2026-09-15 01:33:09,139 - DEBUG - [global] needs_update: raw → 5.4.0
+2026-09-15 01:33:10,162 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-15 01:33:11,169 - DEBUG - [global] needs_update: jsdelivr → 5.2.2
+2026-09-15 01:33:11,169 - DEBUG - [global] needs_update: лучший источник raw → 5.4.0 (из 2)
+2026-09-15 01:33:11,173 - INFO - [global] needs_update: local=(5, 4, 0) remote=(5, 4, 0) -> has_update=False
+2026-09-15 01:33:11,175 - INFO - [global] Установлена последняя версия бота | 5.4.0
+2026-09-15 01:33:28,162 - INFO - [global] LogUploader: запускаю upload_run_logs...
