@@ -117,12 +117,127 @@ def ini(local_path, new_path):
     with open(local_path, "w", encoding="utf-8") as f:
         config_local.write(f)
 
+def _write_apply_bat(root_dir: str, temp_dir: str) -> str:
+    """
+    Создаёт apply_update.bat — он копирует файлы ПОСЛЕ закрытия текущего
+    процесса Python. Решает 'Permission denied' на залоченных .pyd файлах.
+
+    Возвращает путь к созданному bat-файлу.
+    """
+    python_exe = sys.executable
+    if not os.path.exists(python_exe):
+        python_exe = shutil.which("python") or shutil.which("python3") or "python"
+
+    main_py = os.path.join(root_dir, "main.py")
+
+    bat_path = os.path.join(root_dir, "apply_update.bat")
+
+    # ── Шаг 1: Собираем список .pyd/.dll (нужны special handling) ────────
+    pyd_lines = []
+    for root, dirs, files in os.walk(temp_dir):
+        for f in files:
+            if f.endswith(".pyd") or f.endswith(".dll"):
+                src = os.path.join(root, f).replace("/", "\\")
+                rel = os.path.relpath(os.path.join(root, f), temp_dir).replace("/", "\\")
+                dst = os.path.join(root_dir, rel).replace("/", "\\")
+                old = (dst + ".old").replace("/", "\\")
+                pyd_lines.append(f"""
+REM Handle {rel}
+if exist "{old}" del /f /q "{old}"
+if exist "{dst}" rename "{dst}" "{os.path.basename(dst)}.old"
+if not exist "{os.path.dirname(dst)}" mkdir "{os.path.dirname(dst)}"
+copy /y "{src}" "{dst}" >nul
+""")
+
+    # ── Шаг 2: Обрабатываем settings/ (НЕ перезаписываем существующие) ───
+    settings_lines = []
+    for root, dirs, files in os.walk(temp_dir):
+        parts = os.path.relpath(root, temp_dir).split(os.sep)
+        if "settings" not in parts:
+            continue
+        for f in files:
+            src = os.path.join(root, f).replace("/", "\\")
+            rel = os.path.relpath(os.path.join(root, f), temp_dir).replace("/", "\\")
+            dst = os.path.join(root_dir, rel).replace("/", "\\")
+            settings_lines.append(f"""
+REM settings: copy only if missing
+if not exist "{dst}" (
+    if not exist "{os.path.dirname(dst)}" mkdir "{os.path.dirname(dst)}"
+    copy /y "{src}" "{dst}" >nul
+)
+""")
+
+    # ── Шаг 3: Обрабатываем .ini (merge) ────────────────────────────────
+    # .ini merge делаем заранее в Python, а в bat просто копируем результат
+    for root, dirs, files in os.walk(temp_dir):
+        for f in files:
+            if f.endswith(".ini"):
+                src = os.path.join(root, f)
+                rel = os.path.relpath(src, temp_dir)
+                dst = os.path.join(root_dir, rel)
+                if os.path.exists(dst):
+                    # merge — добавляем недостающие секции/ключи
+                    try:
+                        ini(dst, src)
+                        # После merge в dst — не нужно копировать из temp
+                        # Удаляем из temp чтобы xcopy не перезаписал
+                        os.remove(src)
+                    except Exception as e:
+                        log(f"ini merge failed for {rel}: {e}")
+
+    # ── Шаг 4: Собираем bat ──────────────────────────────────────────────
+    pyd_block = "".join(pyd_lines)
+    settings_block = "".join(settings_lines)
+
+    bat_content = f"""@echo off
+chcp 65001 >nul
+title Applying L2Mauto update...
+
+REM ============================================================
+REM L2Mauto updater — apply_update.bat
+REM Копирует файлы ПОСЛЕ закрытия Python (чтобы .pyd разлочился)
+REM ============================================================
+
+REM Ждём пока старый Python полностью закроется
+timeout /t 3 /nobreak >nul
+
+REM ---- Шаг 1: .pyd/.dll (rename old -> copy new) ----
+{pyd_block}
+
+REM ---- Шаг 2: settings/ (copy only if missing) ----
+{settings_block}
+
+REM ---- Шаг 3: остальные файлы (overwrite) ----
+xcopy "{temp_dir}\\*" "{root_dir}\\" /e /y /i >nul
+
+REM ---- Шаг 4: cleanup ----
+rd /s /q "{temp_dir}" 2>nul
+
+REM Установим зависимости если есть requirements.txt
+if exist "{root_dir}\\requirements.txt" (
+    "{python_exe}" -m pip install -r "{root_dir}\\requirements.txt"
+)
+
+REM Удаляем себя
+del "%~f0" 2>nul
+
+REM ---- Шаг 5: запускаем бота ----
+cd /d "{root_dir}"
+start "" "{python_exe}" "{main_py}"
+exit
+"""
+    with open(bat_path, "w", encoding="cp1251", errors="replace") as f:
+        f.write(bat_content)
+    log(f"Создан apply_update.bat: {bat_path}")
+    return bat_path
+
+
 def update():
     try:
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         backup()
 
-        r = requests.get(REPO_ZIP, timeout=10)
+        r = requests.get(REPO_ZIP, timeout=30)
         r.raise_for_status()
         z = zipfile.ZipFile(io.BytesIO(r.content))
 
@@ -132,83 +247,57 @@ def update():
         os.makedirs(temp_dir, exist_ok=True)
 
         z.extractall(temp_dir)
-        main_repo = os.path.join(temp_dir, "L2Mauto-main")  # MY REPO: имя папки из zip
+        main_repo = os.path.join(temp_dir, "L2Mauto-main")
 
+        # Раскрываем содержимое L2Mauto-main/ в корень temp_dir
+        if os.path.isdir(main_repo):
+            for item in os.listdir(main_repo):
+                src = os.path.join(main_repo, item)
+                dst = os.path.join(temp_dir, item)
+                if os.path.exists(dst):
+                    if os.path.isdir(dst):
+                        shutil.rmtree(dst)
+                    else:
+                        os.remove(dst)
+                shutil.move(src, dst)
+            try:
+                os.rmdir(main_repo)
+            except OSError:
+                pass  # папка может быть непустой если были скрытые файлы
+
+        # Очистка старых .pyd.old / .dll.old от прошлых обнов
         _cleanup(root_dir)
 
-        for root, dirs, files in os.walk(main_repo):
-            for file in files:
-                rel_path = os.path.relpath(os.path.join(root, file), main_repo)
-                dst_path = os.path.join(root_dir, rel_path)
+        # ── НОВЫЙ ПОДХОД: apply_update.bat ──────────────────────────────
+        # Старый подход падал с 'Permission denied' — Windows блокирует
+        # залоченный .pyd (его использует текущий процесс Python).
+        # Теперь: создаём bat, который:
+        #   1. ждёт 3 сек (пока текущий Python закроется)
+        #   2. копирует .pyd (уже разлочен)
+        #   3. копирует остальные файлы (с учётом settings/, .ini merge)
+        #   4. перезапускает main.py
+        # А текущий процесс сразу делает sys.exit(0) после запуска bat.
+        bat_path = _write_apply_bat(root_dir, temp_dir)
 
-                if file.endswith(".pyd") or file.endswith(".dll"):
-                    if os.path.exists(dst_path):
-                        old_path = dst_path + ".old"
-                        try:
-                            if os.path.exists(old_path):
-                                os.remove(old_path)
-                        except Exception:
-                            pass
-                        try:
-                            os.rename(dst_path, old_path)
-                        except Exception as e:
-                            log(f"pyd rename failed for {rel_path}: {e}")
-                            continue
-                    os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-                    try:
-                        shutil.copy2(os.path.join(root, file), dst_path)
-                    except Exception as e:
-                        log(f"pyd copy failed for {rel_path}: {e}")
-                    continue
+        log("Накатил обнпату через apply_update.bat, закрываюсь для рестарта...")
 
-                if "settings" in rel_path.split(os.sep):
-                    if not os.path.exists(dst_path):
-                        os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-                        shutil.copy2(os.path.join(root, file), dst_path)
-                    continue
+        clean = os.environ.copy()
+        for bad in ("PYTHONHOME", "PYTHONEXECUTABLE", "PYTHONPATH"):
+            clean.pop(bad, None)
 
-                if dst_path.endswith(".ini") and os.path.exists(dst_path):
-                    ini(dst_path, os.path.join(root, file))
-                    continue
+        # detached process — bat живёт независимо от Python
+        subprocess.Popen(
+            ["cmd.exe", "/c", bat_path],
+            cwd=root_dir,
+            env=clean,
+            creationflags=subprocess.CREATE_NEW_CONSOLE if os.name == "nt" else 0,
+        )
 
-                # MY RULE: delays.py и misc.py НЕ мержим — ставим из обновы как есть.
-                # Наши тайминги = часть бота, одинаковые на всех ПК. (merge-ветки удалены)
-
-                os.makedirs(os.path.dirname(dst_path), exist_ok=True)
-                shutil.copy2(os.path.join(root, file), dst_path)
-
-        shutil.rmtree(temp_dir)
-
-        req_path = os.path.join(root_dir, "requirements.txt")
-        if os.path.exists(req_path):
-            install_req(req_path)
-
-        log("Накатил обнову, рестарчусь")
-
-        try:
-            ppath = sys.executable
-
-            if not os.path.exists(ppath):
-                ppath = shutil.which("python") or shutil.which(
-                    "python3") or ppath
-
-            log(f"Рестарт через: {ppath}")
-            root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-            bot = os.path.join(root, "main.py")
-
-            clean = os.environ.copy()
-            # ebat costyl
-            for bad in ("PYTHONHOME", "PYTHONEXECUTABLE", "PYTHONPATH"):
-                clean.pop(bad, None)
-
-            subprocess.Popen([ppath, bot] + sys.argv[1:], env=clean)
-            print("NE TROGAI NI4EGO")
-            sys.exit(0)
-
-        except Exception as e:
-            log(f"Не смог рестартануть: {e}")
-            sys.exit(1)
+        print("NE TROGAI NI4EGO - APPLYING UPDATE")
+        sys.exit(0)
 
     except Exception as e:
         log(f"Обнова бахнула: {e}")
+        import traceback
+        log(traceback.format_exc(), level="ERROR")
         sys.exit(1)
