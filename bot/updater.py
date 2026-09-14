@@ -22,12 +22,45 @@ def get_my_version():
 def parse_version(v: str):
     return tuple(map(int, v.split(".")))
 
+def _load_github_token() -> str | None:
+    """Прочитать GitHub-токен из tg.ini [github] token (для приватных репо/более высокого rate limit)."""
+    try:
+        ini_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tg.ini")
+        cp = configparser.ConfigParser()
+        cp.read(ini_path, encoding="utf-8")
+        if cp.has_section("github") and cp.has_option("github", "token"):
+            tok = cp.get("github", "token").strip()
+            return tok or None
+    except Exception:
+        pass
+    return None
+
 def needs_update() -> bool:
+    """
+    Сравнить локальную версию с remote. Возвращает True если есть обнова.
+    Использует токен из tg.ini [github] если есть (приватные репо, rate limit).
+    Логирует ошибки — больше не молчит в except.
+    """
     try:
         local = parse_version(get_my_version())
-        remote = parse_version(requests.get(REPO_VERSION, timeout=2).text.strip())
-        return remote > local
-    except Exception:
+        headers = {}
+        tok = _load_github_token()
+        if tok:
+            headers["Authorization"] = f"token {tok}"
+        # timeout 10 сек (было 2 — отваливалось на slow DNS)
+        r = requests.get(REPO_VERSION, timeout=10, headers=headers)
+        r.raise_for_status()
+        remote_text = r.text.strip()
+        if not remote_text:
+            log("needs_update: пустой ответ от GitHub", level="WARNING")
+            return False
+        remote = parse_version(remote_text)
+        has_update = remote > local
+        log(f"needs_update: local={local} remote={remote} -> has_update={has_update}")
+        return has_update
+    except Exception as e:
+        log(f"needs_update: ошибка проверки обновы: {type(e).__name__}: {e}",
+            level="WARNING")
         return False
 
 def backup():
