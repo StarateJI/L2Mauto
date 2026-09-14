@@ -3,6 +3,14 @@ warnings.filterwarnings("ignore", message=".*TypedStorage is deprecated.*")
 
 import sys
 import os
+
+# ── ФИКС memory allocation of 14745616 bytes failed ──────────────────────
+# 14745616 = 2560×1440×4 (один фрейм фуллскрина). Это Rust-захват capture_rs.pyd
+# пытается выделить буфер. На одном ПК падает. Отключаем Rust, оставляем mss.
+# mss медленнее на ~50ms но не падает. В аукционе уже используется mss напрямую.
+# Ставим ДО любого импорта bot.* чтобы RustBackend не инициализировался.
+os.environ.setdefault("L2M_CAPTURE_BACKEND", "mss")
+
 from pathlib import Path
 import asyncio
 import PyQt5

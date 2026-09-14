@@ -83,11 +83,11 @@ CALC_DIGITS = {
 INV_CX = 1187      # X центра свайпа (над ячейками, не цепляет предметы)
 SWIPE_STEP = 130   # px за один свайп (клетка ~68px, 130 = ~2 строки)
 
-# ── Тайминги (секунды) ───────────────────────────────────────────────────
-T_CONFIRM_SETTLE = 3.0    # анимация окна подтверждения
-T_ITEM_WINDOW = 4.0       # прогрузка окна цены после клика по предмету
-T_PAGE_LOAD = 3.0         # пауза после свайпа страницы
-LONG_PAUSE = 4.0          # после выставления лота
+# ── Тайминги (секунды) — ускорены в 5.0.7 ────────────────────────────────
+T_CONFIRM_SETTLE = 1.5    # было 3.0 — анимация окна подтверждения
+T_ITEM_WINDOW = 2.5       # было 4.0 — прогрузка окна цены после клика по предмету
+T_PAGE_LOAD = 1.5         # было 3.0 — пауза после свайпа страницы
+LONG_PAUSE = 2.5          # было 4.0 — после выставления лота
 
 # ── SIFT ──────────────────────────────────────────────────────────────────
 # SIFT оставлен как fallback. Основной метод теперь — multi-scale
@@ -475,7 +475,7 @@ class Auction(GameAction):
         for attempt in range(1, 3):
             await self._click(*BTN_CANCEL_LOT)
             log(f"Аук: клик Отмена лота ({attempt}/2) {BTN_CANCEL_LOT}", self.window_id)
-            await asyncio.sleep(2)
+            await asyncio.sleep(1.5)
             if self._confirm_window_visible():
                 log("Аук: окно подтверждения появилось", self.window_id)
                 return True
@@ -717,6 +717,9 @@ class Auction(GameAction):
         sample_gray = cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY)
 
         # 2. Клик "Отмена лота"
+        # TODO: добавить проверку статуса «Продаётся» ДО клика.
+        # Жду от пользователя координаты зоны статуса (где написано
+        # «Продаётся» или «3д23ч»). Пока — снимаю без проверки.
         if not await self._cancel_lot():
             return 'error'
 
