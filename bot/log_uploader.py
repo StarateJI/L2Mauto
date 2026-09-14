@@ -8,10 +8,13 @@ bot/log_uploader.py — авто-загрузка логов и debug PNG в Git
   3. Коммитит их в ветку `bot-logs` репозитория через GitHub Contents API
   4. Я (ИИ) могу фетчить эту ветку и читать логи + смотреть PNG через VLM
 
-Токен читается из tg.ini (секция [github], ключ token).
-Это безопасно: tg.ini уже в .gitignore.
+Токен читается из 3 источников (по приоритету):
+  1. Env var L2M_GITHUB_TOKEN (если задана)
+  2. Файл .github_token в корне проекта (просто текст, одна строка)
+  3. tg.ini секция [github] ключ token
+  4. Если нигде нет — логи НЕ уходят, бот пишет WARNING в лог
 
-Если токена нет или запрос упал — бот молча работает дальше (это диагностика,
+Если запрос упал — бот молча работает дальше (это диагностика,
 она не должна ломать основной поток).
 """
 from __future__ import annotations
@@ -32,15 +35,16 @@ REPO_OWNER = "StarateJI"
 REPO_NAME = "L2Mauto"
 BRANCH = "bot-logs"
 
+# Корень проекта (для поиска .github_token и tg.ini)
+_PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(
+    os.path.abspath(__file__))))
+
 # Файлы с логами (RotatingFileHandler делает .1, .2 — берём только активный)
-LOG_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
-    os.path.abspath(__file__)))), "logs")
+LOG_DIR = os.path.join(_PROJECT_ROOT, "logs")
 
 # Папка с debug PNG (там же, где auction.py)
-DEBUG_DIR = os.path.dirname(os.path.abspath(__file__)) \
-    if os.path.basename(os.path.dirname(os.path.abspath(__file__))) == "methods" \
-    else os.path.join(os.path.dirname(os.path.abspath(__file__)), "methods", "game")
-DEBUG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "methods", "game")
+DEBUG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         "..", "methods", "game")
 DEBUG_DIR = os.path.abspath(DEBUG_DIR)
 
 # Префиксы файлов, которые считаем debug'ом аукциона
@@ -50,32 +54,46 @@ DEBUG_PREFIXES = ("au_", "cmp_")
 LOG_TAIL_LINES = 500
 
 # ──────────────────────────────────────────────────────────────────────────
-_token_cache: Optional[str] = None
-
-
+# НЕ кешируем токен — перечитываем каждый раз (пользователь мог добавить).
 def _load_token() -> Optional[str]:
-    """Прочитать GitHub-токен из tg.ini -> [github] -> token."""
-    global _token_cache
-    if _token_cache is not None:
-        return _token_cache
+    """
+    Вернуть GitHub-токен. Источники (по приоритету):
+      1. Env var L2M_GITHUB_TOKEN
+      2. Файл {PROJECT_ROOT}/.github_token (одна строка с токеном)
+      3. tg.ini [github] token
+      4. None если нигде нет
+    """
+    # 1. Env var
+    env_tok = os.environ.get("L2M_GITHUB_TOKEN", "").strip()
+    if env_tok and len(env_tok) > 10:
+        return env_tok
 
-    ini_path = os.path.join(
-        os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
-        "tg.ini"
-    )
-    if not os.path.exists(ini_path):
-        return None
-
-    try:
-        cp = configparser.ConfigParser()
-        cp.read(ini_path, encoding="utf-8")
-        if cp.has_section("github") and cp.has_option("github", "token"):
-            tok = cp.get("github", "token").strip()
-            if tok:
-                _token_cache = tok
+    # 2. .github_token файл
+    token_file = os.path.join(_PROJECT_ROOT, ".github_token")
+    if os.path.exists(token_file):
+        try:
+            with open(token_file, "r", encoding="utf-8") as f:
+                tok = f.read().strip()
+            if tok and len(tok) > 10:
                 return tok
-    except Exception as e:
-        log(f"log_uploader: не смог прочитать tg.ini: {e}", level="WARNING")
+        except Exception as e:
+            log(f"log_uploader: не смог прочитать .github_token: {e}",
+                level="WARNING")
+
+    # 3. tg.ini
+    ini_path = os.path.join(_PROJECT_ROOT, "tg.ini")
+    if os.path.exists(ini_path):
+        try:
+            cp = configparser.ConfigParser()
+            cp.read(ini_path, encoding="utf-8")
+            if cp.has_section("github") and cp.has_option("github", "token"):
+                tok = cp.get("github", "token").strip()
+                if tok and len(tok) > 10:
+                    return tok
+        except Exception as e:
+            log(f"log_uploader: не смог прочитать tg.ini: {e}", level="WARNING")
+
+    # 4. Нет токена нигде
     return None
 
 
@@ -128,7 +146,6 @@ def _tail_file(path: str, n_lines: int) -> bytes:
         with open(path, "r", encoding="utf-8", errors="ignore") as f:
             lines = f.readlines()
         tail = "".join(lines[-n_lines:])
-        # Добавим шапку с временем запуска
         header = f"=== Log tail {datetime.now().isoformat()} | last {n_lines} lines ===\n"
         return (header + tail).encode("utf-8")
     except Exception as e:
@@ -151,8 +168,7 @@ def _list_debug_pngs() -> list:
                 size = os.path.getsize(full)
             except Exception:
                 continue
-            # GitHub Contents API лимит 100 МБ, но мы не хотим гигантов
-            if size > 5_000_000:  # 5 МБ
+            if size > 5_000_000:  # 5 МБ лимит
                 continue
             out.append((name, full, size))
     except Exception as e:
@@ -163,11 +179,12 @@ def _list_debug_pngs() -> list:
 def upload_run_logs(window_id: str, made: int = 0, error: Optional[str] = None) -> None:
     """
     Главная точка входа. Вызывается из auction.reregister() в finally блоке
-    (всегда — даже если бот упал).
+    (всегда — даже если бот упал или пользователь стопнул).
 
     Загружает:
       - logs/{window_id}.log (последние 500 строк) -> bot-logs/runs/{ts}_{ok|fail|crash}_{win}.log
       - bot/methods/game/au_*.png + cmp_*.png -> bot-logs/debug/{win}/{name}
+      - logs/log.log (последние 200 строк) -> bot-logs/runs/{ts}_{tag}_global.log
 
     Каждый прогон создаёт новый файл с timestamp в имени — старые остаются
     для истории (можно сравнивать «было/стало»).
@@ -176,11 +193,17 @@ def upload_run_logs(window_id: str, made: int = 0, error: Optional[str] = None) 
       window_id: ник окна (например 'Zakamsk')
       made: сколько лотов переставлено (0 = провал)
       error: строка с описанием ошибки если бот упал (None если штатно)
+
+    Токен ищется в 3 местах: env L2M_GITHUB_TOKEN, файл .github_token,
+    tg.ini [github] token. Если нигде нет — логи не уходят, бот пишет WARNING.
+    Любые ошибки логирует, но НЕ валит бота.
     """
     token = _load_token()
     if not token:
-        log("log_uploader: нет GitHub-токена в tg.ini [github] token — пропускаю",
-            window_id, level="DEBUG")
+        log("log_uploader: нет GitHub-токена (.github_token / tg.ini [github] / "
+            "env L2M_GITHUB_TOKEN) — пропускаю. Создай файл .github_token с "
+            "токеном в корне проекта.",
+            window_id, level="WARNING")
         return
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -191,11 +214,10 @@ def upload_run_logs(window_id: str, made: int = 0, error: Optional[str] = None) 
     else:
         summary_tag = "fail"
 
-    # ── 1. Лог ─────────────────────────────────────────────────────────────
+    # ── 1. Лог окна ────────────────────────────────────────────────────────
     log_path = os.path.join(LOG_DIR, f"{window_id}.log")
     if os.path.exists(log_path):
         content = _tail_file(log_path, LOG_TAIL_LINES)
-        # Добавим шапку с ошибкой если бот упал
         if error:
             header = (f"=== CRASH REPORT {datetime.now().isoformat()} ===\n"
                       f"=== Window: {window_id} ===\n"
@@ -210,7 +232,7 @@ def upload_run_logs(window_id: str, made: int = 0, error: Optional[str] = None) 
         if url:
             log(f"log_uploader: лог загружен: {url}", window_id, level="DEBUG")
         else:
-            log(f"log_uploader: лог НЕ загружен (см. ошибки выше)",
+            log(f"log_uploader: лог НЕ загружен (см. ошибки выше в логе)",
                 window_id, level="WARNING")
     else:
         log(f"log_uploader: файл лога не найден: {log_path}",
@@ -219,19 +241,35 @@ def upload_run_logs(window_id: str, made: int = 0, error: Optional[str] = None) 
     # ── 2. Debug PNG ───────────────────────────────────────────────────────
     pngs = _list_debug_pngs()
     if pngs:
+        uploaded = 0
         for name, full, size in pngs:
             try:
                 with open(full, "rb") as f:
                     data = f.read()
                 repo_path = f"debug/{window_id}/{name}"
                 commit_msg = f"debug: {window_id} {name} @ {ts}"
-                _api_put(repo_path, data, token, commit_msg)
+                result = _api_put(repo_path, data, token, commit_msg)
+                if result:
+                    uploaded += 1
             except Exception as e:
                 log(f"log_uploader: PNG {name} не загружен: {e}",
                     window_id, level="WARNING")
-        log(f"log_uploader: загружено PNG: {len(pngs)}", window_id, level="DEBUG")
+        log(f"log_uploader: загружено PNG: {uploaded}/{len(pngs)}",
+            window_id, level="DEBUG")
     else:
         log("log_uploader: debug PNG не найдены", window_id, level="DEBUG")
+
+    # ── 3. Глобальный лог (последние 200 строк) — для контекста ─────────────
+    global_log_path = os.path.join(LOG_DIR, "log.log")
+    if os.path.exists(global_log_path):
+        try:
+            content = _tail_file(global_log_path, 200)
+            repo_path = f"runs/{ts}_{summary_tag}_global.log"
+            commit_msg = f"log: global {summary_tag} @ {ts}"
+            _api_put(repo_path, content, token, commit_msg)
+        except Exception as e:
+            log(f"log_uploader: global log не загружен: {e}",
+                window_id, level="DEBUG")
 
 
 def list_recent_runs(limit: int = 10) -> list:
