@@ -42,8 +42,10 @@ _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 LOG_DIR = os.path.join(_PROJECT_ROOT, "logs")
 
 # Папка с debug PNG (там же, где auction.py)
+# auction.py находится в bot/methods/game/auction.py
+# __file__ = bot/log_uploader.py → dirname = bot/ → join "methods", "game" = bot/methods/game
 DEBUG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                         "..", "methods", "game")
+                         "methods", "game")
 DEBUG_DIR = os.path.abspath(DEBUG_DIR)
 
 # Префиксы файлов, которые считаем debug'ом аукциона
