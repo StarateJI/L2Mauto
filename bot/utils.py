@@ -59,10 +59,14 @@ def getProfiles(profiles_path="profiles"):
             try:
                 spec.loader.exec_module(module)
             except ImportError as e:
-                log(f"Пропущен профиль {prof_name}")
+                import traceback
+                log(f"Пропущен профиль {prof_name}: ImportError: {e}\n"
+                    f"{traceback.format_exc()}", level="ERROR")
                 continue
             except Exception as e:
-                log(f"Пропущен профиль {prof_name}")
+                import traceback
+                log(f"Пропущен профиль {prof_name}: {type(e).__name__}: {e}\n"
+                    f"{traceback.format_exc()}", level="ERROR")
                 continue
 
             for at in dir(module):

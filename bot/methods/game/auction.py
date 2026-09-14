@@ -19,16 +19,37 @@ from typing import Optional, Tuple
 import cv2
 import mss
 import numpy as np
-import pytesseract
+
+# pytesseract — ленивый импорт (не падает при import auction.py если
+# Tesseract OCR бинарник не установлен на ПК). Импортируется только
+# при вызове _ocr_price() или _is_status_prodano().
+# Это чинит баг "пропадают кнопки профилей на других ПК" — если
+# pytesseract не установлен, auction.py всё равно импортируется,
+# и кнопки Dungeon/PvP/Auction появляются в GUI.
+_pytesseract = None
+
+def _get_pytesseract():
+    """Ленивый импорт pytesseract. Возвращает модуль или None."""
+    global _pytesseract
+    if _pytesseract is not None:
+        return _pytesseract
+    try:
+        import pytesseract as _pt
+        _pt.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+        _pytesseract = _pt
+        return _pytesseract
+    except ImportError:
+        log("Аук: pytesseract не установлен — OCR цен/статуса недоступен",
+            level="WARNING")
+        return None
+    except Exception as e:
+        log(f"Аук: pytesseract init failed: {e}", level="WARNING")
+        return None
 
 from bot.clogger import log
 from bot.delays import DELAY_WAIT_AUCTION
 from bot.methods.base import parseCBT
 from bot.methods.game._base import GameAction
-
-
-# ── Tesseract (ставится отдельно, дефолтный путь UB Mannheim) ─────────────
-pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 # ── mss singleton: открывается ОДИН раз, не на каждый захват ───────────────
 _sct = mss.MSS()
@@ -750,7 +771,12 @@ class Auction(GameAction):
             h, w = img.shape[:2]
             big = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_CUBIC)
             gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
-            text = pytesseract.image_to_string(
+            pt = _get_pytesseract()
+            if pt is None:
+                log("Аук: pytesseract недоступен — НЕ ТРОГАЮ лот (безопасно)",
+                    self.window_id, level="WARNING")
+                return True
+            text = pt.image_to_string(
                 gray, lang="rus+eng", config="--psm 7",
             ).strip().lower()
             log(f"Аук: статус лота OCR: '{text}'", self.window_id, level="DEBUG")
@@ -849,7 +875,10 @@ class Auction(GameAction):
             _, thr = cv2.threshold(inv, 128, 255, cv2.THRESH_BINARY)
 
             # PSM 7 = одна строка, whitelist = цифры
-            text = pytesseract.image_to_string(
+            pt = _get_pytesseract()
+            if pt is None:
+                return None
+            text = pt.image_to_string(
                 thr,
                 config="--psm 7 -c tessedit_char_whitelist=0123456789",
             ).strip()
