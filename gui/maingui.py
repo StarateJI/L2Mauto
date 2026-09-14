@@ -79,6 +79,7 @@ class LogUploader(QThread):
         self._running = True
 
     def run(self):
+        import traceback
         log("Запустил периодический загрузчик логов")
         # Первая загрузка через 30 сек (даём боту время стартовать)
         for _ in range(30):
@@ -88,10 +89,12 @@ class LogUploader(QThread):
         while self._running:
             try:
                 from bot.log_uploader import upload_run_logs
-                # Загружаем от имени 'periodic' — без window_id, только global log
+                log("LogUploader: запускаю upload_run_logs...")
                 upload_run_logs("periodic", made=-1, error=None)
+                log("LogUploader: upload_run_logs завершён")
             except Exception as e:
-                log(f"LogUploader: ошибка: {e}", level="WARNING")
+                tb = traceback.format_exc()
+                log(f"LogUploader: ошибка: {e}\n{tb}", level="ERROR")
             # Раз в 60 секунд
             for _ in range(60):
                 if not self._running:
