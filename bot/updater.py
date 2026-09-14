@@ -6,6 +6,7 @@ import shutil
 import configparser
 import sys
 import subprocess
+import time
 from bot.clogger import log
 
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
@@ -40,15 +41,19 @@ def needs_update() -> bool:
     Сравнить локальную версию с remote. Возвращает True если есть обнова.
     Использует токен из tg.ini [github] если есть (приватные репо, rate limit).
     Логирует ошибки — больше не молчит в except.
+
+    Анти-кеш: добавляем ?ts=<timestamp> к URL — GitHub CDN отдаёт свежую версию.
     """
     try:
         local = parse_version(get_my_version())
-        headers = {}
-        tok = _load_github_token()
-        if tok:
-            headers["Authorization"] = f"token {tok}"
-        # timeout 10 сек (было 2 — отваливалось на slow DNS)
-        r = requests.get(REPO_VERSION, timeout=10, headers=headers)
+        headers = {
+            "Authorization": f"token {_load_github_token()}" if _load_github_token() else "",
+            "Cache-Control": "no-cache, no-store, max-age=0",
+            "Pragma": "no-cache",
+        }
+        # Cache-buster — уникальный URL для каждого запроса
+        cache_buster = f"?ts={int(time.time())}"
+        r = requests.get(REPO_VERSION + cache_buster, timeout=10, headers=headers)
         r.raise_for_status()
         remote_text = r.text.strip()
         if not remote_text:
@@ -198,32 +203,45 @@ REM L2Mauto updater — apply_update.bat
 REM Копирует файлы ПОСЛЕ закрытия Python (чтобы .pyd разлочился)
 REM ============================================================
 
-REM Ждём пока старый Python полностью закроется
+REM Логируем всё в apply_update.log для диагностики
+echo === apply_update.bat started at %DATE% %TIME% === > "{root_dir}\\apply_update.log"
+echo Working dir: {root_dir} >> "{root_dir}\\apply_update.log"
+echo Python: {python_exe} >> "{root_dir}\\apply_update.log"
+
+REM Ждём пока старый Python полностью закроется (отпустит .pyd)
+echo Waiting 3 sec for Python to exit... >> "{root_dir}\\apply_update.log"
 timeout /t 3 /nobreak >nul
 
 REM ---- Шаг 1: .pyd/.dll (rename old -> copy new) ----
+echo Step 1: copy .pyd/.dll files... >> "{root_dir}\\apply_update.log"
 {pyd_block}
 
 REM ---- Шаг 2: settings/ (copy only if missing) ----
+echo Step 2: copy settings (if missing)... >> "{root_dir}\\apply_update.log"
 {settings_block}
 
 REM ---- Шаг 3: остальные файлы (overwrite) ----
-xcopy "{temp_dir}\\*" "{root_dir}\\" /e /y /i >nul
+echo Step 3: xcopy other files... >> "{root_dir}\\apply_update.log"
+xcopy "{temp_dir}\\*" "{root_dir}\\" /e /y /i >> "{root_dir}\\apply_update.log" 2>&1
 
 REM ---- Шаг 4: cleanup ----
+echo Step 4: cleanup temp_dir... >> "{root_dir}\\apply_update.log"
 rd /s /q "{temp_dir}" 2>nul
 
-REM Установим зависимости если есть requirements.txt
-if exist "{root_dir}\\requirements.txt" (
-    "{python_exe}" -m pip install -r "{root_dir}\\requirements.txt"
-)
-
-REM Удаляем себя
-del "%~f0" 2>nul
-
-REM ---- Шаг 5: запускаем бота ----
+REM ---- Шаг 5: запускаем бота СРАЗУ (не ждём pip install) ----
+echo Step 5: starting bot... >> "{root_dir}\\apply_update.log"
 cd /d "{root_dir}"
 start "" "{python_exe}" "{main_py}"
+echo Bot started at %DATE% %TIME% >> "{root_dir}\\apply_update.log"
+
+REM ---- Шаг 6: pip install в фоне (НЕ блокирует запуск бота) ----
+echo Step 6: pip install (background)... >> "{root_dir}\\apply_update.log"
+if exist "{root_dir}\\requirements.txt" (
+    start "" /b "{python_exe}" -m pip install -r "{root_dir}\\requirements.txt"
+)
+
+REM Удаляем себя (apply_update.bat)
+del "%~f0" 2>nul
 exit
 """
     with open(bat_path, "w", encoding="cp1251", errors="replace") as f:
