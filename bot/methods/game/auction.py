@@ -87,8 +87,11 @@ T_PAGE_LOAD = 3.0         # пауза после свайпа страницы
 LONG_PAUSE = 4.0          # после выставления лота
 
 # ── SIFT ──────────────────────────────────────────────────────────────────
-SIFT_THRESHOLD = 4     # мин. размер кластера (был 8 — не дотягивал, реальных ~5)
-CLUSTER_RADIUS = 30    # px, радиус кластера (иконка маленькая ~68x68)
+# Порог 3 (был 4 — не дотягивал: в логе было 2 совп. при пороге 4).
+# Радиус 50 (был 30 — реальные совпадения на сжатой иконке ~68×68
+# разлетаются на 30-50px друг от друга).
+SIFT_THRESHOLD = 3
+CLUSTER_RADIUS = 50
 LOWE_RATIO = 0.75      # Lowe ratio test для BFMatcher
 
 # ── Лимиты ────────────────────────────────────────────────────────────────
@@ -357,24 +360,39 @@ class Auction(GameAction):
         await self.mouse.click(self.window_info, x, y)
 
     async def _swipe_inventory(self, direction: str) -> None:
-        """Свайп инвентаря. direction='down' — следующая страница, 'up' — назад."""
-        win = self.window_info[self.window_id]
-        wx, wy = win["Position"]
-        cx = INV_CX  # window-relative X центра свайпа
+        """
+        Свайп инвентаря. direction='down' — следующая страница, 'up' — назад.
 
-        # Y границы инвентаря (верх и низ зоны сканирования)
+        Генерирует ~20 промежуточных точек между start и end — swipe
+        получается медленным и плавным. Старый вариант с 2 точками делал
+        FLICK (быстрый резкий жест) и эластичный скролл Lineage2M улетал
+        далеко за пределы («сразу в самый низ»).
+        """
+        cx = INV_CX
         top_y = INV_SCAN[1] + 20
         bot_y = INV_SCAN[1] + INV_SCAN[3] - 20
 
         if direction == "down":
+            # контент едет ВВЕРХ (видим нижние предметы): мышь снизу вверх
             start_y, end_y = bot_y, top_y
         else:  # 'up'
+            # контент едет ВНИЗ (видим верхние предметы): мышь сверху вниз
             start_y, end_y = top_y, bot_y
 
-        # Точки пути: прямой свайп, без кривой (no_curve=True)
-        points = [(cx, start_y), (cx, end_y)]
-        await self.mouse.swipe(self.window_info, points, delay_points=0.015, no_curve=True)
-        log(f"Аук: свайп инвентаря {direction}", self.window_id)
+        # Плавный свайп: 20 шагов по 0.04с = ~0.8с на весь свайп.
+        # Никакого flick — игра скроллит ровно на SWIPE_STEP px.
+        N_STEPS = 20
+        STEP_DELAY = 0.04
+        points = []
+        for i in range(N_STEPS + 1):
+            t = i / N_STEPS
+            y = int(start_y + (end_y - start_y) * t)
+            points.append((cx, y))
+
+        await self.mouse.swipe(self.window_info, points,
+                               delay_points=STEP_DELAY, no_curve=True)
+        log(f"Аук: свайп инвентаря {direction} ({len(points)} точек, "
+            f"{start_y}->{end_y})", self.window_id)
         await asyncio.sleep(T_PAGE_LOAD)
 
     # ──────────────────────────────────────────────────────────────────────
@@ -529,19 +547,27 @@ class Auction(GameAction):
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
         Искать предмет в инвентаре по SIFT. До SCAN_PAGES страниц.
+        Сначала сканирует текущую страницу, потом свайпает — НЕ наоборот.
         Возвращает (x, y) центра предмета или None.
         """
+        best_overall: Tuple[int, int, int] = (0, 0, 0)  # (page, cluster, total) для лога
+
         for page in range(1, SCAN_PAGES + 1):
+            # СНАЧАЛА сканируем текущую страницу
+            log(f"Аук: сканирую страницу {page}/{SCAN_PAGES} (свайпов до этого: {page-1})",
+                self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             center, cluster_size, total = self._sift_match(sample_gray, gray)
-            log(f"Аук: SIFT стр {page}: {total} совп., кластер {cluster_size}",
-                self.window_id)
+            log(f"Аук: SIFT стр {page}: {total} совп., кластер {cluster_size} "
+                f"(порог {SIFT_THRESHOLD})", self.window_id)
+
+            if cluster_size > best_overall[2]:
+                best_overall = (page, cluster_size, total)
 
             if center is not None and cluster_size >= SIFT_THRESHOLD:
-                # center — window-relative координаты внутри INV_SCAN
-                # надо прибавить смещение INV_SCAN к x,y
+                # center — координаты внутри INV_SCAN. Прибавляем смещение INV_SCAN.
                 cx = int(center[0]) + INV_SCAN[0]
                 cy = int(center[1]) + INV_SCAN[1]
                 log(f"Аук: предмет найден на странице {page} в ({cx},{cy})",
@@ -551,13 +577,16 @@ class Auction(GameAction):
                     await self._swipe_inventory('up')
                 return (cx, cy)
 
+            # Не нашли на этой странице — свайпаем к следующей
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # Не нашли — вернуться в начало
+        # Не нашли нигде — вернуться в начало
         for _ in range(SCAN_PAGES - 1):
             await self._swipe_inventory('up')
-        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц",
+        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц. "
+            f"Лучший результат: стр {best_overall[0]}, кластер {best_overall[1]}, "
+            f"всего совпадений {best_overall[2]} (порог был {SIFT_THRESHOLD})",
             self.window_id, level="ERROR")
         return None
 
