@@ -573,43 +573,80 @@ class Auction(GameAction):
     def _is_status_prodano(self) -> bool:
         """
         Проверить, что первый лот в статусе «Продаётся» (только что переставлен).
-        Возвращает True если OCR нашёл слово «продаётся»/«продается» в STATUS_ZONE.
-        Такие лоты НЕ трогаем — иначе вечный цикл: снять → поставить → «Продаётся» → снять...
+        Возвращает True если ХОТЯ БЫ ОДИН из 3 методов нашёл признак «Продаётся»:
+          1. OCR: слово «продаётся»/«продается»/«прода» в зоне статуса
+          2. Цвет: много зелёных пикселей (статус «Продаётся» рисуется зелёным)
+          3. Цвет: мало тёмных пикселей (статус-таймер обычно серый, не яркий)
+
+        Такие лоты НЕ трогаем — иначе вечный цикл.
+        Если хотя бы один метод сработал → возвращаем True (лучше пропустить).
         """
         try:
             img = self._grab(STATUS_ZONE)
-            # Сохраняем для отладки — пользователь увидит попадает ли зона в текст
+            # Сохраняем для отладки
             import cv2
             import os
             debug_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                       "au_status.png")
             cv2.imwrite(debug_path, img)
-            # OCR с увеличением x2 — текст мелкий, надо подсунуть крупнее
+
+            # ── Метод 1: OCR ────────────────────────────────────────────────
             h, w = img.shape[:2]
             big = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_CUBIC)
             gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
-            # PSM 7 = одна строка текста
             text = pytesseract.image_to_string(
-                gray,
-                lang="rus+eng",
-                config="--psm 7",
+                gray, lang="rus+eng", config="--psm 7",
             ).strip().lower()
             log(f"Аук: статус лота OCR: '{text}'", self.window_id, level="DEBUG")
 
-            # Если OCR словил «отме» (кусок «Отмена») — зона сползла на кнопку,
-            # проверка ненадёжна. Логируем, но не блокируем.
-            if "отме" in text and "прода" not in text:
-                log("Аук: OCR словил 'Отмена' — зона сползла на кнопку, "
-                    "проверка статуса пропущена (не блокирую)",
-                    self.window_id, level="WARNING")
-                return False
+            ocr_match = any(kw in text for kw in
+                            ("продаёт", "продает", "продаю", "продажа",
+                             "продаё", "продае", "прода", "продаетс"))
+            if ocr_match:
+                log("Аук: статус = «Продаётся» (OCR method)", self.window_id)
+                return True
 
-            # Проверяем ключевые слова (с буквой ё и без)
-            return ("продаёт" in text or "продает" in text or "продаю" in text
-                    or "продажа" in text or "продаё" in text or "продае" in text)
+            # ── Метод 2: зелёные пиксели (статус обычно зелёный) ─────────────
+            # В Lineage2M статус «Продаётся» часто подсвечен зелёным.
+            # HSV: H в [40..90] (зелёный), S>50, V>100
+            try:
+                hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+                # Зелёный: H 40..90, S 50..255, V 100..255
+                lower = np.array([40, 50, 100])
+                upper = np.array([90, 255, 255])
+                green_mask = cv2.inRange(hsv, lower, upper)
+                green_count = int(np.sum(green_mask > 0))
+                total_pixels = img.shape[0] * img.shape[1]
+                green_ratio = green_count / max(total_pixels, 1)
+                log(f"Аук: статус зелёных пикселей: {green_count} "
+                    f"({green_ratio:.2%})", self.window_id, level="DEBUG")
+                # Если >5% пикселей зелёные — почти наверняка «Продаётся»
+                if green_ratio > 0.05:
+                    log(f"Аук: статус = «Продаётся» (зелёный метод, "
+                        f"{green_ratio:.1%})", self.window_id)
+                    return True
+            except Exception as e:
+                log(f"Аук: green check failed: {e}", self.window_id, level="DEBUG")
+
+            # ── Метод 3: OCR вернул что-то похожее на таймер? ───────────────
+            # Если OCR вернул цифры + «д.»/«ч.» — это таймер, не «Продаётся».
+            # Если OCR вернул текст похожий на «прод...» — это «Продаётся».
+            # Если OCR вернул пустоту — не уверены, НЕ трогаем (безопасно).
+            if not text or text in ("", "=", "-", "]"):
+                # OCR пустой — возможно текста вообще нет, или зона смещена.
+                # Безопасно: пропустить (пусть пользователь проверит руками).
+                log(f"Аук: OCR вернул пусто ('{text}') — НЕ ТРОГАЮ лот "
+                    f"(безопасно, вдруг это «Продаётся»)", self.window_id,
+                    level="WARNING")
+                return True
+
+            # ── Все 3 метода: не «Продаётся», есть таймер/текст ─────────────
+            return False
+
         except Exception as e:
-            log(f"Аук: OCR статуса не удался: {e}", self.window_id, level="WARNING")
-            return False  # Если OCR упал — не блокируем, продолжаем
+            log(f"Аук: OCR статуса не удался: {e} — НЕ ТРОГАЮ (безопасно)",
+                self.window_id, level="WARNING")
+            return True  # Если проверка упала — лучше не трогать
 
     async def _cancel_lot(self) -> bool:
         """Клик 'Отмена лота' и ожидание окна подтверждения."""
