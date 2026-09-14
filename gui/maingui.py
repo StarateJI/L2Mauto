@@ -447,10 +447,11 @@ class NedoGui(QWidget):
                 if not stalled:
                     wait_f()
                     return
-                # Было 120 попыток × 500ms = 60 сек.
-                # Теперь 10 попыток × 500ms = 5 сек — если окно не завелось за 5 сек, пропускаем
-                if attempts >= 10:
-                    log(f"Пачка {batch_idx + 1}: не завелись {stalled} за 5 сек, пропускаю дальше", level="WARNING")
+                # 60 попыток × 500ms = 30 сек.
+                # Было 5 сек (10 попыток) — слишком мало, окна не успевают стартовать.
+                # Было 60 сек (120 попыток) — слишком долго, пользователь устал ждать.
+                if attempts >= 60:
+                    log(f"Пачка {batch_idx + 1}: не завелись {stalled} за 30 сек, пропускаю дальше", level="WARNING")
                     wait_f()
                     return
                 QTimer.singleShot(500, lambda: wait_c(attempts + 1))
