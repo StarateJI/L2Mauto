@@ -48,8 +48,11 @@ BTN_CLOSE = (1218, 46)           # крестик (закрыть аук/мен�
 BTN_FIELD_PRICE = (576, 547)     # центр поля "Общая цена" — кликнуть перед вводом
 
 # ── Зоны захвата (window-relative) ────────────────────────────────────────
-# Зона лота целиком, БЕЗ обрезки. SIFT сам разрулит фон вокруг иконки.
-LOT_SEARCH = (170, 277, 83, 77)
+# ⚠️ ФИКС: раньше было (170, 277, 83, 77) — это захватывало ТЕКСТ названия
+# шлема, а не саму иконку! SIFT искал текст в инвентаре — 0 совпадений.
+# Из переписки: LOT_ICON был (80, 195, 67, 61). Расширил до 80×70 с запасом.
+# Это та самая иконка, что в инвентаре и в окне подтверждения — одинаковая.
+LOT_SEARCH = (75, 190, 80, 70)
 
 # Зона инвентаря — расширенная (+40px вниз), чтобы предмет в самом низу
 # последней страницы тоже попадал в кадр.
@@ -87,12 +90,18 @@ T_PAGE_LOAD = 3.0         # пауза после свайпа страницы
 LONG_PAUSE = 4.0          # после выставления лота
 
 # ── SIFT ──────────────────────────────────────────────────────────────────
-# Порог 3 (был 4 — не дотягивал: в логе было 2 совп. при пороге 4).
-# Радиус 50 (был 30 — реальные совпадения на сжатой иконке ~68×68
-# разлетаются на 30-50px друг от друга).
+# SIFT оставлен как fallback. Основной метод теперь — multi-scale
+# template matching в _find_item (надёжнее для одинаковых иконок).
 SIFT_THRESHOLD = 3
 CLUSTER_RADIUS = 50
 LOWE_RATIO = 0.75      # Lowe ratio test для BFMatcher
+
+# ── Template Matching ─────────────────────────────────────────────────────
+# Порог корреляции (0..1). 0.75 = высокая уверенность. Если предмет на странице
+# есть — matchTemplate даст >0.9. Если нет — <0.4. Нет серой зоны.
+TM_THRESHOLD = 0.75
+# Масштабы для multi-scale (иконка в инвентаре может быть чуть другого размера)
+TM_SCALES = [0.85, 0.92, 1.0, 1.08, 1.15]
 
 # ── Лимиты ────────────────────────────────────────────────────────────────
 SCAN_PAGES = 5          # страниц инвентаря (предмет падает в КОНЕЦ)
@@ -110,86 +119,131 @@ class Auction(GameAction):
         """
         Снять все лоты с продажи и переставить их с ценой минус 1 от минималки.
         Возвращает True если хотя бы один предмет переставлен.
+
+        ВАЖНО: всё обёрнуто в try/finally — даже если бот упал, в finally
+        вызываются _resize_back (вернуть окно), BTN_CLOSE (закрыть аук),
+        notify_screenshot (слать скрин в TG) и upload_run_logs (логи в GitHub).
         """
         log("Аук: запущен relist (снять+найти+поставить)", self.window_id)
-
-        # 1. Разбудить окно — выйти из энерго
-        try:
-            if await self.profile.energo.is_on():
-                await self.profile.energo.turn_off()
-        except Exception as e:
-            log(f"Аук: энерго-выход не удался: {e}", self.window_id, level="WARNING")
-
-        # 2. Открыть главное меню (CBT-кнопка, маленькое окно 400x225)
-        if not await self.wait_and_click("main_menu_gui", timeout=7):
-            log("Не удалось открыть главное меню В АУКЕ", self.window_id)
-            return False
-
-        # 3. Открыть аукцион (CBT-кнопка)
-        if not await self.wait_and_click("auction_menu", timeout=4):
-            log("Не удалось ткнуть по auction_menu", self.window_id)
-            await self.wait_and_click("main_menu_gui", timeout=3)
-            return False
-
-        await asyncio.sleep(0.3)
-
-        # 4. Дождаться загрузки аукциона (пиксель auction_nalog, до 60с)
-        if not await self._wait_auction_loaded(timeout=60):
-            log("Чет пошло не так, не прогрузился аук =( Пробую выйти в меню", self.window_id)
-            await self.wait_and_click("main_menu_gui", timeout=1)
-            return False
-
-        log("Аук: загрузился", self.window_id)
-
-        # 5. Развернуть окно в рабочий размер 1280x720 на (100,100)
-        if not await self._resize_work():
-            log("Аук: не удалось установить рабочий размер — СТОП", self.window_id, level="ERROR")
-            await self.wait_and_click("main_menu_gui", timeout=1)
-            return False
-
-        # 6. Кликнуть вкладку "Продажа"
-        await self._click(*BTN_TAB_SELL)
-        await asyncio.sleep(3)
-        log("Аук: вкладка Продажа открыта", self.window_id)
-
-        # 7. Цикл по предметам
         made = 0
-        for i in range(1, MAX_ITEMS + 1):
-            log(f"Аук: предмет {i}/{MAX_ITEMS}", self.window_id)
-            result = await self._one_item_cycle()
-            if result == 'ok':
-                made += 1
-                log(f"Аук: предмет {i} переставлен", self.window_id)
-            elif result == 'empty':
-                log(f"Аук: лотов больше нет на странице (предмет {i})", self.window_id)
-                break
-            else:  # 'error'
-                log(f"Аук: ошибка на предмете {i} — стоп, сделано {made}",
-                    self.window_id, level="ERROR")
-                break
+        last_error: Optional[Exception] = None
+        resize_done = False  # чтобы в finally знать — надо ли возвращать размер
 
-        # 8. Вернуть размер окна обратно
-        await self._resize_back()
-
-        # 9. Закрыть аук/меню
-        await self._click(*BTN_CLOSE)
-        await asyncio.sleep(3)
-        log("Аук: аук закрыт", self.window_id)
-
-        # 10. Уведомление в TG
-        if made > 0:
-            self.profile.notify("info", f"Аук: переставлено лотов {made}")
-            log(f"Аук: готово, переставлено {made}", self.window_id)
-        else:
-            self.profile.notify("warning", "Аук: не удалось переставить ни один лот")
-
-        # 11. Загрузить логи + debug PNG в GitHub (ветка bot-logs)
-        #    чтобы я мог самостоятельно читать без copy-paste из чата.
         try:
-            from bot.log_uploader import upload_run_logs
-            upload_run_logs(self.window_id, made=made)
+            # 1. Разбудить окно — выйти из энерго
+            try:
+                if await self.profile.energo.is_on():
+                    await self.profile.energo.turn_off()
+            except Exception as e:
+                log(f"Аук: энерго-выход не удался: {e}", self.window_id, level="WARNING")
+
+            # 2. Открыть главное меню (CBT-кнопка, маленькое окно 400x225)
+            if not await self.wait_and_click("main_menu_gui", timeout=7):
+                log("Не удалось открыть главное меню В АУКЕ", self.window_id)
+                return False
+
+            # 3. Открыть аукцион (CBT-кнопка)
+            if not await self.wait_and_click("auction_menu", timeout=4):
+                log("Не удалось ткнуть по auction_menu", self.window_id)
+                await self.wait_and_click("main_menu_gui", timeout=3)
+                return False
+
+            await asyncio.sleep(0.3)
+
+            # 4. Дождаться загрузки аукциона (пиксель auction_nalog, до 60с)
+            if not await self._wait_auction_loaded(timeout=60):
+                log("Чет пошло не так, не прогрузился аук =( Пробую выйти в меню", self.window_id)
+                await self.wait_and_click("main_menu_gui", timeout=1)
+                return False
+
+            log("Аук: загрузился", self.window_id)
+
+            # 5. Развернуть окно в рабочий размер 1280x720 на (100,100)
+            if not await self._resize_work():
+                log("Аук: не удалось установить рабочий размер — СТОП",
+                    self.window_id, level="ERROR")
+                await self.wait_and_click("main_menu_gui", timeout=1)
+                return False
+            resize_done = True
+
+            # 6. Кликнуть вкладку "Продажа"
+            await self._click(*BTN_TAB_SELL)
+            await asyncio.sleep(3)
+            log("Аук: вкладка Продажа открыта", self.window_id)
+
+            # 7. Цикл по предметам
+            for i in range(1, MAX_ITEMS + 1):
+                log(f"Аук: предмет {i}/{MAX_ITEMS}", self.window_id)
+                result = await self._one_item_cycle()
+                if result == 'ok':
+                    made += 1
+                    log(f"Аук: предмет {i} переставлен", self.window_id)
+                elif result == 'empty':
+                    log(f"Аук: лотов больше нет на странице (предмет {i})", self.window_id)
+                    break
+                else:  # 'error'
+                    log(f"Аук: ошибка на предмете {i} — стоп, сделано {made}",
+                        self.window_id, level="ERROR")
+                    break
+
         except Exception as e:
-            log(f"Аук: log_uploader не сработал: {e}", self.window_id, level="WARNING")
+            last_error = e
+            import traceback
+            tb = traceback.format_exc()
+            log(f"Аук: УПАЛ с исключением: {e}\n{tb}", self.window_id, level="ERROR")
+            made = 0
+
+        finally:
+            # ── ВСЁ что ниже — выполняется ВСЕГДА ──────────────────────────
+            # Даже если бот упал, даже если пользователь стопнул (CancelledError).
+
+            # 8. Вернуть размер окна (если увеличивали)
+            if resize_done:
+                try:
+                    await self._resize_back()
+                except Exception as e:
+                    log(f"Аук: не удалось вернуть размер окна: {e}",
+                        self.window_id, level="WARNING")
+
+            # 9. Закрыть аук/меню (всегда — аук не должен остаться открытым)
+            try:
+                await self._click(*BTN_CLOSE)
+                await asyncio.sleep(3)
+                log("Аук: аук закрыт", self.window_id)
+            except Exception as e:
+                log(f"Аук: не удалось закрыть аук: {e}", self.window_id, level="WARNING")
+
+            # 10. Уведомление в TG
+            try:
+                if made > 0:
+                    self.profile.notify("info", f"Аук: переставлено лотов {made}")
+                    log(f"Аук: готово, переставлено {made}", self.window_id)
+                elif last_error is not None:
+                    self.profile.notify("error",
+                                      f"Аук: УПАЛ с ошибкой: {last_error}")
+                    # Слать скрин в TG — для диагностики
+                    try:
+                        self.profile.notify_screenshot(
+                            f"Аук упал: {last_error}", level="error")
+                    except Exception:
+                        pass
+                else:
+                    self.profile.notify("warning",
+                                      "Аук: не удалось переставить ни один лот")
+            except Exception as e:
+                log(f"Аук: не удалось отправить TG-уведомление: {e}",
+                    self.window_id, level="WARNING")
+
+            # 11. Загрузить логи + debug PNG в GitHub (ветка bot-logs)
+            #     ВСЕГДА — независимо от результата. Если бот упал, тем более
+            #     важно чтобы логи ушли в GitHub.
+            try:
+                from bot.log_uploader import upload_run_logs
+                upload_run_logs(self.window_id, made=made,
+                              error=str(last_error) if last_error else None)
+            except Exception as e:
+                log(f"Аук: log_uploader не сработал: {e}",
+                    self.window_id, level="WARNING")
 
         return made > 0
 
@@ -544,50 +598,99 @@ class Auction(GameAction):
             return None, 0, len(good)
         return (float(best_center[0]), float(best_center[1])), best_cluster_size, len(good)
 
+    def _match_template(self, sample_gray: np.ndarray,
+                        page_gray: np.ndarray) -> Tuple[Optional[Tuple[int, int]], float, float, float]:
+        """
+        Multi-scale template matching. Перебирает масштабы, берёт лучший.
+        Возвращает (center, best_score, scale, angle_or_0).
+        center — координаты в page_gray (не INV_SCAN-relative).
+        score в диапазоне 0..1.
+        """
+        best_score = 0.0
+        best_loc: Optional[Tuple[int, int]] = None
+        best_scale = 1.0
+        h_sample, w_sample = sample_gray.shape[:2]
+
+        for scale in TM_SCALES:
+            new_w = int(w_sample * scale)
+            new_h = int(h_sample * scale)
+            if new_w < 5 or new_h < 5:
+                continue
+            if new_w > page_gray.shape[1] or new_h > page_gray.shape[0]:
+                continue
+            scaled = cv2.resize(sample_gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            try:
+                result = cv2.matchTemplate(page_gray, scaled, cv2.TM_CCOEFF_NORMED)
+            except cv2.error:
+                continue
+            _, max_val, _, max_loc = cv2.minMaxLoc(result)
+            if max_val > best_score:
+                best_score = max_val
+                best_loc = (int(max_loc[0]) + new_w // 2,
+                            int(max_loc[1]) + new_h // 2)
+                best_scale = scale
+
+        if best_loc is None or best_score < TM_THRESHOLD:
+            return None, best_score, best_scale, 0.0
+        return best_loc, best_score, best_scale, 0.0
+
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет в инвентаре по SIFT. До SCAN_PAGES страниц.
-        Сначала сканирует текущую страницу, потом свайпает — НЕ наоборот.
+        Искать предмет в инвентаре. До SCAN_PAGES страниц.
+        Сначала сканирует текущую страницу, потом свайпает.
+        Использует multi-scale template matching (основной) + SIFT (fallback).
         Возвращает (x, y) центра предмета или None.
         """
-        best_overall: Tuple[int, int, int] = (0, 0, 0)  # (page, cluster, total) для лога
+        best_overall: Tuple[int, float, str] = (0, 0.0, "none")  # (page, score, method)
 
         for page in range(1, SCAN_PAGES + 1):
-            # СНАЧАЛА сканируем текущую страницу
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES} (свайпов до этого: {page-1})",
                 self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            center, cluster_size, total = self._sift_match(sample_gray, gray)
-            log(f"Аук: SIFT стр {page}: {total} совп., кластер {cluster_size} "
-                f"(порог {SIFT_THRESHOLD})", self.window_id)
 
-            if cluster_size > best_overall[2]:
-                best_overall = (page, cluster_size, total)
+            # ── Основной метод: multi-scale template matching ──────────────
+            center, score, scale, _ = self._match_template(sample_gray, gray)
+            log(f"Аук: TM стр {page}: score={score:.3f} (порог {TM_THRESHOLD}) "
+                f"scale={scale:.2f}", self.window_id)
 
-            if center is not None and cluster_size >= SIFT_THRESHOLD:
-                # center — координаты внутри INV_SCAN. Прибавляем смещение INV_SCAN.
+            if score > best_overall[1]:
+                best_overall = (page, score, "TM")
+
+            if center is not None and score >= TM_THRESHOLD:
                 cx = int(center[0]) + INV_SCAN[0]
                 cy = int(center[1]) + INV_SCAN[1]
-                log(f"Аук: предмет найден на странице {page} в ({cx},{cy})",
-                    self.window_id)
-                # Вернуться в начало инвентаря (если листали)
+                log(f"Аук: предмет найден (TM) на стр {page} в ({cx},{cy}) "
+                    f"score={score:.3f}", self.window_id)
                 for _ in range(page - 1):
                     await self._swipe_inventory('up')
                 return (cx, cy)
 
-            # Не нашли на этой странице — свайпаем к следующей
+            # ── Fallback: SIFT (если TM не сработал) ────────────────────────
+            sift_center, sift_cluster, sift_total = self._sift_match(sample_gray, gray)
+            log(f"Аук: SIFT стр {page}: {sift_total} совп., кластер {sift_cluster}",
+                self.window_id, level="DEBUG")
+            if score > best_overall[1]:
+                best_overall = (page, score, "SIFT")
+            if sift_center is not None and sift_cluster >= SIFT_THRESHOLD:
+                cx = int(sift_center[0]) + INV_SCAN[0]
+                cy = int(sift_center[1]) + INV_SCAN[1]
+                log(f"Аук: предмет найден (SIFT) на стр {page} в ({cx},{cy}) "
+                    f"кластер={sift_cluster}", self.window_id)
+                for _ in range(page - 1):
+                    await self._swipe_inventory('up')
+                return (cx, cy)
+
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # Не нашли нигде — вернуться в начало
         for _ in range(SCAN_PAGES - 1):
             await self._swipe_inventory('up')
         log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц. "
-            f"Лучший результат: стр {best_overall[0]}, кластер {best_overall[1]}, "
-            f"всего совпадений {best_overall[2]} (порог был {SIFT_THRESHOLD})",
-            self.window_id, level="ERROR")
+            f"Лучший результат: стр {best_overall[0]}, {best_overall[2]} "
+            f"score={best_overall[1]:.3f} (порог TM={TM_THRESHOLD}, "
+            f"SIFT={SIFT_THRESHOLD})", self.window_id, level="ERROR")
         return None
 
     # ──────────────────────────────────────────────────────────────────────

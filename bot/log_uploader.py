@@ -160,16 +160,22 @@ def _list_debug_pngs() -> list:
     return out
 
 
-def upload_run_logs(window_id: str, made: int = 0) -> None:
+def upload_run_logs(window_id: str, made: int = 0, error: Optional[str] = None) -> None:
     """
-    Главная точка входа. Вызывается из auction.reregister() в конце прогона.
+    Главная точка входа. Вызывается из auction.reregister() в finally блоке
+    (всегда — даже если бот упал).
 
     Загружает:
-      - logs/{window_id}.log (последние 500 строк) -> bot-logs/runs/{ts}_{win}.log
-      - bot/methods/game/au_*.png -> bot-logs/debug/{win}/{name}
+      - logs/{window_id}.log (последние 500 строк) -> bot-logs/runs/{ts}_{ok|fail|crash}_{win}.log
+      - bot/methods/game/au_*.png + cmp_*.png -> bot-logs/debug/{win}/{name}
 
     Каждый прогон создаёт новый файл с timestamp в имени — старые остаются
     для истории (можно сравнивать «было/стало»).
+
+    Параметры:
+      window_id: ник окна (например 'Zakamsk')
+      made: сколько лотов переставлено (0 = провал)
+      error: строка с описанием ошибки если бот упал (None если штатно)
     """
     token = _load_token()
     if not token:
@@ -178,14 +184,28 @@ def upload_run_logs(window_id: str, made: int = 0) -> None:
         return
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
-    summary_tag = "ok" if made > 0 else "fail"
+    if error:
+        summary_tag = "crash"
+    elif made > 0:
+        summary_tag = "ok"
+    else:
+        summary_tag = "fail"
 
     # ── 1. Лог ─────────────────────────────────────────────────────────────
     log_path = os.path.join(LOG_DIR, f"{window_id}.log")
     if os.path.exists(log_path):
         content = _tail_file(log_path, LOG_TAIL_LINES)
+        # Добавим шапку с ошибкой если бот упал
+        if error:
+            header = (f"=== CRASH REPORT {datetime.now().isoformat()} ===\n"
+                      f"=== Window: {window_id} ===\n"
+                      f"=== Error: {error} ===\n"
+                      f"=== Made: {made} ===\n\n"
+                      f"=== Log tail {LOG_TAIL_LINES} lines ===\n")
+            content = header.encode("utf-8") + content
         repo_path = f"runs/{ts}_{summary_tag}_{window_id}.log"
-        commit_msg = f"log: {window_id} {summary_tag} made={made} @ {ts}"
+        commit_msg = f"log: {window_id} {summary_tag} made={made}" + \
+                    (f" error={error[:80]}" if error else "") + f" @ {ts}"
         url = _api_put(repo_path, content, token, commit_msg)
         if url:
             log(f"log_uploader: лог загружен: {url}", window_id, level="DEBUG")
@@ -203,7 +223,6 @@ def upload_run_logs(window_id: str, made: int = 0) -> None:
             try:
                 with open(full, "rb") as f:
                     data = f.read()
-                # Путь с окном в имени папки, чтобы я мог группировать
                 repo_path = f"debug/{window_id}/{name}"
                 commit_msg = f"debug: {window_id} {name} @ {ts}"
                 _api_put(repo_path, data, token, commit_msg)
