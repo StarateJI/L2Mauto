@@ -433,7 +433,8 @@ class NedoGui(QWidget):
                 return
             if self.controller.batch_cancelled:
                 return
-            if self._batch_stop:  # жёсткая остановка — выходим из цепочки
+            if getattr(self, '_batch_stop', False):
+                log(f"start_all: СТОП — process_batch прерван (batch_idx={batch_idx})")
                 return
 
             batch = batches[batch_idx]
@@ -447,20 +448,23 @@ class NedoGui(QWidget):
                 if not stalled:
                     wait_f()
                     return
-                # 10 попыток × 500ms = 5 сек.
-                if attempts >= 10:
-                    log(f"Пачка {batch_idx + 1}: не завелись {stalled} за 5 сек, пропускаю дальше", level="WARNING")
+                # 16 попыток × 500ms = 8 сек.
+                if attempts >= 16:
+                    log(f"Пачка {batch_idx + 1}: не завелись {stalled} за 8 сек, пропускаю дальше", level="WARNING")
                     wait_f()
                     return
                 QTimer.singleShot(500, lambda: wait_c(attempts + 1))
 
             def wait_f(attempts=0):
-                if self.controller.batch_cancelled or self._batch_stop:
+                if self.controller.batch_cancelled or getattr(self, '_batch_stop', False):
                     return
                 running = [nick for nick in batch
                            if self.controller.is_running(nick)]
                 if not running:
-                    # Сразу запускаем следующую пачку — без паузы
+                    # Проверка стопа ПЕРЕД запуском следующей пачки
+                    if getattr(self, '_batch_stop', False):
+                        log(f"start_all: СТОП — wait_f прерван перед batch {batch_idx + 1}")
+                        return
                     process_batch(batch_idx + 1)
                     return
                 if attempts >= 8 * 3600:
