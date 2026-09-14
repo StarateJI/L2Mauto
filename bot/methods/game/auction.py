@@ -584,24 +584,24 @@ class Auction(GameAction):
         рядом с auction.py. Используется для диагностики — видно все окна
         в момент вызова, не только текущее.
 
+        Использует singleton _sct (тот же что и _grab) — НЕ создаёт новый mss.
         Синхронный (быстрый ~50ms) — не блокирует event loop надолго.
         """
         try:
-            import mss
             out_dir = os.path.dirname(os.path.abspath(__file__))
             path = os.path.join(out_dir, name)
             # Берём главный монитор (обычно 2560×1440)
-            with mss.mss() as sct:
-                # monitors[0] = все мониторы вместе (virtual screen)
-                # monitors[1] = первый реальный монитор
-                if len(sct.monitors) > 1:
-                    monitor = sct.monitors[1]
-                else:
-                    monitor = sct.monitors[0]
-                shot = sct.grab(monitor)
-                arr = np.array(shot)  # BGRA
-                img = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
-                cv2.imwrite(path, img)
+            # monitors[0] = все мониторы вместе (virtual screen)
+            # monitors[1] = первый реальный монитор
+            monitors = _sct.monitors
+            if len(monitors) > 1:
+                monitor = monitors[1]
+            else:
+                monitor = monitors[0]
+            shot = _sct.grab(monitor)
+            arr = np.array(shot)  # BGRA
+            img = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
+            cv2.imwrite(path, img)
             log(f"Аук: сохранён фулл-скрин {name} ({monitor['width']}x{monitor['height']})",
                 self.window_id)
         except Exception as e:

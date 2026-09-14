@@ -68,6 +68,41 @@ class UpdateChecker(QThread):
         log("Стопнул чекер обнов")
         self._running = False
 
+
+class LogUploader(QThread):
+    """
+    Периодически (раз в 60 сек) загружает logs/log.log + debug PNG в ветку
+    bot-logs. Даже если бот упал и finally не сработал — логи всё равно уйдут.
+    """
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._running = True
+
+    def run(self):
+        log("Запустил периодический загрузчик логов")
+        # Первая загрузка через 30 сек (даём боту время стартовать)
+        for _ in range(30):
+            if not self._running:
+                return
+            time.sleep(1)
+        while self._running:
+            try:
+                from bot.log_uploader import upload_run_logs
+                # Загружаем от имени 'periodic' — без window_id, только global log
+                upload_run_logs("periodic", made=-1, error=None)
+            except Exception as e:
+                log(f"LogUploader: ошибка: {e}", level="WARNING")
+            # Раз в 60 секунд
+            for _ in range(60):
+                if not self._running:
+                    return
+                time.sleep(1)
+
+    def stop(self):
+        log("Стопнул загрузчик логов")
+        self._running = False
+
+
 class NedoGui(QWidget):
     _stop_signal = pyqtSignal()
 
@@ -95,6 +130,12 @@ class NedoGui(QWidget):
         self.update_timer = QTimer(self)
         self.update_timer.timeout.connect(self.update_state)
         self.update_timer.start(1000)
+
+        # ── ПЕРИОДИЧЕСКАЯ ЗАГРУЗКА ЛОГОВ в GitHub (раз в 60 сек) ──────────
+        # Даже если бот упал и finally не сработал — логи всё равно уйдут.
+        # Запускается в отдельном потоке (LogUploader QThread).
+        self.log_uploader_thread = LogUploader()
+        self.log_uploader_thread.start()
 
     def load_window_position(self):
         if os.path.exists(WINDOWS_CACHE):
@@ -140,6 +181,9 @@ class NedoGui(QWidget):
         if hasattr(self, 'update_checker') and self.update_checker.isRunning():
             self.update_checker.stop()
             self.update_checker.wait(100)
+        if hasattr(self, 'log_uploader_thread') and self.log_uploader_thread.isRunning():
+            self.log_uploader_thread.stop()
+            self.log_uploader_thread.wait(100)
         super().closeEvent(event)
 
     def init_ui(self):
