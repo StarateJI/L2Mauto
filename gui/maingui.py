@@ -58,7 +58,8 @@ class UpdateChecker(QThread):
                     log(f"Установлена последняя версия бота | {get_my_version()}")
             except Exception:
                 pass
-            for _ in range(3600):
+            # Проверка раз в 60 секунд (было 3600 = час)
+            for _ in range(60):
                 if not self._running:
                     break
                 time.sleep(1)
