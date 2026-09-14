@@ -182,7 +182,8 @@ def _tail_file(path: str, n_lines: int) -> bytes:
 
 
 def _list_debug_pngs() -> list:
-    """Список debug PNG-файлов в DEBUG_DIR с префиксом au_ или cmp_."""
+    """Список debug PNG-файлов в DEBUG_DIR с префиксом au_ или cmp_.
+    Включает фулл-скрины (au_final_fullscreen.png, au_after_tab_sell.png)."""
     out = []
     try:
         if not os.path.isdir(DEBUG_DIR):
@@ -197,7 +198,8 @@ def _list_debug_pngs() -> list:
                 size = os.path.getsize(full)
             except Exception:
                 continue
-            if size > 5_000_000:  # 5 МБ лимит
+            # Лимит 10 МБ — фулл-скрин 2560×1440 может быть ~3 МБ
+            if size > 10_000_000:
                 continue
             out.append((name, full, size))
     except Exception as e:

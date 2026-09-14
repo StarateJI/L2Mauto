@@ -184,6 +184,8 @@ class Auction(GameAction):
             await self._click(*BTN_TAB_SELL)
             await asyncio.sleep(T_TAB_SELL_OPEN)  # 3 сек — на лагающих ПК вкладка открывается
             log("Аук: вкладка Продажа открыта", self.window_id)
+            # Фулл-скрин после открытия вкладки Продажа — видно что открылось
+            self._take_fullscreen("au_after_tab_sell.png")
 
             # 7. Цикл по предметам
             for i in range(1, MAX_ITEMS + 1):
@@ -243,21 +245,22 @@ class Auction(GameAction):
             if resize_done:
                 try:
                     await self._resize_back()
-                    # Проверка что окно реально 400x225, а не зависло 1280x720
+                    # Проверка что окно реально 400x225 и на СВОЕЙ позиции,
+                    # а не зависло 1280x720 или не встало на чужое место.
                     import pygetwindow as gw
                     try:
                         win = gw.getWindowsWithTitle(
                             self.window_info[self.window_id]["Title"])[0]
+                        saved = getattr(self.profile, '_au_saved_pos', None)
+                        expected_pos = saved[:2] if saved else None
                         if win.width != REST_W or win.height != REST_H:
                             log(f"Аук: окно НЕ вернулось в {REST_W}x{REST_H}, "
                                 f"сейчас {win.width}x{win.height} — принудительный "
                                 f"SetWindowPos",
                                 self.window_id, level="WARNING")
-                            # Принудительно SetWindowPos ещё раз
                             import ctypes
                             SWP_NOZORDER = 0x0004
                             SWP_NOACTIVATE = 0x0010
-                            saved = getattr(self.profile, '_au_saved_pos', None)
                             if saved:
                                 left, top, w, h = saved
                             else:
@@ -269,6 +272,23 @@ class Auction(GameAction):
                             )
                             await asyncio.sleep(0.5)
                             log(f"Аук: принудительный resize завершён", self.window_id)
+                        elif expected_pos and (win.left, win.top) != expected_pos:
+                            # Размер 400x225 но позиция не совпала — FranklinSaint bug
+                            log(f"Аук: окно на чужой позиции ({win.left},{win.top}), "
+                                f"ожидалась {expected_pos} — двигаю на свою",
+                                self.window_id, level="WARNING")
+                            import ctypes
+                            SWP_NOSIZE = 0x0001
+                            SWP_NOZORDER = 0x0004
+                            SWP_NOACTIVATE = 0x0010
+                            ctypes.windll.user32.SetWindowPos(
+                                ctypes.c_void_p(int(win._hWnd)), None,
+                                expected_pos[0], expected_pos[1], 0, 0,
+                                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE,
+                            )
+                            await asyncio.sleep(0.5)
+                            log(f"Аук: окно передвинуто на {expected_pos}",
+                                self.window_id)
                     except Exception as e:
                         log(f"Аук: проверка размера не удалась: {e}",
                             self.window_id, level="WARNING")
@@ -276,15 +296,34 @@ class Auction(GameAction):
                     log(f"Аук: не удалось вернуть размер окна: {e}",
                         self.window_id, level="WARNING")
 
-            # 8c. Включить энергорежим (увести в сон) — бот только что вышел
-            #     из энерго в начале reregister, надо вернуть.
+            # 8c. Включить энергорежим (увести в сон) + ПРОВЕРИТЬ что реально включился.
+            #     «Недо-энерго» = бот думает что включил, но по факту окно не в энерго.
+            #     Проверяем пикселем, если не совпало — ещё раз пытаемся.
             try:
-                if not await self.profile.energo.is_on():
+                for attempt in range(1, 4):  # до 3 попыток
+                    if await self.profile.energo.is_on():
+                        log(f"Аук: окно уложено спать (энерго включён, "
+                            f"попытка {attempt})", self.window_id)
+                        break
+                    log(f"Аук: энерго не включился (попытка {attempt}/3) — "
+                        f"пытаюсь ещё раз", self.window_id, level="WARNING")
                     await self.profile.energo.turn_on()
-                    log("Аук: окно уложено спать (энерго включён)", self.window_id)
+                    await asyncio.sleep(2.0)
+                else:
+                    log(f"Аук: ВАЖНО — энерго НЕ включился за 3 попытки! "
+                        f"Окно может остаться в «недо-энерго»",
+                        self.window_id, level="ERROR")
             except Exception as e:
                 log(f"Аук: не удалось включить энерго: {e}",
                     self.window_id, level="WARNING")
+
+            # 8d. ФУЛЛ-СКРИН в конце прогона — видно реальное состояние ВСЕХ окон.
+            #     Логи могут врать (бот пишет «окно возвращено» а по факту нет),
+            #     а скриншот показывает правду. Закоммитится в GitHub через log_uploader.
+            try:
+                self._take_fullscreen("au_final_fullscreen.png")
+            except Exception:
+                pass
 
             # 9. Уведомление в TG
             try:
@@ -538,6 +577,36 @@ class Auction(GameAction):
             log(f"Аук: сохранён {name}", self.window_id)
         except Exception as e:
             log(f"Аук: не удалось сохранить {name}: {e}", self.window_id, level="WARNING")
+
+    def _take_fullscreen(self, name: str = "au_fullscreen.png") -> None:
+        """
+        Сделать скриншот ВСЕГО монитора (не отдельного окна) и сохранить
+        рядом с auction.py. Используется для диагностики — видно все окна
+        в момент вызова, не только текущее.
+
+        Синхронный (быстрый ~50ms) — не блокирует event loop надолго.
+        """
+        try:
+            import mss
+            out_dir = os.path.dirname(os.path.abspath(__file__))
+            path = os.path.join(out_dir, name)
+            # Берём главный монитор (обычно 2560×1440)
+            with mss.mss() as sct:
+                # monitors[0] = все мониторы вместе (virtual screen)
+                # monitors[1] = первый реальный монитор
+                if len(sct.monitors) > 1:
+                    monitor = sct.monitors[1]
+                else:
+                    monitor = sct.monitors[0]
+                shot = sct.grab(monitor)
+                arr = np.array(shot)  # BGRA
+                img = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
+                cv2.imwrite(path, img)
+            log(f"Аук: сохранён фулл-скрин {name} ({monitor['width']}x{monitor['height']})",
+                self.window_id)
+        except Exception as e:
+            log(f"Аук: не удалось сохранить фулл-скрин {name}: {e}",
+                self.window_id, level="WARNING")
 
     # ──────────────────────────────────────────────────────────────────────
     # КЛИКИ
