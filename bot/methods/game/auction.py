@@ -218,7 +218,24 @@ class Auction(GameAction):
             # ── ВСЁ что ниже — выполняется ВСЕГДА ──────────────────────────
             # Даже если бот упал, даже если пользователь стопнул (CancelledError).
 
-            # 8. Вернуть размер окна (если увеличивали)
+            # 8a. Закрыть аук/меню ДО resize_back (кнопка 1218,46 в окне 1280x720,
+            #     после resize_back окно станет 400x225 и клик не попадёт).
+            #     Используем SetForegroundWindow для надёжности.
+            try:
+                import ctypes
+                hwnd_val = self.window_info[self.window_id].get("ID")
+                if hwnd_val:
+                    try:
+                        ctypes.windll.user32.SetForegroundWindow(int(hwnd_val))
+                    except Exception:
+                        pass
+                await self._click(*BTN_CLOSE)
+                await asyncio.sleep(2)
+                log("Аук: аук закрыт", self.window_id)
+            except Exception as e:
+                log(f"Аук: не удалось закрыть аук: {e}", self.window_id, level="WARNING")
+
+            # 8b. Вернуть размер окна (если увеличивали)
             if resize_done:
                 try:
                     await self._resize_back()
@@ -226,15 +243,17 @@ class Auction(GameAction):
                     log(f"Аук: не удалось вернуть размер окна: {e}",
                         self.window_id, level="WARNING")
 
-            # 9. Закрыть аук/меню (всегда — аук не должен остаться открытым)
+            # 8c. Включить энергорежим (увести в сон) — бот только что вышел
+            #     из энерго в начале reregister, надо вернуть.
             try:
-                await self._click(*BTN_CLOSE)
-                await asyncio.sleep(3)
-                log("Аук: аук закрыт", self.window_id)
+                if not await self.profile.energo.is_on():
+                    await self.profile.energo.turn_on()
+                    log("Аук: окно уложено спать (энерго включён)", self.window_id)
             except Exception as e:
-                log(f"Аук: не удалось закрыть аук: {e}", self.window_id, level="WARNING")
+                log(f"Аук: не удалось включить энерго: {e}",
+                    self.window_id, level="WARNING")
 
-            # 10. Уведомление в TG
+            # 9. Уведомление в TG
             try:
                 if made > 0:
                     self.profile.notify("info", f"Аук: переставлено лотов {made}")
@@ -242,22 +261,22 @@ class Auction(GameAction):
                 elif last_error is not None:
                     self.profile.notify("error",
                                       f"Аук: УПАЛ с ошибкой: {last_error}")
-                    # Слать скрин в TG — для диагностики
                     try:
                         self.profile.notify_screenshot(
                             f"Аук упал: {last_error}", level="error")
                     except Exception:
                         pass
                 else:
-                    self.profile.notify("warning",
-                                      "Аук: не удалось переставить ни один лот")
+                    # Не ошибка — просто нет лотов для перестановки (INFO не ERROR)
+                    self.profile.notify("info",
+                                      "Аук: лотов для перестановки не найдено")
+                    log("Аук: нечего переставлять (все лоты в «Продаётся» "
+                        "или список пуст)", self.window_id, level="INFO")
             except Exception as e:
                 log(f"Аук: не удалось отправить TG-уведомление: {e}",
                     self.window_id, level="WARNING")
 
-            # 11. Загрузить логи + debug PNG в GitHub (ветка bot-logs)
-            #     ВСЕГДА — независимо от результата. Если бот упал, тем более
-            #     важно чтобы логи ушли в GitHub.
+            # 10. Загрузить логи + debug PNG в GitHub (ветка bot-logs)
             try:
                 from bot.log_uploader import upload_run_logs
                 upload_run_logs(self.window_id, made=made,
@@ -388,26 +407,49 @@ class Auction(GameAction):
         return False
 
     async def _resize_back(self) -> None:
-        """Вернуть окно в исходное положение (сохранённое до resize_work)."""
+        """
+        Вернуть окно в исходное положение (сохранённое до resize_work).
+        Использует SetWindowPos (как _resize_work) — надёжнее чем moveTo+resizeTo,
+        потому что moveTo не сработает если окно перекрыто другим окном 1280x720.
+        """
+        import ctypes
         import pygetwindow as gw
+
+        SWP_NOZORDER = 0x0004
+        SWP_NOACTIVATE = 0x0010
+        SetWindowPos = ctypes.windll.user32.SetWindowPos
 
         saved = getattr(self.profile, '_au_saved_pos', None)
         if saved:
             left, top, w, h = saved
-            # Сбросить флаг — следующий прогон сохранит заново
             self.profile._au_saved_pos = None
         else:
             left, top, w, h = 0, 40, REST_W, REST_H
 
         try:
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
-            # Сначала moveTo в нужное место, потом resize — иначе resizeTo может
-            # «зацепить» позицию другого окна.
-            win.moveTo(left, top)
-            await asyncio.sleep(0.2)
-            win.resizeTo(w, h)
-            await asyncio.sleep(0.4)
+            # restore + unmaximize (иначе SetWindowPos игнорируется)
+            try:
+                win.restore()
+            except Exception:
+                pass
+            if win.isMaximized:
+                try:
+                    win.unmaximize()
+                except Exception:
+                    pass
 
+            # SetWindowPos — принудительно, даже если окно перекрыто
+            hwnd = win._hWnd
+            SetWindowPos(
+                ctypes.c_void_p(int(hwnd)), None,
+                left, top, w, h,
+                SWP_NOZORDER | SWP_NOACTIVATE,
+            )
+            await asyncio.sleep(0.5)
+
+            # Перечитать win (мог сместиться)
+            win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             self.window_info[self.window_id]["Position"] = (win.left, win.top)
             self.window_info[self.window_id]["Width"] = win.width
             self.window_info[self.window_id]["Height"] = win.height
@@ -805,11 +847,14 @@ class Auction(GameAction):
         await self._save_debug("au_lot_zone.png", sample)
         await self._save_debug("au_sample.png", sample)
 
-        # Считаем SIFT keypoints образца (для лога)
+        # Считаем SIFT keypoints образца — если 0, значит строка пустая
+        # (нет иконки/лота на продаже). Это НЕ ошибка — просто нечего переставлять.
+        kp_count = 0
         try:
             sift = cv2.SIFT_create()
             kp_sample, _ = sift.detectAndCompute(cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY), None)
-            log(f"Аук: SIFT образец (лот): {len(kp_sample)} точек", self.window_id)
+            kp_count = len(kp_sample) if kp_sample else 0
+            log(f"Аук: SIFT образец (лот): {kp_count} точек", self.window_id)
         except Exception:
             pass
 
@@ -822,6 +867,15 @@ class Auction(GameAction):
         if self._is_status_prodano():
             log("Аук: первый лот в статусе «Продаётся» — пропускаю, "
                 "не трогаю (защита от вечного цикла)", self.window_id)
+            return 'empty'
+
+        # 2b. Если образец пустой (0 SIFT точек) и статус не «Продаётся» —
+        # значит строка лота пустая (нет лотов на продаже вообще).
+        # Это НЕ ошибка — просто нечего переставлять. Возвращаем 'empty'.
+        if kp_count == 0:
+            log("Аук: образец лота пустой (нет иконки) и статус не «Продаётся» — "
+                "видимо список лотов пуст. Завершаю прогон (не ошибка).",
+                self.window_id, level="INFO")
             return 'empty'
 
         # 3. Клик "Отмена лота"
