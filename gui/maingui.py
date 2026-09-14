@@ -112,7 +112,7 @@ class NedoGui(QWidget):
     def __init__(self, kb: str, m: str):
         super().__init__()
         if m is not None:
-            self.setWindowTitle(f"L2Monad | FREE | Купил? Лох! | OK | Клава {kb} | Мышь {m}")
+            self.setWindowTitle(f"L2Mauto | Клава {kb} | Мышь {m}")
         else:
             # жаль никогда не случится =(
             self.setWindowTitle("L2Monad | Драйвер не найден!")
@@ -191,20 +191,26 @@ class NedoGui(QWidget):
 
     def init_ui(self):
         self.layout_main = QVBoxLayout()
-        font_btn = QFont("Orbitron", 9, QFont.Bold)
+        font_btn = QFont("Segoe UI", 9, QFont.Bold)
 
-        self.btn_otdel = QPushButton("Отдельное управление")
+        # ── Заголовок ───────────────────────────────────────────────────────
+        self.title_label = QLabel("🏰 L2Mauto")
+        self.title_label.setObjectName("title")
+        self.title_label.setAlignment(Qt.AlignCenter)
+        self.layout_main.addWidget(self.title_label)
+
+        self.btn_otdel = QPushButton("📋 Отдельное управление")
         self.btn_otdel.setFont(font_btn)
         self.btn_otdel.setCursor(Qt.PointingHandCursor)
-        self.btn_otdel.setFixedHeight(25)
+        self.btn_otdel.setFixedHeight(28)
         self.btn_otdel.clicked.connect(self.open_otdel)
         self.layout_main.addWidget(self.btn_otdel)
 
         for name, cls in self.profiles.items():
-            btn = QPushButton(f"{name} ВСЕ")
+            btn = QPushButton(f"▶ {name} ВСЕ")
             btn.setFont(font_btn)
             btn.setCursor(Qt.PointingHandCursor)
-            btn.setFixedHeight(25)
+            btn.setFixedHeight(28)
 
             if name == "MainAlchemy":
                 btn.clicked.connect(lambda _, c=cls: self.start_alchemy(c))
@@ -213,41 +219,43 @@ class NedoGui(QWidget):
 
             self.layout_main.addWidget(btn)
 
-        self.btn_stop_all = QPushButton("STOP ВСЕ")
-        self.btn_stop_all.setFont(font_btn)
+        # ── STOP ВСЕ — красная, крупная ─────────────────────────────────────
+        self.btn_stop_all = QPushButton("⏹ STOP ВСЕ")
+        self.btn_stop_all.setObjectName("stop_all")
+        self.btn_stop_all.setFont(QFont("Segoe UI", 10, QFont.Bold))
         self.btn_stop_all.setCursor(Qt.PointingHandCursor)
-        self.btn_stop_all.setFixedHeight(25)
+        self.btn_stop_all.setFixedHeight(32)
         self.btn_stop_all.clicked.connect(self.stop_profile)
         self.layout_main.addWidget(self.btn_stop_all)
 
         layout_mini = QHBoxLayout()
 
         self.btn_settings = QPushButton("⚙️")
-        self.btn_settings.setFixedSize(30, 30)
+        self.btn_settings.setFixedSize(32, 32)
         self.btn_settings.setCursor(Qt.PointingHandCursor)
         self.btn_settings.clicked.connect(self.open_settings)
         layout_mini.addWidget(self.btn_settings, alignment=Qt.AlignLeft)
 
         self.windows_sel = QPushButton("👤")
-        self.windows_sel.setFixedSize(30, 30)
+        self.windows_sel.setFixedSize(32, 32)
         self.windows_sel.setCursor(Qt.PointingHandCursor)
         self.windows_sel.clicked.connect(self.winsel)
         layout_mini.addWidget(self.windows_sel, alignment=Qt.AlignLeft)
 
         self.don = QPushButton("💰")
-        self.don.setFixedSize(30, 30)
+        self.don.setFixedSize(32, 32)
         self.don.setCursor(Qt.PointingHandCursor)
         self.don.clicked.connect(self.donate)
         layout_mini.addWidget(self.don, alignment=Qt.AlignLeft)
 
         self.btn_tiling = QPushButton("📐")
-        self.btn_tiling.setFixedSize(30, 30)
+        self.btn_tiling.setFixedSize(32, 32)
         self.btn_tiling.setCursor(Qt.PointingHandCursor)
         self.btn_tiling.clicked.connect(self.open_tiling)
         layout_mini.addWidget(self.btn_tiling, alignment=Qt.AlignLeft)
 
-        version = QLabel(f"v{get_my_version()} | tg: @BotLineage2M | Купил бота = ЛОХ")
-        version.setStyleSheet("color: gray; font-size: 8pt;")
+        version = QLabel(f"v{get_my_version()}")
+        version.setStyleSheet("color: #6e7681; font-size: 8pt;")
         version.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         layout_mini.addWidget(version, stretch=1)
 
