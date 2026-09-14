@@ -52,7 +52,12 @@ from bot.methods.base import parseCBT
 from bot.methods.game._base import GameAction
 
 # ── mss singleton: открывается ОДИН раз, не на каждый захват ───────────────
-_sct = mss.MSS()
+# mss.mss() — класс в нижнем регистре (да, это легально в Python).
+# На некоторых версиях mss модуль называется mss.mss, на других mss.MSS.
+try:
+    _sct = mss.mss()
+except AttributeError:
+    _sct = mss.MSS()
 
 # ── Рабочий размер окна ───────────────────────────────────────────────────
 WORK_W, WORK_H = 1280, 720
