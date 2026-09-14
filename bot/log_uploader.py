@@ -144,10 +144,11 @@ def _api_put(path_in_repo: str, content_bytes: bytes, token: str,
     sha: Optional[str] = None
     try:
         r = requests.get(url, headers=headers, params={"ref": BRANCH}, timeout=10)
+        log(f"_api_put: GET {path_in_repo} -> {r.status_code}", level="DEBUG")
         if r.status_code == 200:
             sha = r.json().get("sha")
-    except Exception:
-        pass
+    except Exception as e:
+        log(f"_api_put: GET exception: {e}", level="DEBUG")
 
     payload = {
         "message": commit_msg,
@@ -159,13 +160,14 @@ def _api_put(path_in_repo: str, content_bytes: bytes, token: str,
 
     try:
         r = requests.put(url, headers=headers, json=payload, timeout=20)
+        log(f"_api_put: PUT {path_in_repo} -> {r.status_code} "
+            f"({len(content_bytes)} bytes)", level="DEBUG")
         if r.status_code in (200, 201):
             data = r.json()
             return data.get("content", {}).get("html_url")
-        log(f"log_uploader: PUT {path_in_repo} -> {r.status_code}: "
-            f"{r.text[:200]}", level="WARNING")
+        log(f"_api_put: PUT failed body: {r.text[:200]}", level="WARNING")
     except Exception as e:
-        log(f"log_uploader: PUT {path_in_repo} exception: {e}", level="WARNING")
+        log(f"_api_put: PUT exception: {e}", level="WARNING")
     return None
 
 
@@ -210,28 +212,17 @@ def _list_debug_pngs() -> list:
 def upload_run_logs(window_id: str, made: int = 0, error: Optional[str] = None) -> None:
     """
     Главная точка входа. Вызывается из auction.reregister() в finally блоке
-    (всегда — даже если бот упал или пользователь стопнул).
+    и из LogUploader QThread (раз в 60 сек).
 
     Загружает:
-      - logs/{window_id}.log (последние 500 строк) -> bot-logs/runs/{ts}_{ok|fail|crash}_{win}.log
+      - logs/{window_id}.log (если есть) -> bot-logs/runs/{ts}_{tag}_{win}.log
       - bot/methods/game/au_*.png + cmp_*.png -> bot-logs/debug/{win}/{name}
       - logs/log.log (последние 200 строк) -> bot-logs/runs/{ts}_{tag}_global.log
-
-    Каждый прогон создаёт новый файл с timestamp в имени — старые остаются
-    для истории (можно сравнивать «было/стало»).
-
-    Параметры:
-      window_id: ник окна (например 'Zakamsk')
-      made: сколько лотов переставлено (0 = провал)
-      error: строка с описанием ошибки если бот упал (None если штатно)
-
-    Токен ищется в 4 местах (последнее — встроенный fallback, ВСЕГДА есть):
-    env L2M_GITHUB_TOKEN → .github_token → .github_token.txt → tg.ini [github] →
-    → встроенный base64-токен.
-    Любые ошибки логирует, но НЕ валит бота.
     """
     # ВСЕГДА есть токен — fallback встроен в код
     token = _load_token()
+    log(f"log_uploader: START window={window_id} made={made} token=...{token[-5:]}",
+        level="DEBUG")
 
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     if error:
@@ -256,14 +247,10 @@ def upload_run_logs(window_id: str, made: int = 0, error: Optional[str] = None) 
         commit_msg = f"log: {window_id} {summary_tag} made={made}" + \
                     (f" error={error[:80]}" if error else "") + f" @ {ts}"
         url = _api_put(repo_path, content, token, commit_msg)
-        if url:
-            log(f"log_uploader: лог загружен: {url}", window_id, level="DEBUG")
-        else:
-            log(f"log_uploader: лог НЕ загружен (см. ошибки выше в логе)",
-                window_id, level="WARNING")
+        log(f"log_uploader: STEP 1 (window log) -> {url or 'FAILED'}",
+            level="DEBUG")
     else:
-        log(f"log_uploader: файл лога не найден: {log_path}",
-            window_id, level="WARNING")
+        log(f"log_uploader: STEP 1 SKIP (no {log_path})", level="DEBUG")
 
     # ── 2. Debug PNG ───────────────────────────────────────────────────────
     pngs = _list_debug_pngs()
@@ -281,10 +268,10 @@ def upload_run_logs(window_id: str, made: int = 0, error: Optional[str] = None) 
             except Exception as e:
                 log(f"log_uploader: PNG {name} не загружен: {e}",
                     window_id, level="WARNING")
-        log(f"log_uploader: загружено PNG: {uploaded}/{len(pngs)}",
-            window_id, level="DEBUG")
+        log(f"log_uploader: STEP 2 (PNGs) -> {uploaded}/{len(pngs)}",
+            level="DEBUG")
     else:
-        log("log_uploader: debug PNG не найдены", window_id, level="DEBUG")
+        log(f"log_uploader: STEP 2 SKIP (no PNGs)", level="DEBUG")
 
     # ── 3. Глобальный лог (последние 200 строк) — для контекста ─────────────
     global_log_path = os.path.join(LOG_DIR, "log.log")
@@ -293,10 +280,16 @@ def upload_run_logs(window_id: str, made: int = 0, error: Optional[str] = None) 
             content = _tail_file(global_log_path, 200)
             repo_path = f"runs/{ts}_{summary_tag}_global.log"
             commit_msg = f"log: global {summary_tag} @ {ts}"
-            _api_put(repo_path, content, token, commit_msg)
+            url = _api_put(repo_path, content, token, commit_msg)
+            log(f"log_uploader: STEP 3 (global log) -> {url or 'FAILED'}",
+                level="DEBUG")
         except Exception as e:
-            log(f"log_uploader: global log не загружен: {e}",
-                window_id, level="DEBUG")
+            log(f"log_uploader: global log exception: {e}",
+                window_id, level="WARNING")
+    else:
+        log(f"log_uploader: STEP 3 SKIP (no log.log)", level="DEBUG")
+
+    log(f"log_uploader: END window={window_id}", level="DEBUG")
 
 
 def list_recent_runs(limit: int = 10) -> list:
