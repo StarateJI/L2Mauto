@@ -1,0 +1,201 @@
+=== Log tail 2026-09-15T13:20:36.714901 | last 200 lines ===
+2026-09-15 13:17:06,065 - INFO - [global] needs_update: local=(5, 5, 2) remote=(5, 5, 2) -> has_update=False
+2026-09-15 13:17:06,068 - INFO - [global] Установлена последняя версия бота | 5.5.2
+2026-09-15 13:17:06,639 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-15 13:17:11,051 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-15 13:17:24,384 - DEBUG - [global] log_uploader: START window=6600ti made=1 token=...Rjnfq
+2026-09-15 13:17:25,298 - DEBUG - [global] _api_put: GET runs/20260915_131724_ok_6600ti.log -> 404
+2026-09-15 13:17:26,988 - DEBUG - [global] _api_put: PUT runs/20260915_131724_ok_6600ti.log -> 201 (51820 bytes)
+2026-09-15 13:17:26,991 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_131724_ok_6600ti.log
+2026-09-15 13:17:28,188 - DEBUG - [global] _api_put: GET debug/6600ti/au_after_click.png -> 200
+2026-09-15 13:17:30,127 - DEBUG - [global] _api_put: PUT debug/6600ti/au_after_click.png -> 200 (90137 bytes)
+2026-09-15 13:17:31,098 - DEBUG - [global] _api_put: GET debug/6600ti/au_final_fullscreen.png -> 200
+2026-09-15 13:17:36,087 - INFO - [global] Проверяю обновы...
+2026-09-15 13:17:36,802 - DEBUG - [global] needs_update: raw → 5.5.2
+2026-09-15 13:17:37,713 - DEBUG - [global] needs_update: API GitHub → 5.5.2
+2026-09-15 13:17:38,436 - DEBUG - [global] needs_update: jsdelivr → 5.4.1
+2026-09-15 13:17:38,436 - DEBUG - [global] needs_update: лучший источник raw → 5.5.2 (из 3)
+2026-09-15 13:17:38,438 - INFO - [global] needs_update: local=(5, 5, 2) remote=(5, 5, 2) -> has_update=False
+2026-09-15 13:17:38,439 - INFO - [global] Установлена последняя версия бота | 5.5.2
+2026-09-15 13:17:38,742 - DEBUG - [global] _api_put: PUT debug/6600ti/au_final_fullscreen.png -> 200 (2278022 bytes)
+2026-09-15 13:17:39,708 - DEBUG - [global] _api_put: GET debug/6600ti/au_lot_zone.png -> 200
+2026-09-15 13:17:41,119 - DEBUG - [global] _api_put: PUT debug/6600ti/au_lot_zone.png -> 200 (6422 bytes)
+2026-09-15 13:17:42,055 - DEBUG - [global] _api_put: GET debug/6600ti/au_sample.png -> 200
+2026-09-15 13:17:43,443 - DEBUG - [global] _api_put: PUT debug/6600ti/au_sample.png -> 200 (6422 bytes)
+2026-09-15 13:17:44,385 - DEBUG - [global] _api_put: GET debug/6600ti/au_status.png -> 200
+2026-09-15 13:17:45,651 - DEBUG - [global] _api_put: PUT debug/6600ti/au_status.png -> 409 (2474 bytes)
+2026-09-15 13:17:45,651 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 8746cfcd264cf58415987d1fc10f34fbe6905e82 but expected f706f0fad2d512b2bde3506540359dc32f0ea5a9","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-15 13:17:45,654 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 4/5 (удалено с диска: 4)
+2026-09-15 13:17:45,962 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-15 13:17:46,592 - DEBUG - [global] _api_put: GET runs/20260915_131724_ok_global.log -> 404
+2026-09-15 13:17:48,266 - DEBUG - [global] _api_put: PUT runs/20260915_131724_ok_global.log -> 201 (22221 bytes)
+2026-09-15 13:17:48,267 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_131724_ok_global.log
+2026-09-15 13:17:48,267 - DEBUG - [global] log_uploader: END window=6600ti
+2026-09-15 13:17:54,410 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-15 13:17:56,518 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-15 13:17:56,519 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-15 13:17:59,577 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20260915_131756_fail_periodic.log?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-09-15 13:17:59,843 - INFO - [global] Запуск через 3 сек. | ['Lupi', 'Zakamsk']
+2026-09-15 13:18:02,591 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20260915_131756_fail_periodic.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-09-15 13:18:02,591 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-09-15 13:18:05,656 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/debug/periodic/au_status.png?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-09-15 13:18:07,061 - DEBUG - [global] _api_put: PUT debug/periodic/au_status.png -> 422 (2474 bytes)
+2026-09-15 13:18:07,061 - WARNING - [global] _api_put: PUT failed body: {"message":"Invalid request.\n\n\"sha\" wasn't supplied.","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file-contents","status":"422"}
+2026-09-15 13:18:07,062 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 0/1 (удалено с диска: 0)
+2026-09-15 13:18:08,068 - DEBUG - [global] _api_put: GET runs/20260915_131756_fail_global.log -> 404
+2026-09-15 13:18:08,460 - INFO - [global] Проверяю обновы...
+2026-09-15 13:18:09,312 - DEBUG - [global] needs_update: raw → 5.5.2
+2026-09-15 13:18:09,881 - DEBUG - [global] _api_put: PUT runs/20260915_131756_fail_global.log -> 201 (22805 bytes)
+2026-09-15 13:18:09,883 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_131756_fail_global.log
+2026-09-15 13:18:09,884 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-15 13:18:09,884 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-15 13:18:10,335 - DEBUG - [global] needs_update: API GitHub → 5.5.2
+2026-09-15 13:18:11,085 - DEBUG - [global] needs_update: jsdelivr → 5.4.2
+2026-09-15 13:18:11,085 - DEBUG - [global] needs_update: лучший источник raw → 5.5.2 (из 3)
+2026-09-15 13:18:11,088 - INFO - [global] needs_update: local=(5, 5, 2) remote=(5, 5, 2) -> has_update=False
+2026-09-15 13:18:11,089 - INFO - [global] Установлена последняя версия бота | 5.5.2
+2026-09-15 13:18:41,110 - INFO - [global] Проверяю обновы...
+2026-09-15 13:18:41,917 - DEBUG - [global] needs_update: raw → 5.5.2
+2026-09-15 13:18:42,879 - DEBUG - [global] needs_update: API GitHub → 5.5.2
+2026-09-15 13:18:43,670 - DEBUG - [global] needs_update: jsdelivr → 5.4.1
+2026-09-15 13:18:43,670 - DEBUG - [global] needs_update: лучший источник raw → 5.5.2 (из 3)
+2026-09-15 13:18:43,672 - INFO - [global] needs_update: local=(5, 5, 2) remote=(5, 5, 2) -> has_update=False
+2026-09-15 13:18:43,673 - INFO - [global] Установлена последняя версия бота | 5.5.2
+2026-09-15 13:19:09,958 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-15 13:19:09,958 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-15 13:19:10,899 - DEBUG - [global] _api_put: GET runs/20260915_131909_fail_periodic.log -> 404
+2026-09-15 13:19:12,417 - DEBUG - [global] _api_put: PUT runs/20260915_131909_fail_periodic.log -> 201 (6618 bytes)
+2026-09-15 13:19:12,420 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_131909_fail_periodic.log
+2026-09-15 13:19:13,685 - DEBUG - [global] _api_put: GET debug/periodic/au_after_click.png -> 200
+2026-09-15 13:19:13,705 - INFO - [global] Проверяю обновы...
+2026-09-15 13:19:14,662 - DEBUG - [global] needs_update: raw → 5.5.2
+2026-09-15 13:19:15,682 - DEBUG - [global] needs_update: API GitHub → 5.5.3
+2026-09-15 13:19:15,819 - DEBUG - [global] _api_put: PUT debug/periodic/au_after_click.png -> 200 (89491 bytes)
+2026-09-15 13:19:16,595 - DEBUG - [global] needs_update: jsdelivr → 5.4.1
+2026-09-15 13:19:16,595 - DEBUG - [global] needs_update: лучший источник API → 5.5.3 (из 3)
+2026-09-15 13:19:16,597 - INFO - [global] needs_update: local=(5, 5, 2) remote=(5, 5, 3) -> has_update=True
+2026-09-15 13:19:16,597 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-15 13:19:16,968 - DEBUG - [global] _api_put: GET debug/periodic/au_after_tab_sell.png -> 200
+2026-09-15 13:19:20,935 - DEBUG - [global] _api_put: PUT debug/periodic/au_after_tab_sell.png -> 200 (2593702 bytes)
+2026-09-15 13:19:21,939 - DEBUG - [global] _api_put: GET debug/periodic/au_lot_zone.png -> 200
+2026-09-15 13:19:23,388 - DEBUG - [global] _api_put: PUT debug/periodic/au_lot_zone.png -> 200 (6573 bytes)
+2026-09-15 13:19:24,637 - DEBUG - [global] _api_put: GET debug/periodic/au_page_1.png -> 200
+2026-09-15 13:19:25,464 - DEBUG - [global] log_uploader: START window=Zakamsk made=1 token=...Rjnfq
+2026-09-15 13:19:26,436 - DEBUG - [global] _api_put: GET runs/20260915_131925_ok_Zakamsk.log -> 404
+2026-09-15 13:19:26,547 - DEBUG - [global] _api_put: PUT debug/periodic/au_page_1.png -> 200 (89487 bytes)
+2026-09-15 13:19:27,614 - DEBUG - [global] _api_put: GET debug/periodic/au_sample.png -> 200
+2026-09-15 13:19:28,146 - DEBUG - [global] _api_put: PUT runs/20260915_131925_ok_Zakamsk.log -> 201 (50179 bytes)
+2026-09-15 13:19:28,148 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_131925_ok_Zakamsk.log
+2026-09-15 13:19:29,169 - DEBUG - [global] _api_put: GET debug/Zakamsk/au_final_fullscreen.png -> 200
+2026-09-15 13:19:29,195 - DEBUG - [global] _api_put: PUT debug/periodic/au_sample.png -> 200 (6573 bytes)
+2026-09-15 13:19:30,335 - DEBUG - [global] _api_put: GET debug/periodic/au_status.png -> 200
+2026-09-15 13:19:31,740 - DEBUG - [global] _api_put: PUT debug/periodic/au_status.png -> 200 (2474 bytes)
+2026-09-15 13:19:31,743 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 6/6 (удалено с диска: 6)
+2026-09-15 13:19:32,254 - DEBUG - [global] _api_put: PUT debug/Zakamsk/au_final_fullscreen.png -> 409 (2292520 bytes)
+2026-09-15 13:19:32,254 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 689b4333ee7fdd25c529b45b13d19b7b62678f62 but expected 41ed64a231b15f1978610d4771fb760270f29212","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-15 13:19:32,258 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 0/3 (удалено с диска: 0)
+2026-09-15 13:19:32,735 - DEBUG - [global] _api_put: GET runs/20260915_131909_fail_global.log -> 404
+2026-09-15 13:19:33,242 - DEBUG - [global] _api_put: GET runs/20260915_131925_ok_global.log -> 404
+2026-09-15 13:19:34,433 - DEBUG - [global] _api_put: PUT runs/20260915_131909_fail_global.log -> 201 (22547 bytes)
+2026-09-15 13:19:34,435 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_131909_fail_global.log
+2026-09-15 13:19:34,435 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-15 13:19:34,435 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-15 13:19:34,828 - DEBUG - [global] _api_put: PUT runs/20260915_131925_ok_global.log -> 409 (22779 bytes)
+2026-09-15 13:19:34,828 - WARNING - [global] _api_put: PUT failed body: {"message":"is at ca87f97097d1c22867588f14f55fd8372452a180 but expected 689b4333ee7fdd25c529b45b13d19b7b62678f62","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-15 13:19:34,830 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-09-15 13:19:34,830 - DEBUG - [global] log_uploader: END window=Zakamsk
+2026-09-15 13:19:35,125 - DEBUG - [global] log_uploader: START window=Lupi made=1 token=...Rjnfq
+2026-09-15 13:19:36,063 - DEBUG - [global] _api_put: GET runs/20260915_131935_ok_Lupi.log -> 404
+2026-09-15 13:19:37,885 - DEBUG - [global] _api_put: PUT runs/20260915_131935_ok_Lupi.log -> 201 (49536 bytes)
+2026-09-15 13:19:37,888 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_131935_ok_Lupi.log
+2026-09-15 13:19:38,904 - DEBUG - [global] _api_put: GET debug/Lupi/au_final_fullscreen.png -> 200
+2026-09-15 13:19:42,462 - DEBUG - [global] _api_put: PUT debug/Lupi/au_final_fullscreen.png -> 200 (2316609 bytes)
+2026-09-15 13:19:42,466 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 1/1 (удалено с диска: 1)
+2026-09-15 13:19:43,394 - DEBUG - [global] _api_put: GET runs/20260915_131935_ok_global.log -> 404
+2026-09-15 13:19:44,970 - DEBUG - [global] _api_put: PUT runs/20260915_131935_ok_global.log -> 201 (22928 bytes)
+2026-09-15 13:19:44,971 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_131935_ok_global.log
+2026-09-15 13:19:44,971 - DEBUG - [global] log_uploader: END window=Lupi
+2026-09-15 13:19:46,625 - INFO - [global] Проверяю обновы...
+2026-09-15 13:19:46,687 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-15 13:19:47,388 - DEBUG - [global] needs_update: raw → 5.5.2
+2026-09-15 13:19:48,346 - DEBUG - [global] needs_update: API GitHub → 5.5.3
+2026-09-15 13:19:49,082 - DEBUG - [global] needs_update: jsdelivr → 5.4.1
+2026-09-15 13:19:49,082 - DEBUG - [global] needs_update: лучший источник API → 5.5.3 (из 3)
+2026-09-15 13:19:49,085 - INFO - [global] needs_update: local=(5, 5, 2) remote=(5, 5, 3) -> has_update=True
+2026-09-15 13:19:49,085 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-15 13:19:50,068 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-15 13:19:55,094 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-15 13:19:56,609 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-15 13:20:00,445 - INFO - [global] Запуск через 3 сек. | ['РспАнтохи', 'Loot']
+2026-09-15 13:20:02,789 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:02,789 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:02,789 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:03,281 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:03,281 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:03,281 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:03,431 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:03,431 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:03,431 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:15,557 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:15,557 - INFO - [global] СТОП ВСЕ: останавливаю 2 окон: ['РспАнтохи', 'Loot']
+2026-09-15 13:20:15,557 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:15,560 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-15 13:20:15,712 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:15,713 - INFO - [global] СТОП ВСЕ: останавливаю 1 окон: ['РспАнтохи']
+2026-09-15 13:20:15,713 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:15,714 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-15 13:20:15,832 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:15,833 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:15,833 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:15,969 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:15,969 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:15,969 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:16,100 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:16,100 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:16,100 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:16,223 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:16,223 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:16,223 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:16,376 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:16,376 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:16,377 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:16,511 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:16,511 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:16,511 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:16,651 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:16,651 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:16,651 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:16,792 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:16,792 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:16,792 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:16,926 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:16,926 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:16,927 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:17,049 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:17,049 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:17,049 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:17,176 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:17,176 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:17,176 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:17,315 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:17,315 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:17,315 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:17,456 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:17,456 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:17,456 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:17,575 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-15 13:20:17,575 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-15 13:20:17,575 - INFO - [global] СТОП ВСЕ: команда отправлена
+2026-09-15 13:20:19,113 - INFO - [global] Проверяю обновы...
+2026-09-15 13:20:19,769 - DEBUG - [global] needs_update: raw → 5.5.2
+2026-09-15 13:20:20,652 - DEBUG - [global] needs_update: API GitHub → 5.5.3
+2026-09-15 13:20:21,328 - DEBUG - [global] needs_update: jsdelivr → 5.4.1
+2026-09-15 13:20:21,328 - DEBUG - [global] needs_update: лучший источник API → 5.5.3 (из 3)
+2026-09-15 13:20:21,329 - INFO - [global] needs_update: local=(5, 5, 2) remote=(5, 5, 3) -> has_update=True
+2026-09-15 13:20:21,329 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-15 13:20:34,470 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-15 13:20:34,471 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-15 13:20:35,341 - DEBUG - [global] _api_put: GET runs/20260915_132034_fail_periodic.log -> 404
+2026-09-15 13:20:36,669 - DEBUG - [global] _api_put: PUT runs/20260915_132034_fail_periodic.log -> 201 (6618 bytes)
+2026-09-15 13:20:36,672 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260915_132034_fail_periodic.log
+2026-09-15 13:20:36,672 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
