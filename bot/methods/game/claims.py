@@ -20,6 +20,60 @@ from bot.methods.game._base import GameAction
 
 class Claims(GameAction):
 
+    async def _close_ad_banners(self) -> int:
+        """
+        Закрыть рекламные баннеры которые могут вылезти в любом месте
+        интерфейса (донат-магазин, гугл-реклама, «обычная» реклама).
+
+        Проверяет 3 типа баннеров и закрывает каждый если виден:
+          1. magaz_monetka_reklama → magaz_circle_close (кругляш)
+          2. magaz_reklama_trigger → magaz_reklama_close
+          3. magaz_google_trigger → magaz_google_close
+
+        Возвращает количество закрытых баннеров (0 если ничего не было).
+        Безопасно вызывать в любом месте — если баннеров нет, ничего не делает.
+        """
+        closed = 0
+
+        # 1. Обычная реклама (монетка-реклама) → кругляш-закрывашка
+        xy_ad, rgb_ad = parseCBT("magaz_monetka_reklama", profile=self.profile)
+        if xy_ad and await self.profile.check_pixel(
+            xy_ad, rgb_ad, timeout=0.3, thr=1, wsize="1x1",
+        ):
+            await asyncio.sleep(0.5)
+            xy_close, _ = parseCBT("magaz_circle_close", profile=self.profile)
+            if xy_close:
+                await self.mouse.click(self.window_info, *xy_close)
+                log("Вылезла обычная реклама, закрыл гадость", self.window_id)
+                closed += 1
+                await asyncio.sleep(0.5)
+
+        # 2. Реклама в магазе (триггер → закрыть)
+        xy_rek, rgb_rek = parseCBT("magaz_reklama_trigger", profile=self.profile)
+        if xy_rek and await self.profile.check_pixel(
+            xy_rek, rgb_rek, timeout=0.3, thr=2,
+        ):
+            await asyncio.sleep(0.3)
+            if await self.wait_and_click("magaz_reklama_close", timeout=2, thr=2):
+                log("Вылезла реклама в магазе, закрыл", self.window_id)
+                closed += 1
+                await asyncio.sleep(0.5)
+
+        # 3. Гугл-реклама (только для не-RU региона)
+        if self.settings.REGION != Region.RU:
+            xy_google, rgb_google = parseCBT("magaz_google_trigger",
+                                              profile=self.profile)
+            if xy_google and await self.profile.check_pixel(
+                xy_google, rgb_google, timeout=0.3, thr=2, wsize="2x2",
+            ):
+                await asyncio.sleep(0.3)
+                if await self.wait_and_click("magaz_google_close", timeout=2, thr=2):
+                    log("Вылез гугл, закрыл гадость", self.window_id)
+                    closed += 1
+                    await asyncio.sleep(0.5)
+
+        return closed
+
     async def _menu_open(self, timeout: float = 0.3) -> bool:
         xy, rgb = parseCBT("main_menu_opened", profile=self.profile)
         if xy is None:
@@ -610,25 +664,8 @@ class Claims(GameAction):
 
         await asyncio.sleep(3)  # v2: было 2.5 — магазин тяжёлый
 
-        xy_close, rgb_close = parseCBT("magaz_monetka_reklama", profile=self.profile)
-        if await self.profile.check_pixel(
-            xy_close, rgb_close,
-            timeout=DELAY_WAIT_ADENA_SHOP_ADD, thr=1, wsize="1x1",
-        ):
-            await asyncio.sleep(1.5)
-            xy_close1, _ = parseCBT("magaz_circle_close", profile=self.profile)
-            await self.mouse.click(self.window_info, *xy_close1)
-            log("Вылезла обычная реклама, закрыл гадость", self.window_id)
-
-        if self.settings.REGION != Region.RU:
-            xy_google, rgb_google = parseCBT("magaz_google_trigger", profile=self.profile)
-            if await self.profile.check_pixel(
-                xy_google, rgb_google,
-                timeout=DELAY_WAIT_ADENA_SHOP_GOOGLE, thr=2, wsize="2x2",
-            ):
-                await asyncio.sleep(0.5)  # v2: было 0.2
-                if await self.wait_and_click("magaz_google_close", timeout=2, thr=2):
-                    log("Вылез гугл, закрыл гадость", self.window_id)
+        # Реклама может вылезти сразу при открытии магазина — проверяем.
+        await self._close_ad_banners()
 
         await asyncio.sleep(1.2)  # v2: было 0.6 — после реклам интерфейс оседает
         await self.wait_and_click("3_vkladka", timeout=2, thr=2)
@@ -655,9 +692,24 @@ class Claims(GameAction):
                 log("Что-то пошло не так, не трогаю окно, зырь в него", self.window_id)
                 return False
 
+            # После каждой вкладки — реклама могла догрузиться. Проверяем.
+            await self._close_ad_banners()
+
+        # Перед закрытием магаза — финальная проверка рекламы.
+        # Баннер мог вылезти пока бот скупал последние вкладки.
+        await self._close_ad_banners()
+
         if not await self.wait_and_click("close_magaz", timeout=5, thr=2):
-            await self.wait_and_click("npc_global_quit_button", timeout=2, thr=2)
-            return False
+            # Может баннер перекрыл кнопку закрытия? Проверим ещё раз.
+            await self._close_ad_banners()
+            if not await self.wait_and_click("close_magaz", timeout=3, thr=2):
+                await self.wait_and_click("npc_global_quit_button", timeout=2, thr=2)
+                return False
 
         await asyncio.sleep(0.8)  # v2: было 0.2
+
+        # После закрытия магаза — баннер мог вылезти в последний момент.
+        # Проверим ещё раз (мог догрузиться пока бот закрывал окно).
+        await self._close_ad_banners()
+
         return True

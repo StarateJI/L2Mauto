@@ -41,6 +41,19 @@ class Rewards(BaseProfile):
             if not await self.energo.is_on():
                 await self.energo.turn_on()
 
+            # После turn_on энерго — рекламный баннер мог вылезти в самый
+            # последний момент (пока бот засыпал). Проверяем несколько раз
+            # с паузами — на случай «недо-энерго» с баннером поверх.
+            # Пользователь: «бывает в режиме недоэнерго, где батарейка в
+            # центре, тогда это уже плохо».
+            for check in range(3):
+                # _close_ad_banners доступен через self.claims (Claims)
+                closed = await self.claims._close_ad_banners()
+                if closed > 0:
+                    log(f"После энерго: закрыл рекламный баннер "
+                        f"(проверка {check + 1}/3)", self.window_id)
+                await asyncio.sleep(1.0)
+
             self.notify(NotifyLevel.INFO, "Успешно собрал награды")
 
             await asyncio.sleep(1)

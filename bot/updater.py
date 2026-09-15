@@ -322,10 +322,39 @@ def update():
     try:
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         backup()
+        log("Обнова: бэкап сделан, качаю ZIP с GitHub...", level="INFO")
 
-        r = requests.get(REPO_ZIP, timeout=30)
-        r.raise_for_status()
-        z = zipfile.ZipFile(io.BytesIO(r.content))
+        # Качаем ZIP с stream=True и connect/read timeout — иначе requests.get
+        # может зависнуть намертво если GitHub долго отдаёт большой файл.
+        # connect=10 сек (дозвон), read=60 сек (между пакетами).
+        try:
+            r = requests.get(REPO_ZIP, timeout=(10, 60), stream=True)
+            r.raise_for_status()
+            # Читаем чанками с логированием прогресса — чтобы было видно что качается
+            content = b""
+            total = 0
+            last_log = 0
+            for chunk in r.iter_content(chunk_size=65536):
+                if chunk:
+                    content += chunk
+                    total += len(chunk)
+                    # Лог прогресса каждые 1 МБ
+                    if total - last_log >= 1024 * 1024:
+                        log(f"Обнова: скачано {total // 1024} КБ...", level="DEBUG")
+                        last_log = total
+            log(f"Обнова: ZIP скачан ({total // 1024} КБ), распаковываю...", level="INFO")
+            z = zipfile.ZipFile(io.BytesIO(content))
+        except requests.exceptions.ConnectTimeout:
+            log("Обнова: connect timeout — не смог дозвониться до GitHub за 10с",
+                level="ERROR")
+            sys.exit(1)
+        except requests.exceptions.ReadTimeout:
+            log("Обнова: read timeout — GitHub перестал слать данные (60с без пакетов)",
+                level="ERROR")
+            sys.exit(1)
+        except requests.exceptions.RequestException as e:
+            log(f"Обнова: сетевая ошибка: {type(e).__name__}: {e}", level="ERROR")
+            sys.exit(1)
 
         temp_dir = os.path.join(root_dir, "temp_update")
         if os.path.exists(temp_dir):
