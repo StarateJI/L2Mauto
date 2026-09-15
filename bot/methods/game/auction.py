@@ -1365,27 +1365,33 @@ class Auction(GameAction):
                 # Есть И иконка И красная точка → наш предмет.
                 win_cx = cx + INV_SCAN[0]
                 win_cy = cy + INV_SCAN[1]
-                if best_result is None or score > best_result[2]:
-                    best_result = (win_cx, win_cy, score, page)
-                    log(f"Аук: НАЙДЕН И ПОДТВЕРЖДЁН — стр {page} "
-                        f"иконка ({cx},{cy}) + точка {confirmed_dot} "
-                        f"→ клик ({win_cx},{win_cy}) score={score:.3f}",
-                        self.window_id)
-                # Точное совпадение с подтверждением — дальше не листаем.
-                if score >= 0.90:
-                    log(f"Аук: точное совпадение с красной точкой "
-                        f"(score >= 0.90), не листаю дальше", self.window_id)
-                    break
+                best_result = (win_cx, win_cy, score, page)
+                log(f"Аук: НАЙДЕН И ПОДТВЕРЖДЁН — стр {page} "
+                    f"иконка ({cx},{cy}) + точка {confirmed_dot} "
+                    f"→ клик ({win_cx},{win_cy}) score={score:.3f}",
+                    self.window_id)
+                # Подтверждён красной точкой → СРАЗУ break, не листаем дальше.
+                # Раньше требовалось score >= 0.90 — но 0.891 < 0.90 и бот
+                # продолжал листать на стр 2, 3, 4, 5 хотя уже нашёл.
+                # Красная точка — достаточное подтверждение, score не важен.
+                break
 
-            if best_result is not None and best_result[2] >= 0.90:
+            if best_result is not None:
+                # Нашли подтверждённый предмет — прекращаем сканирование.
                 break
 
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # Вернуться к странице с предметом
+        # Вернуться к странице с предметом.
+        # ВАЖНО: pages_to_back = сколько свайпов UP нужно сделать.
+        # Бот сейчас на стр `page` (последняя отсканированная). Чтобы вернуться
+        # на стр `best_result[3]`, нужно (page - best_result[3]) свайпов up.
+        # Раньше было `best_result[3] - 1` — неправильно (давало 0 для стр 1,
+        # хотя бот уже на стр 5 и нужно 4 свайпа up).
         if best_result is not None:
-            pages_to_back = best_result[3] - 1
+            last_page_scanned = page  # текущая страница после цикла
+            pages_to_back = last_page_scanned - best_result[3]
             for _ in range(pages_to_back):
                 await self._swipe_inventory('up')
             log(f"Аук: предмет найден и подтверждён красной точкой! "
