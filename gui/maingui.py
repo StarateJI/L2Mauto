@@ -430,6 +430,10 @@ class NedoGui(QWidget):
         self._batch_stop = False  # флаг жёсткой остановки process_batch
         self._skipped_windows = []  # окна которые не загрузились (Поиск информации)
 
+        # Запоминаем время старта всего прогона — для финального отчёта
+        import time as _time
+        _run_start_ts = _time.monotonic()
+
         def process_batch(batch_idx=0):
             if batch_idx >= len(batches):
                 # Все пачки прошли — проверяем пропущенные окна
@@ -440,6 +444,11 @@ class NedoGui(QWidget):
                     retry_batches = [retry_windows[i:i + num] for i in range(0, len(retry_windows), num)]
                     batches.extend(retry_batches)
                     QTimer.singleShot(5000, lambda: process_batch(batch_idx))
+                else:
+                    # Финал — всё прошло, пропущенных нет
+                    total_sec = _time.monotonic() - _run_start_ts
+                    log(f"Прогон завершён за {total_sec:.0f}с ({total_sec/60:.1f} мин). "
+                        f"Пачек: {batch_idx}.")
                 return
             if self.controller.batch_cancelled:
                 return
@@ -448,6 +457,9 @@ class NedoGui(QWidget):
                 return
 
             batch = batches[batch_idx]
+            # Лог старта пачки — пользователь видит прогресс в консоли
+            log(f"Пачка {batch_idx + 1}/{len(batches)}: старт ({len(batch)} окон: {batch})")
+            _batch_start_ts = _time.monotonic()
             self.start_windows(profile_class, batch)
 
             def wait_c(attempts=0):
@@ -477,6 +489,9 @@ class NedoGui(QWidget):
                         return
                     if self.controller.batch_cancelled:
                         return
+                    # Лог завершения пачки — пользователь видит прогресс в консоли
+                    _batch_dur = _time.monotonic() - _batch_start_ts
+                    log(f"Пачка {batch_idx + 1}/{len(batches)}: завершена за {_batch_dur:.0f}с")
                     # Пауза 1 сек между пачками
                     def _start_next():
                         if getattr(self, '_batch_stop', False):
