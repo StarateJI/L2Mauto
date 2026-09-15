@@ -1078,17 +1078,21 @@ class Auction(GameAction):
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
         Искать предмет в инвентаре.
-        Метод: красная точка + matchTemplate.
-        1. Сканируем страницу → ищем красные точки
-        2. Для каждой красной точки → matchTemplate в области вокруг неё
-        3. Если score >= порог И есть красная точка → это наш предмет
-        4. Кликаем по центру ячейки с красной точкой
+        Правильный порядок (как просил пользователь):
+          1. ПЕРВИЧНО — multi-scale matchTemplate по ВСЕЙ зоне INV_SCAN на каждой
+             странице. Находит ВСЕ места с score >= порога (не только лучшее),
+             потому что в инвентаре могут быть чёрно-белые НЕПРОДАВАЕМЫЕ дубликаты
+             с той же иконкой — matchTemplate может сматчить их тоже.
+          2. ПОДТВЕРЖДЕНИЕ — рядом с найденной иконкой проверяем красную точку
+             «новое». Предмет только что снят с продажи → у него ВСЕГДА есть
+             красная точка. Чёрно-белые дубликаты (непродаваемые) точки не имеют.
+          3. Кликаем только если ЕСТЬ И иконка И красная точка рядом.
 
-        Если красных точек нет → листаем дальше.
-        Если красные точки есть но matchTemplate не совпал → всё равно кликаем
-        (красная точка = новый предмет, а наш только что сняли).
+        Красная точка — ВСПОМОГАТЕЛЬНАЯ (подтверждение), НЕ фильтр страниц.
+        Каждая страница сканируется matchTemplate'ом независимо от наличия точек.
         """
-        best_result = None  # (cx, cy, score, page)
+        best_result = None  # (cx, cy, score, page) — window-relative
+        h_sample, w_sample = sample_gray.shape[:2]
 
         for page in range(1, SCAN_PAGES + 1):
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
@@ -1096,63 +1100,79 @@ class Auction(GameAction):
             await self._save_debug(f"au_page_{page}.png", img)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-            # 1. Ищем красные точки на странице
-            red_dots = self._find_red_dots(img)
-            log(f"Аук: стр {page} — красных точек: {len(red_dots)}", self.window_id)
-
-            if not red_dots:
-                # Нет красных точек → наш предмет не здесь → листаем
-                if page < SCAN_PAGES:
-                    await self._swipe_inventory('down')
-                continue
-
-            # 2. Для каждой красной точки — matchTemplate в области вокруг неё
-            # Красная точка в правом верхнем углу ячейки.
-            # Иконка предмета — НИЖЕ точки в той же ячейке.
-            # Кликаем по центру ячейки = точка + (0, +20) — ниже точки.
-            for (dot_x, dot_y) in red_dots:
-                # Вырезаем зону: от точки вниз 50px, влево-вправо 30px
-                crop_x1 = max(0, dot_x - 30)
-                crop_y1 = max(0, dot_y - 5)
-                crop_x2 = min(img.shape[1], dot_x + 30)
-                crop_y2 = min(img.shape[0], dot_y + 50)
-                crop = gray[crop_y1:crop_y2, crop_x1:crop_x2]
-
-                if crop.shape[0] < sample_gray.shape[0] or crop.shape[1] < sample_gray.shape[1]:
-                    log(f"Аук: стр {page} точка ({dot_x},{dot_y}) — crop мал", self.window_id, level="DEBUG")
+            # 1. ПЕРВИЧНО: multi-scale matchTemplate → все кандидаты >= порога.
+            #    Берём ВСЕ пики, не только лучший — чтобы не пропустить наш
+            #    цветной предмет, если B&W-дубликат получил чуть больший score.
+            candidates = []  # [(cx, cy, score)] в координатах page_gray
+            for scale in TM_SCALES:
+                new_w = int(w_sample * scale)
+                new_h = int(h_sample * scale)
+                if new_w < 5 or new_h < 5:
                     continue
-
-                # Прямой matchTemplate без multi-scale (на crop масштаб мешает)
+                if new_w > gray.shape[1] or new_h > gray.shape[0]:
+                    continue
+                scaled = cv2.resize(sample_gray, (new_w, new_h),
+                                    interpolation=cv2.INTER_AREA)
                 try:
-                    result_crop = cv2.matchTemplate(crop, sample_gray, cv2.TM_CCOEFF_NORMED)
-                    _, score, _, max_loc = cv2.minMaxLoc(result_crop)
-                    center_crop = (max_loc[0] + sample_gray.shape[1] // 2,
-                                   max_loc[1] + sample_gray.shape[0] // 2)
+                    result = cv2.matchTemplate(gray, scaled,
+                                               cv2.TM_CCOEFF_NORMED)
                 except cv2.error:
-                    score = 0.0
-                    center_crop = None
-                log(f"Аук: стр {page} точка ({dot_x},{dot_y}) TM score={score:.3f}",
-                    self.window_id, level="DEBUG")
+                    continue
+                locs = np.where(result >= TM_THRESHOLD)
+                for (pt_y, pt_x) in zip(*locs):
+                    cx = int(pt_x) + new_w // 2
+                    cy = int(pt_y) + new_h // 2
+                    score = float(result[int(pt_y), int(pt_x)])
+                    candidates.append((cx, cy, score))
 
-                if center_crop is not None and score >= TM_THRESHOLD:
-                    tm_cx = int(center_crop[0]) + crop_x1 + INV_SCAN[0]
-                    tm_cy = int(center_crop[1]) + crop_y1 + INV_SCAN[1]
-                else:
-                    # TM не нашёл рядом — пропускаем (дроп, не наш)
-                    log(f"Аук: стр {page} точка ({dot_x},{dot_y}) — TM не совпал",
-                        self.window_id, level="DEBUG")
+            # Дедупликация: кандидаты в пределах 25px друг от друга —
+            # оставляем с максимальным score (это один и тот же предмет,
+            # сматченный на разных масштабах).
+            candidates.sort(key=lambda c: -c[2])
+            deduped = []
+            for c in candidates:
+                if all(abs(c[0] - d[0]) > 25 or abs(c[1] - d[1]) > 25
+                       for d in deduped):
+                    deduped.append(c)
+
+            best_page_score = deduped[0][2] if deduped else 0.0
+
+            # 2. ПОДТВЕРЖДЕНИЕ: красные точки на этой странице
+            red_dots = self._find_red_dots(img)
+            log(f"Аук: стр {page} — кандидатов TM: {len(deduped)} "
+                f"(лучший score={best_page_score:.3f}), "
+                f"красных точек: {len(red_dots)}", self.window_id)
+
+            # 3. Ищем кандидата с красной точкой рядом.
+            #    Красная точка в Lineage2M — правый верхний угол ячейки,
+            #    т.е. в пределах ~40px от центра иконки 60×53.
+            for (cx, cy, score) in deduped:
+                confirmed_dot = None
+                for (dx, dy) in red_dots:
+                    if abs(dx - cx) <= 40 and abs(dy - cy) <= 40:
+                        confirmed_dot = (dx, dy)
+                        break
+                if confirmed_dot is None:
+                    # Иконка сматчилась, но красной точки рядом нет →
+                    # это B&W-дубликат (непродаваемый), не наш предмет.
+                    log(f"Аук: стр {page} — иконка ({cx},{cy}) "
+                        f"score={score:.3f} НО без красной точки → дубликат, "
+                        f"пропускаю", self.window_id, level="DEBUG")
                     continue
 
+                # Есть И иконка И красная точка → наш предмет.
+                win_cx = cx + INV_SCAN[0]
+                win_cy = cy + INV_SCAN[1]
                 if best_result is None or score > best_result[2]:
-                    best_result = (tm_cx, tm_cy, score, page)
-                    log(f"Аук: новый лучший — стр {page} точка ({dot_x},{dot_y}) "
-                        f"→ клик ({tm_cx},{tm_cy}) score={score:.3f}",
+                    best_result = (win_cx, win_cy, score, page)
+                    log(f"Аук: НАЙДЕН И ПОДТВЕРЖДЁН — стр {page} "
+                        f"иконка ({cx},{cy}) + точка {confirmed_dot} "
+                        f"→ клик ({win_cx},{win_cy}) score={score:.3f}",
                         self.window_id)
-
-                # Если score >= 0.90 — точное совпадение, не листаем дальше
+                # Точное совпадение с подтверждением — дальше не листаем.
                 if score >= 0.90:
-                    log(f"Аук: точное совпадение (score >= 0.90), не листаю дальше",
-                        self.window_id)
+                    log(f"Аук: точное совпадение с красной точкой "
+                        f"(score >= 0.90), не листаю дальше", self.window_id)
                     break
 
             if best_result is not None and best_result[2] >= 0.90:
@@ -1166,16 +1186,16 @@ class Auction(GameAction):
             pages_to_back = best_result[3] - 1
             for _ in range(pages_to_back):
                 await self._swipe_inventory('up')
-            log(f"Аук: предмет найден! стр {best_result[3]} "
-                f"({best_result[0]},{best_result[1]}) score={best_result[2]:.3f}",
-                self.window_id)
+            log(f"Аук: предмет найден и подтверждён красной точкой! "
+                f"стр {best_result[3]} ({best_result[0]},{best_result[1]}) "
+                f"score={best_result[2]:.3f}", self.window_id)
             return (best_result[0], best_result[1])
 
         # Не нашли — вернуться в начало
         for _ in range(SCAN_PAGES - 1):
             await self._swipe_inventory('up')
-        log(f"Аук: предмет не найден (нет красных точек с matchTemplate)",
-            self.window_id, level="ERROR")
+        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
+            f"(ни иконки с красной точкой)", self.window_id, level="ERROR")
         return None
 
     # ──────────────────────────────────────────────────────────────────────
