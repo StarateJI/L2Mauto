@@ -1180,6 +1180,21 @@ class Auction(GameAction):
             #    Красная точка в Lineage2M — правый верхний угол ячейки,
             #    т.е. в пределах ~40px от центра иконки 60×53.
             for (cx, cy, score) in deduped:
+                # Если score >= 0.95 — это почти идеальное совпадение.
+                # B&W дубликаты (серые иконки) дают ниже score при сравнении
+                # с цветным образцом. Раз score такой высокий — это наш
+                # предмет, красная точка не нужна.
+                if score >= 0.95:
+                    win_cx = cx + INV_SCAN[0]
+                    win_cy = cy + INV_SCAN[1]
+                    if best_result is None or score > best_result[2]:
+                        best_result = (win_cx, win_cy, score, page)
+                        log(f"Аук: НАЙДЕН (score>=0.95, без точки) — стр {page} "
+                            f"иконка ({cx},{cy}) → клик ({win_cx},{win_cy}) "
+                            f"score={score:.3f}", self.window_id)
+                    break
+
+                # score < 0.95 — проверяем красную точку как подтверждение
                 confirmed_dot = None
                 for (dx, dy) in red_dots:
                     if abs(dx - cx) <= 40 and abs(dy - cy) <= 40:
