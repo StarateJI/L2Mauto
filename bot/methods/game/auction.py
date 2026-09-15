@@ -1049,13 +1049,14 @@ class Auction(GameAction):
     def _find_red_dots(self, img: np.ndarray) -> list:
         """
         Найти красные точки «новое» в кадре инвентаря.
-        Цвет точки в Lineage2M: R~187, G~75, B~5 (красно-оранжевый).
-        Фильтр: R>150, G<120, B<50, R>G+50 (красный явно больше зелёного).
+        Точный цвет точки в Lineage2M: BGR=(0, 102, 255) = R=255, G=102, B=0.
+        Это яркий красно-оранжевый круг в правом верхнем углу ячейки.
+        Фильтр: R>200, G 70-130, B<30 — точный цвет красной точки.
         """
         try:
             b, g, r = cv2.split(img)
-            # R>150, G<120, B<50, R>G+50
-            mask = (r > 150) & (g < 120) & (b < 50) & (r > g + 50)
+            # R>200, G=70-130, B<30 — точный цвет красной точки Lineage2M
+            mask = (r > 200) & (g > 70) & (g < 130) & (b < 30)
             mask_u8 = (mask.astype(np.uint8)) * 255
             # Морфология — объединить пиксели в кластер
             kernel = np.ones((3, 3), np.uint8)
@@ -1064,7 +1065,7 @@ class Auction(GameAction):
             dots = []
             for i in range(1, num):  # 0 = фон
                 area = stats[i, cv2.CC_STAT_AREA]
-                if area < 3:  # шум
+                if area < 5:  # слишком маленький — шум
                     continue
                 cx = int(centroids[i][0])
                 cy = int(centroids[i][1])
