@@ -206,11 +206,29 @@ class NedoGui(QWidget):
         self.btn_otdel.clicked.connect(self.open_otdel)
         self.layout_main.addWidget(self.btn_otdel)
 
+        # Маппинг имён профилей в русские подписи кнопок.
+        # Ключ — имя класса профиля (как в self.profiles).
+        # Значение — русский текст кнопки.
+        PROFILE_LABELS = {
+            "Auction":      "Аукцион",
+            "Dungeon":      "Данжи",
+            "MainAlchemy":  "Химка",
+            "PVPDodge":     "ПВП",
+            "Rewards":      "Бонусы",
+            "Scheduler":    "Шедуля",
+            "BuyerProfile": "Байер",
+        }
+
         for name, cls in self.profiles.items():
-            btn = QPushButton(f"▶ {name} ВСЕ")
+            # Русская подпись из маппинга, если нет — само имя класса
+            label = PROFILE_LABELS.get(name, name)
+            btn = QPushButton(f"▶ {label}")
             btn.setFont(font_btn)
             btn.setCursor(Qt.PointingHandCursor)
             btn.setFixedHeight(28)
+            # Сохраняем имя класса профиля в свойстве кнопки — для подсчёта
+            # активных окон (метод _update_running_counters ниже).
+            btn.setProperty("profile_name", name)
 
             if name == "MainAlchemy":
                 btn.clicked.connect(lambda _, c=cls: self.start_alchemy(c))
@@ -219,8 +237,8 @@ class NedoGui(QWidget):
 
             self.layout_main.addWidget(btn)
 
-        # ── STOP ВСЕ — красная, крупная ─────────────────────────────────────
-        self.btn_stop_all = QPushButton("⏹ STOP ВСЕ")
+        # ── СТОП — красная, крупная ────────────────────────────────────────
+        self.btn_stop_all = QPushButton("⏹ СТОП")
         self.btn_stop_all.setObjectName("stop_all")
         self.btn_stop_all.setFont(QFont("Segoe UI", 10, QFont.Bold))
         self.btn_stop_all.setCursor(Qt.PointingHandCursor)
@@ -561,10 +579,14 @@ class NedoGui(QWidget):
         for i in range(self.layout_main.count()):
             item = self.layout_main.itemAt(i)
             w = item.widget()
-            if isinstance(w, QPushButton) and "ВСЕ" in w.text() and not "STOP ВСЕ" in w.text(): # эбат накостылил, потом переделать #todo
+            if isinstance(w, QPushButton):
+                # Профильная кнопка — у неё есть свойство profile_name
+                prof_name = w.property("profile_name")
+                if prof_name is None:
+                    continue
+                # Базовый текст без счётчика «(N)»
                 base_text = w.text().split(" (")[0]
-                profile_name = base_text.replace(" ВСЕ", "")
-                count = running.get(profile_name, 0)
+                count = running.get(prof_name, 0)
                 w.setText(f"{base_text} ({count})")
 
     def show_update_button(self):

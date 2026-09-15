@@ -20,6 +20,60 @@ from bot.methods.game._base import GameAction
 
 class Claims(GameAction):
 
+    async def _close_ad_banners(self) -> int:
+        """
+        Закрыть рекламные баннеры которые могут вылезти в любом месте
+        интерфейса (донат-магазин, гугл-реклама, «обычная» реклама).
+
+        Проверяет 3 типа баннеров и закрывает каждый если виден:
+          1. magaz_monetka_reklama → magaz_circle_close (кругляш)
+          2. magaz_reklama_trigger → magaz_reklama_close
+          3. magaz_google_trigger → magaz_google_close
+
+        Возвращает количество закрытых баннеров (0 если ничего не было).
+        Безопасно вызывать в любом месте — если баннеров нет, ничего не делает.
+        """
+        closed = 0
+
+        # 1. Обычная реклама (монетка-реклама) → кругляш-закрывашка
+        xy_ad, rgb_ad = parseCBT("magaz_monetka_reklama", profile=self.profile)
+        if xy_ad and await self.profile.check_pixel(
+            xy_ad, rgb_ad, timeout=0.3, thr=1, wsize="1x1",
+        ):
+            await asyncio.sleep(0.5)
+            xy_close, _ = parseCBT("magaz_circle_close", profile=self.profile)
+            if xy_close:
+                await self.mouse.click(self.window_info, *xy_close)
+                log("Вылезла обычная реклама, закрыл гадость", self.window_id)
+                closed += 1
+                await asyncio.sleep(0.5)
+
+        # 2. Реклама в магазе (триггер → закрыть)
+        xy_rek, rgb_rek = parseCBT("magaz_reklama_trigger", profile=self.profile)
+        if xy_rek and await self.profile.check_pixel(
+            xy_rek, rgb_rek, timeout=0.3, thr=2,
+        ):
+            await asyncio.sleep(0.3)
+            if await self.wait_and_click("magaz_reklama_close", timeout=2, thr=2):
+                log("Вылезла реклама в магазе, закрыл", self.window_id)
+                closed += 1
+                await asyncio.sleep(0.5)
+
+        # 3. Гугл-реклама (только для не-RU региона)
+        if self.settings.REGION != Region.RU:
+            xy_google, rgb_google = parseCBT("magaz_google_trigger",
+                                              profile=self.profile)
+            if xy_google and await self.profile.check_pixel(
+                xy_google, rgb_google, timeout=0.3, thr=2, wsize="2x2",
+            ):
+                await asyncio.sleep(0.3)
+                if await self.wait_and_click("magaz_google_close", timeout=2, thr=2):
+                    log("Вылез гугл, закрыл гадость", self.window_id)
+                    closed += 1
+                    await asyncio.sleep(0.5)
+
+        return closed
+
     async def _menu_open(self, timeout: float = 0.3) -> bool:
         xy, rgb = parseCBT("main_menu_opened", profile=self.profile)
         if xy is None:
@@ -31,11 +85,16 @@ class Claims(GameAction):
             return True
         await self.wait_and_click("main_menu_gui", timeout=timeout)
         if await self._menu_open(timeout=3):
+            # Меню открыто — вылезла реклама? Закроем.
+            await self._close_ad_banners()
             return True
         # v2: одна повторная попытка входа в меню (лаг на старте — частый гость)
         await asyncio.sleep(1.5)
         await self.wait_and_click("main_menu_gui", timeout=3)
-        return await self._menu_open(timeout=3)
+        if await self._menu_open(timeout=3):
+            await self._close_ad_banners()
+            return True
+        return False
 
     async def _close_menu(self):
         if await self._menu_open():
