@@ -330,20 +330,26 @@ def update():
         try:
             r = requests.get(REPO_ZIP, timeout=(10, 60), stream=True)
             r.raise_for_status()
-            # Читаем чанками с логированием прогресса — чтобы было видно что качается
-            content = b""
+            # Читаем чанками с логированием прогресса — чтобы было видно что качается.
+            # FIX: previously did `content = b""; content += chunk` in a loop.
+            # CPython's bytes += is O(n) per append (it rebuilds the whole
+            # buffer), so accumulating a multi-MB ZIP that way is O(n²) —
+            # noticeably slow and allocates a fresh copy on every iteration.
+            # io.BytesIO amortises appends via an internal over-allocated
+            # buffer (like a list of chunks), so the same download is O(n).
+            buf = io.BytesIO()
             total = 0
             last_log = 0
             for chunk in r.iter_content(chunk_size=65536):
                 if chunk:
-                    content += chunk
+                    buf.write(chunk)
                     total += len(chunk)
                     # Лог прогресса каждые 1 МБ
                     if total - last_log >= 1024 * 1024:
                         log(f"Обнова: скачано {total // 1024} КБ...", level="DEBUG")
                         last_log = total
             log(f"Обнова: ZIP скачан ({total // 1024} КБ), распаковываю...", level="INFO")
-            z = zipfile.ZipFile(io.BytesIO(content))
+            z = zipfile.ZipFile(buf)
         except requests.exceptions.ConnectTimeout:
             log("Обнова: connect timeout — не смог дозвониться до GitHub за 10с",
                 level="ERROR")

@@ -238,7 +238,13 @@ class RustBackend(CaptureBackend):
                             return True
                     except Exception as e2:
                         self._log_error("wait_for_pixel(monitor fallback)", e2)
-                        return False
+                        # FIX: previously this returned False on the first
+                        # fallback exception — a single transient mss/rust
+                        # hiccup would abort the whole wait even though
+                        # `timeout` had not yet elapsed. Continue iterating
+                        # so the loop falls through to the deadline check
+                        # below and respects the requested timeout.
+                        continue
             if time.monotonic() >= deadline:
                 return False
             await asyncio.sleep(poll_s)

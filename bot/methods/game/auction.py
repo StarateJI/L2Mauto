@@ -133,7 +133,7 @@ TM_THRESHOLD = 0.75
 TM_SCALES = [0.85, 0.92, 1.0, 1.08, 1.15]
 
 # ── Лимиты ────────────────────────────────────────────────────────────────
-SCAN_PAGES = 5          # страниц инвентаря (предмет падает в КОНЕЦ)
+SCAN_PAGES = 3          # страниц инвентаря (предмет падает в КОНЕЦ, 3 достаточно)
 MAX_OK_RETRIES = 4      # попыток кликнуть ОК отмены
 MAX_ITEMS = 10          # максимум предметов за один прогон
 
@@ -277,7 +277,12 @@ class Auction(GameAction):
             # 7. Цикл по предметам
             for i in range(1, MAX_ITEMS + 1):
                 log(f"Аук: предмет {i}/{MAX_ITEMS}", self.window_id)
-                result = await self._one_item_cycle()
+                try:
+                    result = await self._one_item_cycle()
+                except Exception as e:
+                    log(f"Аук: предмет {i} упал с исключением: {e!r} — пропускаю",
+                        self.window_id, level="WARNING")
+                    result = 'error'
                 if result == 'ok':
                     made += 1
                     log(f"Аук: предмет {i} переставлен", self.window_id)
@@ -285,9 +290,9 @@ class Auction(GameAction):
                     log(f"Аук: лотов больше нет на странице (предмет {i})", self.window_id)
                     break
                 else:  # 'error'
-                    log(f"Аук: ошибка на предмете {i} — стоп, сделано {made}",
-                        self.window_id, level="ERROR")
-                    break
+                    log(f"Аук: ошибка на предмете {i} — пропускаю, иду к следующему",
+                        self.window_id, level="WARNING")
+                    continue
 
         except asyncio.CancelledError:
             # Пользователь нажал СТОП ВСЕ. finally всё равно выполнится —
@@ -687,12 +692,27 @@ class Auction(GameAction):
         другое окно и мы получим чужой кадр (поэтому «страницы не меняются»
         и matchTemplate матчит одни и те же иконки).
         """
-        self._ensure_foreground()
         win = self.window_info[self.window_id]
         wx, wy = win["Position"]
         x, y, w, h = rect
         monitor = {"left": wx + x, "top": wy + y, "width": w, "height": h}
-        shot = _sct.grab(monitor)
+        # mss использует thread-local handles. При вызове из не-главного потока
+        # может крашиться с AttributeError srcdc. Ловим и пересоздаём локально.
+        try:
+            shot = _sct.grab(monitor)
+        except Exception as e:
+            if 'srcdc' in str(e) or 'memdc' in str(e):
+                try:
+                    local_sct = mss.mss()
+                except AttributeError:
+                    local_sct = mss.MSS()
+                shot = local_sct.grab(monitor)
+                try:
+                    local_sct.close()
+                except Exception:
+                    pass
+            else:
+                raise
         arr = np.array(shot)  # BGRA
         return cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
 
@@ -939,14 +959,15 @@ class Auction(GameAction):
             big = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_CUBIC)
             gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
             pt = _get_pytesseract()
+            text = ""
             if pt is None:
-                log("Аук: pytesseract недоступен — НЕ ТРОГАЮ лот (безопасно)",
-                    self.window_id, level="WARNING")
-                return True
-            text = pt.image_to_string(
-                gray, lang="rus+eng", config="--psm 7",
-            ).strip().lower()
-            log(f"Аук: статус лота OCR: '{text}'", self.window_id, level="DEBUG")
+                log("Аук: pytesseract недоступен — проверяю статус по цвету",
+                    self.window_id, level="DEBUG")
+            else:
+                text = pt.image_to_string(
+                    gray, lang="rus+eng", config="--psm 7",
+                ).strip().lower()
+                log(f"Аук: статус лота OCR: '{text}'", self.window_id, level="DEBUG")
 
             ocr_match = any(kw in text for kw in
                             ("продаёт", "продает", "продаю", "продажа",
@@ -1186,10 +1207,13 @@ class Auction(GameAction):
             dots = []
             for i in range(1, num):  # 0 = фон
                 area = stats[i, cv2.CC_STAT_AREA]
-                if area < 5:  # слишком маленький — шум
+                if area < 15:  # слишком маленький — шум (было 5)
                     continue
                 cx = int(centroids[i][0])
                 cy = int(centroids[i][1])
+                # Игнорировать точки в заголовке инвентаря (y < 30) — это шум
+                if cy < 30:
+                    continue
                 dots.append((cx, cy))
             return dots
         except Exception as e:
@@ -1302,11 +1326,15 @@ class Auction(GameAction):
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # Вернуться к странице с предметом
+        # ВСЕГДА возвращаемся в начало — SCAN_PAGES свайпов up
+        for _ in range(SCAN_PAGES):
+            await self._swipe_inventory('up')
+        await asyncio.sleep(1.0)
         if best_result is not None:
-            pages_to_back = best_result[3] - 1
-            for _ in range(pages_to_back):
-                await self._swipe_inventory('up')
+            # Свайпаем down до нужной страницы
+            pages_to_go = best_result[3] - 1
+            for _ in range(pages_to_go):
+                await self._swipe_inventory('down')
             log(f"Аук: предмет найден и подтверждён красной точкой! "
                 f"стр {best_result[3]} ({best_result[0]},{best_result[1]}) "
                 f"score={best_result[2]:.3f}", self.window_id)
@@ -1396,7 +1424,7 @@ class Auction(GameAction):
         # 5. Кликнуть по найденному предмету (двойной клик — первый выделяет, второй открывает окно)
         await self._click(*item_pos)
         log(f"Аук: клик 1 по предмету {item_pos}", self.window_id)
-        await asyncio.sleep(1.0)
+        await asyncio.sleep(0.2)
         await self._click(*item_pos)
         log(f"Аук: клик 2 по предмету {item_pos}", self.window_id)
         await asyncio.sleep(T_ITEM_WINDOW)
@@ -1408,7 +1436,8 @@ class Auction(GameAction):
         # ⚠️ КРИТИЧНО: если OCR не смог прочитать цену — СТОП, не выставлять!
         # Раньше бот ставил 10 аден и «успешно» выставлял предмет за бесценок.
         min_price = self._ocr_price()
-        if min_price is None or min_price < 10:
+        MAX_REASONABLE_PRICE = 10_000_000  # 10M — верхняя граница sanity
+        if min_price is None or min_price < 10 or min_price > MAX_REASONABLE_PRICE:
             log("Аук: не удалось прочитать мин. цену — СТОП, не выставляю "
                 "(защита от продажи за бесценок)", self.window_id, level="ERROR")
             self.profile.notify("error",

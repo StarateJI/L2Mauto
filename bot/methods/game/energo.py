@@ -42,11 +42,16 @@ class Energo(GameAction):
 
         if self.settings.PEACE_MODE:
             peace_xy, peace_rgb = parseCBT("peace_off", profile=self.profile)
-            peace = await self.profile.check_pixel(peace_xy, peace_rgb, timeout=0.2, thr=5)
-            if peace:
-                await self.mouse.click(self.window_info, peace_xy[0], peace_xy[1])
-                log("Врубил мирку, была выключена", self.window_id)
-                await asyncio.sleep(0.15)
+            # BUG E3: parseCBT("peace_off") без None guard —
+            # если координат нет, check_pixel словит TypeError на None.
+            if peace_xy is not None:
+                peace = await self.profile.check_pixel(peace_xy, peace_rgb, timeout=0.2, thr=5)
+                if peace:
+                    await self.mouse.click(self.window_info, peace_xy[0], peace_xy[1])
+                    log("Врубил мирку, была выключена", self.window_id)
+                    await asyncio.sleep(0.15)
+            else:
+                log("peace_off координат нет, скип мирки", self.window_id, level="WARNING")
 
         await self.mouse.click(self.window_info, center_x, center_y)
         return True
@@ -56,7 +61,7 @@ class Energo(GameAction):
         width = window["Width"]
         height = window["Height"]
 
-        running = self.profile.events_checker.get_running(self.window_id)
+        running = self.profile.events_checker.get_running(self.window_id) or []
         health_was_on = MonitorType.HEALTH in running
         if health_was_on:
             self.profile.events_checker.stop_once(self.window_id, MonitorType.HEALTH)
@@ -76,6 +81,15 @@ class Energo(GameAction):
         await self.mouse.swipe(self.window_info, swipe_points, delay_points=0.08)
 
         xy1, rgb1 = parseCBT("zalupka_gui", profile=self.profile)
+        # BUG E6: parseCBT("zalupka_gui") без None guard — check_pixel падает на None
+        # и вся turn_off() улетает в исключение. Выходим с False, не сломав событийный монитор.
+        if xy1 is None:
+            log("zalupka_gui координат нет, не могу проверить телепорт", self.window_id, level="WARNING")
+            if health_was_on:
+                self.profile.events_checker.start_monitoring(
+                    self.window_id, self.profile, [MonitorType.HEALTH]
+                )
+            return False
         await asyncio.sleep(SLEEP_AFTER_UNBLOCK)
         if health_was_on:
             self.profile.events_checker.start_monitoring(
@@ -112,13 +126,18 @@ class Energo(GameAction):
 
     async def check_lvl_up(self) -> bool:
         need = ["lvl_up_black_2", "lvl_up_black"]
-        results = [
-            await self.profile.check_pixel(
-                *parseCBT(lvl_name, profile=self.profile),
-                timeout=0.3, wsize="1x1", thr=1,
-            )
-            for lvl_name in need
-        ]
+        # BUG E11: parseCBT(lvl_name) без None guard в check_lvl_up —
+        # старый list-comprehension словит TypeError если для какого-то lvl_name
+        # нет координат в CBT. Разворачиваем в цикл с проверкой.
+        results = []
+        for lvl_name in need:
+            xy, rgb = parseCBT(lvl_name, profile=self.profile)
+            if xy is None:
+                results.append(False)
+                continue
+            results.append(await self.profile.check_pixel(
+                xy, rgb, timeout=0.3, wsize="1x1", thr=1,
+            ))
 
         if all(results):
             log("Лвл ап вылез, закрываю", self.window_id)
@@ -137,5 +156,10 @@ class Energo(GameAction):
         if not await self.is_on():
             return None
         xy1, rgb1 = parseCBT("q_quiver", profile=self.profile)
+        # BUG E13: parseCBT("q_quiver") без None guard — check_pixel падает на None.
+        # Возвращаем None (неизвестно), чтобы коллер не считал что колчан есть.
+        if xy1 is None:
+            log("q_quiver координат нет, не могу проверить колчан", self.window_id, level="WARNING")
+            return None
         quiver = await self.profile.check_pixel(xy1, rgb1, timeout=2, thr=2, wsize="1x1")
         return not quiver

@@ -181,11 +181,27 @@ class BaseProfile(ABC):
 
         EventsManager.unregister(window_id)
 
-        tasks = [self._task] if self._task else []
+        # FIX: previously on_stop built `tasks = [self._task] + [event_task]`
+        # and cancelled+awaited them all. But on_stop is invoked from inside
+        # self._task's execution (either via _graceful_stop in _run_bot's
+        # except/finally, or via stop_bot after self._task has already been
+        # cancelled and awaited). Cancelling self._task here either raises
+        # CancelledError at the next await inside this very cleanup (leaving
+        # EventsManager unregistered, capture not released, queue not reset)
+        # or is a redundant no-op. So we leave self._task alone and only
+        # cancel the event listener plus any spawned child tasks.
+        tasks: List[asyncio.Task] = []
 
         if self._event_task:
             self._event_task.cancel()
             tasks.append(self._event_task)
+
+        # Cancel any spawned child tasks (best-effort, ignore if list is
+        # empty or contains already-done tasks).
+        for child in list(self._child_tasks or []):
+            if child is not None and not child.done():
+                child.cancel()
+                tasks.append(child)
 
         for task in tasks:
             task.cancel()
