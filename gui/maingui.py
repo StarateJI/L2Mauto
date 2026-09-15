@@ -476,8 +476,10 @@ class NedoGui(QWidget):
                         return
                     process_batch(batch_idx + 1)
                     return
-                if attempts >= 8 * 3600:
-                    log(f"Пачка {batch_idx + 1}: фармит слишком долго {running}, запускаю следующую", level="WARNING")
+                # Таймаут: 5 минут (300 сек) на пачку.
+                # Было 8 часов (8*3600=28800) — бот ждал часами если окно зависло.
+                if attempts >= 300:
+                    log(f"Пачка {batch_idx + 1}: слишком долго ({running}), пропускаю дальше", level="WARNING")
                     process_batch(batch_idx + 1)
                     return
                 QTimer.singleShot(1000, lambda: wait_f(attempts + 1))
