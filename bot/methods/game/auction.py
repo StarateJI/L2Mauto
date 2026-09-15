@@ -689,33 +689,15 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     async def _click(self, x: int, y: int) -> None:
         """Клик по window-relative координатам через очередь мыши.
-        Перед кликом — SetForegroundWindow + проверка перекрытия.
-        Если окно перекрыто другим (другой бот работает) — ждём до 3 сек."""
+        SetForegroundWindow перед кликом — без проверки/ожидания."""
         try:
             import ctypes
             hwnd_val = self.window_info[self.window_id].get("ID")
             if hwnd_val:
-                hwnd = int(hwnd_val)
-                # Активируем окно
                 try:
-                    ctypes.windll.user32.SetForegroundWindow(hwnd)
+                    ctypes.windll.user32.SetForegroundWindow(int(hwnd_val))
                 except Exception:
                     pass
-                # Проверяем — реально ли наше окно теперь активно?
-                for wait_attempt in range(6):  # до 3 сек (6 × 0.5с)
-                    try:
-                        fg = ctypes.windll.user32.GetForegroundWindow()
-                        if fg == hwnd:
-                            break  # наше окно активно — можно кликать
-                    except Exception:
-                        break
-                    if wait_attempt == 0:
-                        log(f"Аук: окно перекрыто, жду... (attempt {wait_attempt+1}/6)",
-                            self.window_id, level="DEBUG")
-                    await asyncio.sleep(0.5)
-                else:
-                    log(f"Аук: окно перекрыто 3 сек — кликаю вслепую",
-                        self.window_id, level="WARNING")
         except Exception:
             pass
         await self.mouse.click(self.window_info, x, y)

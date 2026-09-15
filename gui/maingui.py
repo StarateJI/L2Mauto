@@ -458,9 +458,9 @@ class NedoGui(QWidget):
                 if not stalled:
                     wait_f()
                     return
-                # 6 попыток × 500ms = 3 сек.
-                if attempts >= 6:
-                    log(f"Пачка {batch_idx + 1}: не завелись {stalled} за 3 сек, пропускаю дальше", level="WARNING")
+                # 16 попыток × 500ms = 8 сек.
+                if attempts >= 16:
+                    log(f"Пачка {batch_idx + 1}: не завелись {stalled} за 8 сек, пропускаю дальше", level="WARNING")
                     wait_f()
                     return
                 QTimer.singleShot(500, lambda: wait_c(attempts + 1))
@@ -508,7 +508,11 @@ class NedoGui(QWidget):
             if nicks:
                 self.stop_windows(nicks)
 
-            log(f"СТОП ВСЕ: команда отправлена")
+            # 4. Очистить список пропущенных
+            if hasattr(self, '_skipped_windows'):
+                self._skipped_windows.clear()
+
+            log(f"СТОП ВСЕ: команда отправлена, _batch_stop={self._batch_stop}")
         except Exception as e:
             log(f"СТОП ВСЕ: exception: {e}", level="ERROR")
             import traceback
