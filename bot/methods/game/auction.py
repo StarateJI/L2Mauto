@@ -641,7 +641,24 @@ class Auction(GameAction):
         wx, wy = win["Position"]
         x, y, w, h = rect
         monitor = {"left": wx + x, "top": wy + y, "width": w, "height": h}
-        shot = _sct.grab(monitor)
+        try:
+            shot = _sct.grab(monitor)
+        except AttributeError as e:
+            if 'srcdc' in str(e) or 'memdc' in str(e):
+                # mss использует thread-local handles. Если вызван из потока
+                # где handles не созданы → краш. Создаём НОВЫЙ mss локально
+                # (НЕ меняем global _sct) и используем его.
+                try:
+                    local_sct = mss.mss()
+                except AttributeError:
+                    local_sct = mss.MSS()
+                shot = local_sct.grab(monitor)
+                try:
+                    local_sct.close()
+                except Exception:
+                    pass
+            else:
+                raise
         arr = np.array(shot)  # BGRA
         return cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
 
@@ -670,12 +687,28 @@ class Auction(GameAction):
             # Берём главный монитор (обычно 2560×1440)
             # monitors[0] = все мониторы вместе (virtual screen)
             # monitors[1] = первый реальный монитор
-            monitors = _sct.monitors
-            if len(monitors) > 1:
-                monitor = monitors[1]
-            else:
-                monitor = monitors[0]
-            shot = _sct.grab(monitor)
+            try:
+                monitors = _sct.monitors
+                if len(monitors) > 1:
+                    monitor = monitors[1]
+                else:
+                    monitor = monitors[0]
+                shot = _sct.grab(monitor)
+            except AttributeError as e:
+                if 'srcdc' in str(e) or 'memdc' in str(e):
+                    try:
+                        local_sct = mss.mss()
+                    except AttributeError:
+                        local_sct = mss.MSS()
+                    monitors = local_sct.monitors
+                    monitor = monitors[1] if len(monitors) > 1 else monitors[0]
+                    shot = local_sct.grab(monitor)
+                    try:
+                        local_sct.close()
+                    except Exception:
+                        pass
+                else:
+                    raise
             arr = np.array(shot)  # BGRA
             img = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
             cv2.imwrite(path, img)
