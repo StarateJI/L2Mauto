@@ -1123,12 +1123,13 @@ class Auction(GameAction):
                         f"→ клик ({cell_cx},{cell_cy}) score={score:.3f}",
                         self.window_id)
 
-                # Если точное совпадение — не листаем дальше
-                if score >= 0.95:
-                    log(f"Аук: точное совпадение, не листаю дальше", self.window_id)
+                # Если score >= 0.90 — точное совпадение, не листаем дальше
+                if score >= 0.90:
+                    log(f"Аук: точное совпадение (score >= 0.90), не листаю дальше",
+                        self.window_id)
                     break
 
-            if best_result is not None and best_result[2] >= 0.95:
+            if best_result is not None and best_result[2] >= 0.90:
                 break
 
             if page < SCAN_PAGES:
@@ -1215,9 +1216,12 @@ class Auction(GameAction):
                                f"Аук: ПРЕДМЕТ НЕ НАЙДЕН (SIFT, {SCAN_PAGES} стр)")
             return 'error'
 
-        # 5. Кликнуть по найденному предмету
+        # 5. Кликнуть по найденному предмету (двойной клик — первый выделяет, второй открывает окно)
         await self._click(*item_pos)
-        log(f"Аук: клик по предмету {item_pos}", self.window_id)
+        log(f"Аук: клик 1 по предмету {item_pos}", self.window_id)
+        await asyncio.sleep(1.0)
+        await self._click(*item_pos)
+        log(f"Аук: клик 2 по предмету {item_pos}", self.window_id)
         await asyncio.sleep(T_ITEM_WINDOW)
         # Скрин после клика — видно открылось ли окно цены
         after_item_click = self._grab(INV_SCAN)
