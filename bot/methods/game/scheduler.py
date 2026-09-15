@@ -51,6 +51,33 @@ class Scheduler(GameAction):
                 return None
 
         if not await self.wait_and_click(tag, timeout=5):
+            # Кнопка «Начать расписание» не найдена. Возможно расписание
+            # уже запущено — тогда на её месте кнопка «Остановить расписание»
+            # (schedule_stop, серый/коричневый цвет). Проверим.
+            xy_stop, rgb_stop = parseCBT("schedule_stop", profile=self.profile)
+            already_running = False
+            if xy_stop:
+                already_running = await self.profile.check_pixel(
+                    xy_stop, rgb_stop, timeout=2, thr=4,
+                )
+
+            if already_running:
+                # Расписание уже идёт — выходим из меню и усыпляем окно.
+                # Пользователь: «ему надо просто выйти отсюда и уйти в сон,
+                # выход я подметил так же как кнопки со стрелочкой (цифра 3)
+                # нажал, он вышел из меню шедули и усыпляем окно».
+                log("Расписание уже запущено (кнопка «Остановить» вместо "
+                    "«Начать») — выхожу из меню и усыпаю окно",
+                    self.window_id, level="WARNING")
+                # Кнопка выхода из меню шедули (стрелочка в левом верхнем углу)
+                await self.wait_and_click("npc_global_quit_button", timeout=3)
+                await asyncio.sleep(1)
+                # Усыпить окно
+                if not await self.profile.energo.is_on():
+                    await self.profile.energo.turn_on()
+                return None  # не ошибка — просто расписание уже идёт
+
+            # Не schedule_stop и не schedule_start — окно реально сломалось
             log("Окно сломалось?", self.window_id)
             self.profile.notify(
                 "error",
