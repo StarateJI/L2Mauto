@@ -167,6 +167,18 @@ class Auction(GameAction):
         notify_screenshot (слать скрин в TG) и upload_run_logs (логи в GitHub).
         """
         log("Аук: запущен relist (снять+найти+поставить)", self.window_id)
+
+        # Очистка старых debug PNG от прошлых прогонов
+        try:
+            out_dir = os.path.dirname(os.path.abspath(__file__))
+            for fname in os.listdir(out_dir):
+                if fname.startswith(("au_", "cmp_")) and fname.endswith(".png"):
+                    try:
+                        os.remove(os.path.join(out_dir, fname))
+                    except Exception:
+                        pass
+        except Exception:
+            pass
         made = 0
         last_error: Optional[Exception] = None
         resize_done = False  # чтобы в finally знать — надо ли возвращать размер
@@ -646,15 +658,33 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     async def _click(self, x: int, y: int) -> None:
         """Клик по window-relative координатам через очередь мыши.
-        Перед кликом — SetForegroundWindow (активировать окно если перекрыто)."""
+        Перед кликом — SetForegroundWindow + проверка перекрытия.
+        Если окно перекрыто другим (другой бот работает) — ждём до 3 сек."""
         try:
             import ctypes
             hwnd_val = self.window_info[self.window_id].get("ID")
             if hwnd_val:
+                hwnd = int(hwnd_val)
+                # Активируем окно
                 try:
-                    ctypes.windll.user32.SetForegroundWindow(int(hwnd_val))
+                    ctypes.windll.user32.SetForegroundWindow(hwnd)
                 except Exception:
                     pass
+                # Проверяем — реально ли наше окно теперь активно?
+                for wait_attempt in range(6):  # до 3 сек (6 × 0.5с)
+                    try:
+                        fg = ctypes.windll.user32.GetForegroundWindow()
+                        if fg == hwnd:
+                            break  # наше окно активно — можно кликать
+                    except Exception:
+                        break
+                    if wait_attempt == 0:
+                        log(f"Аук: окно перекрыто, жду... (attempt {wait_attempt+1}/6)",
+                            self.window_id, level="DEBUG")
+                    await asyncio.sleep(0.5)
+                else:
+                    log(f"Аук: окно перекрыто 3 сек — кликаю вслепую",
+                        self.window_id, level="WARNING")
         except Exception:
             pass
         await self.mouse.click(self.window_info, x, y)

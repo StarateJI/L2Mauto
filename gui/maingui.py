@@ -411,14 +411,15 @@ class NedoGui(QWidget):
             self.start_windows(profile_class, windows)
             return
 
-        # Для Auction ВСЕГДА batch = 1, игнорируем cache полностью.
-        # Если в кэше было 2 или 10 — игнорируем, перезаписываем на 1.
+        # Для Auction — 2 окна в пачке (1280x720 рядом на 2560x1440).
+        # SetForegroundWindow + проверка GetForegroundWindow перед каждым кликом
+        # решает проблему перекрытия — если окно перекрыто, бот ждёт.
         if profile_name == "Auction":
-            if self.cache.get("Auction", 1) != 1:
-                log(f"start_all: Auction cache был {self.cache.get('Auction')} → сброс на 1")
-                self.cache["Auction"] = 1
+            if self.cache.get("Auction", 1) != 2:
+                log(f"start_all: Auction cache был {self.cache.get('Auction')} → сброс на 2")
+                self.cache["Auction"] = 2
                 save_cache(self.cache)
-            num = 1  # ЖЁСТКО — не спрашиваем пользователя, сразу 1
+            num = 2  # ЖЁСТКО — 2 окна в пачке
             log(f"start_all: Auction batch = {num} (hardcoded)")
         else:
             last_value = self.cache.get(profile_name, 1)
