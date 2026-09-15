@@ -1113,15 +1113,22 @@ class Auction(GameAction):
                 log(f"Аук: стр {page} точка ({dot_x},{dot_y}) TM score={score:.3f}",
                     self.window_id, level="DEBUG")
 
-                # Красная точка есть — кликаем по ней (центр ячейки)
-                # Красная точка в правом верхнем углу ячейки → центр = точка - (15, 15)
-                cell_cx = dot_x + INV_SCAN[0] - 15
-                cell_cy = dot_y + INV_SCAN[1] - 15
+                # КЛИКАЕМ ПО ЦЕНТРУ TM (не по красной точке!)
+                # Красная точка — только фильтр (подтверждение что предмет новый).
+                # Кликать надо по центру предмета, который нашёл matchTemplate.
+                if center is not None:
+                    tm_cx = int(center[0]) + INV_SCAN[0]
+                    tm_cy = int(center[1]) + INV_SCAN[1]
+                else:
+                    # TM не нашёл — кликаем по ячейке с красной точкой
+                    # Красная точка в правом верхнем углу → центр ~ точка - (22, 22)
+                    tm_cx = dot_x + INV_SCAN[0] - 22
+                    tm_cy = dot_y + INV_SCAN[1] - 22
 
                 if best_result is None or score > best_result[2]:
-                    best_result = (cell_cx, cell_cy, score, page)
+                    best_result = (tm_cx, tm_cy, score, page)
                     log(f"Аук: новый лучший — стр {page} точка ({dot_x},{dot_y}) "
-                        f"→ клик ({cell_cx},{cell_cy}) score={score:.3f}",
+                        f"→ клик TM ({tm_cx},{tm_cy}) score={score:.3f}",
                         self.window_id)
 
                 # Если score >= 0.90 — точное совпадение, не листаем дальше
