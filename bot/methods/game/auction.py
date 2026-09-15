@@ -1247,6 +1247,10 @@ class Auction(GameAction):
             b, g, r = cv2.split(img)
             # R>200, G=70-130, B<30 — точный цвет красной точки Lineage2M
             mask = (r > 200) & (g > 70) & (g < 130) & (b < 30)
+            # Дополнительно: красно-оранжевый (R>180, G<100, B<60)
+            # (другие оттенки красной точки на разных предметах)
+            mask2 = (r > 180) & (g < 100) & (b < 60)
+            mask = mask | mask2
             mask_u8 = (mask.astype(np.uint8)) * 255
             # Морфология — объединить пиксели в кластер
             kernel = np.ones((3, 3), np.uint8)
@@ -1259,6 +1263,10 @@ class Auction(GameAction):
                     continue
                 cx = int(centroids[i][0])
                 cy = int(centroids[i][1])
+                # Игнорировать точки в самом верху (y < 25) — это скорее
+                # всего шум от заголовка инвентаря, не от ячейки предмета.
+                if cy < 25:
+                    continue
                 dots.append((cx, cy))
             return dots
         except Exception as e:
@@ -1375,19 +1383,30 @@ class Auction(GameAction):
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # Вернуться к странице с предметом
+        # ВСЕГДА вернуться в НАЧАЛО — независимо от того нашли или нет.
+        # Раньше: если нашли → pages_to_back свайпов up (мало).
+        #         если не нашли → SCAN_PAGES-1 свайпов up.
+        # Проблема: после неудачи бот не возвращался до конца → следующий
+        # предмет начинал не с 1-й страницы → "предмет был наверху, но вверх
+        # не стал листать".
+        # Теперь: всегда SCAN_PAGES свайпов up — гарантия возврата на стр 1.
+        for _ in range(SCAN_PAGES):
+            await self._swipe_inventory('up')
+
+        # Пауза чтобы инвентарь осел после свайпов
+        await asyncio.sleep(1.0)
+
         if best_result is not None:
-            pages_to_back = best_result[3] - 1
-            for _ in range(pages_to_back):
-                await self._swipe_inventory('up')
+            # Нашли — но после свайпов up мы на стр 1, а предмет может быть
+            # на другой странице. Свайпаем down до нужной страницы.
+            pages_to_go = best_result[3] - 1
+            for _ in range(pages_to_go):
+                await self._swipe_inventory('down')
             log(f"Аук: предмет найден и подтверждён красной точкой! "
                 f"стр {best_result[3]} ({best_result[0]},{best_result[1]}) "
                 f"score={best_result[2]:.3f}", self.window_id)
             return (best_result[0], best_result[1])
 
-        # Не нашли — вернуться в начало
-        for _ in range(SCAN_PAGES - 1):
-            await self._swipe_inventory('up')
         log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
             f"(ни иконки с красной точкой)", self.window_id, level="ERROR")
         return None
