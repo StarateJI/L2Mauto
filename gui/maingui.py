@@ -458,9 +458,9 @@ class NedoGui(QWidget):
                 if not stalled:
                     wait_f()
                     return
-                # 16 попыток × 500ms = 8 сек.
-                if attempts >= 16:
-                    log(f"Пачка {batch_idx + 1}: не завелись {stalled} за 8 сек, пропускаю дальше", level="WARNING")
+                # 6 попыток × 500ms = 3 сек.
+                if attempts >= 6:
+                    log(f"Пачка {batch_idx + 1}: не завелись {stalled} за 3 сек, пропускаю дальше", level="WARNING")
                     wait_f()
                     return
                 QTimer.singleShot(500, lambda: wait_c(attempts + 1))
@@ -475,8 +475,8 @@ class NedoGui(QWidget):
                     if getattr(self, '_batch_stop', False):
                         log(f"start_all: СТОП — wait_f прерван перед batch {batch_idx + 1}")
                         return
-                    # Пауза 5 сек между пачками — окна могут сворачиваться не мгновенно
-                    QTimer.singleShot(5000, lambda: process_batch(batch_idx + 1))
+                    # Пауза 1 сек между пачками — окна могут сворачиваться не мгновенно
+                    QTimer.singleShot(1000, lambda: process_batch(batch_idx + 1))
                     return
                 # НЕТ таймаута — ждём пока пачка не закончит.
                 # Если окно зависнет — пользователь жмёт STOP ВСЕ.
