@@ -171,10 +171,21 @@ class Auction(GameAction):
         resize_done = False  # чтобы в finally знать — надо ли возвращать размер
 
         try:
-            # 1. Разбудить окно — выйти из энерго
+            # 1. Разбудить окно — ВСЕГДА выйти из энерго (без проверки is_on()).
+            # Проблема: is_on() даёт false negative если окно в энерго но
+            # пиксель energomode_center_gui не совпал (тёмный фильтр, другая
+            # локация). Тогда turn_off не вызывается → окно остаётся в сне →
+            # главное меню не открывается → _wait_auction_loaded ждёт 120с
+            # впустую → «не прогрузился за 120 сек» (как Снегопад 16:59).
+            #
+            # Решение: всегда вызываем turn_off(ignore=True) — это просто
+            # swipe по центру для выхода из энерго. Если окно не в энерго —
+            # swipe безобидно кликнет по центру, ничего не сломав.
+            # ignore=True пропускает долгую проверку zalupka_gui/телепорта.
             try:
-                if await self.profile.energo.is_on():
-                    await self.profile.energo.turn_off()
+                await self.profile.energo.turn_off(ignore=True)
+                log("Аук: выход из энерго (turn_off ignore=True) — всегда",
+                    self.window_id, level="DEBUG")
             except Exception as e:
                 log(f"Аук: энерго-выход не удался: {e}", self.window_id, level="WARNING")
             # Пауза после выхода из энерго — окно должно «проснуться» полностью
