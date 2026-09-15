@@ -1471,12 +1471,17 @@ class Auction(GameAction):
                                f"Аук: ПРЕДМЕТ НЕ НАЙДЕН (SIFT, {SCAN_PAGES} стр)")
             return 'error'
 
-        # 5. Кликнуть по найденному предмету (двойной клик — первый выделяет, второй открывает окно)
+        # 5. Двойной клик по найденному предмету.
+        # ВАЖНО: 2 отдельных клика с паузой 1 сек НЕ открывают окно цены.
+        # Lineage2M требует быстрый двойной клик (как в Windows — между кликами
+        # должно быть <0.3 сек). VLM по au_after_item_click.png подтвердил:
+        # «окно цены НЕ открылось, на экране обычный вид инвентаря».
+        # Делаем 2 клика подряд с минимальной паузой (0.1 сек).
         await self._click(*item_pos)
-        log(f"Аук: клик 1 по предмету {item_pos}", self.window_id)
-        await asyncio.sleep(1.0)
+        log(f"Аук: двойной клик по предмету {item_pos} (быстрый, пауза 0.1с)",
+            self.window_id)
+        await asyncio.sleep(0.1)
         await self._click(*item_pos)
-        log(f"Аук: клик 2 по предмету {item_pos}", self.window_id)
         await asyncio.sleep(T_ITEM_WINDOW)
         # Скрин после клика — видно открылось ли окно цены
         after_item_click = self._grab(INV_SCAN)
