@@ -1106,29 +1106,39 @@ class Auction(GameAction):
                     await self._swipe_inventory('down')
                 continue
 
-            # 2. Для каждой красной точки — проверяем matchTemplate
+            # 2. Для каждой красной точки — matchTemplate в области вокруг неё
+            # Красная точка в правом верхнем углу ячейки.
+            # Иконка предмета — НИЖЕ точки в той же ячейке.
+            # Кликаем по центру ячейки = точка + (0, +20) — ниже точки.
             for (dot_x, dot_y) in red_dots:
-                # matchTemplate по всей странице
-                center, score, scale, _ = self._match_template(sample_gray, gray)
+                # Вырезаем зону: от точки вниз 50px, влево-вправо 30px
+                crop_x1 = max(0, dot_x - 30)
+                crop_y1 = max(0, dot_y - 5)
+                crop_x2 = min(img.shape[1], dot_x + 30)
+                crop_y2 = min(img.shape[0], dot_y + 50)
+                crop = gray[crop_y1:crop_y2, crop_x1:crop_x2]
+
+                if crop.shape[0] < sample_gray.shape[0] or crop.shape[1] < sample_gray.shape[1]:
+                    log(f"Аук: стр {page} точка ({dot_x},{dot_y}) — crop мал", self.window_id, level="DEBUG")
+                    continue
+
+                center_crop, score, _, _ = self._match_template(sample_gray, crop)
                 log(f"Аук: стр {page} точка ({dot_x},{dot_y}) TM score={score:.3f}",
                     self.window_id, level="DEBUG")
 
-                # КЛИКАЕМ ПО ЦЕНТРУ TM (не по красной точке!)
-                # Красная точка — только фильтр (подтверждение что предмет новый).
-                # Кликать надо по центру предмета, который нашёл matchTemplate.
-                if center is not None:
-                    tm_cx = int(center[0]) + INV_SCAN[0]
-                    tm_cy = int(center[1]) + INV_SCAN[1]
+                if center_crop is not None and score >= TM_THRESHOLD:
+                    tm_cx = int(center_crop[0]) + crop_x1 + INV_SCAN[0]
+                    tm_cy = int(center_crop[1]) + crop_y1 + INV_SCAN[1]
                 else:
-                    # TM не нашёл — кликаем по ячейке с красной точкой
-                    # Красная точка в правом верхнем углу → центр ~ точка - (22, 22)
-                    tm_cx = dot_x + INV_SCAN[0] - 22
-                    tm_cy = dot_y + INV_SCAN[1] - 22
+                    # TM не нашёл рядом — пропускаем (дроп, не наш)
+                    log(f"Аук: стр {page} точка ({dot_x},{dot_y}) — TM не совпал",
+                        self.window_id, level="DEBUG")
+                    continue
 
                 if best_result is None or score > best_result[2]:
                     best_result = (tm_cx, tm_cy, score, page)
                     log(f"Аук: новый лучший — стр {page} точка ({dot_x},{dot_y}) "
-                        f"→ клик TM ({tm_cx},{tm_cy}) score={score:.3f}",
+                        f"→ клик ({tm_cx},{tm_cy}) score={score:.3f}",
                         self.window_id)
 
                 # Если score >= 0.90 — точное совпадение, не листаем дальше
