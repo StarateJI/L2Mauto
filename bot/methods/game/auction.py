@@ -1122,7 +1122,15 @@ class Auction(GameAction):
                     log(f"Аук: стр {page} точка ({dot_x},{dot_y}) — crop мал", self.window_id, level="DEBUG")
                     continue
 
-                center_crop, score, _, _ = self._match_template(sample_gray, crop)
+                # Прямой matchTemplate без multi-scale (на crop масштаб мешает)
+                try:
+                    result_crop = cv2.matchTemplate(crop, sample_gray, cv2.TM_CCOEFF_NORMED)
+                    _, score, _, max_loc = cv2.minMaxLoc(result_crop)
+                    center_crop = (max_loc[0] + sample_gray.shape[1] // 2,
+                                   max_loc[1] + sample_gray.shape[0] // 2)
+                except cv2.error:
+                    score = 0.0
+                    center_crop = None
                 log(f"Аук: стр {page} точка ({dot_x},{dot_y}) TM score={score:.3f}",
                     self.window_id, level="DEBUG")
 
