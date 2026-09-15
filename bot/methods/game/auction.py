@@ -430,29 +430,50 @@ class Auction(GameAction):
                     self.window_id, level="WARNING")
 
         # ── Авто-выбор позиции ─────────────────────────────────────────────
-        # Найти свободную из WORK_POSITIONS: проверяем все окна L2M, если
-        # какое-то уже стоит 1280x720 в позиции — считаем её занятой.
+        # Найти свободную из WORK_POSITIONS.
+        # Проверяем ВСЕ окна (даже 400×225) — если окно уже стоит на позиции,
+        # считаем её занятой (не только 960×540 окна).
         chosen_pos: Optional[Tuple[int, int]] = None
         try:
             from bot.utils import findAllWindows as _findAll
             all_wins = _findAll()
             occupied: set = set()
             my_title = self.window_info[self.window_id]["Title"]
+
+            # Проверяем все позиции — занята ли любым окном в пределах tolerance
             for nick, info in all_wins.items():
-                # Свой заголовок не считаем занятым
                 if info.get("Title") == my_title:
-                    continue
-                w, h = info.get("Width", 0), info.get("Height", 0)
-                if w == WORK_W and h == WORK_H:
-                    pos = (info.get("Position", (0, 0))[0],
-                           info.get("Position", (0, 0))[1])
-                    occupied.add(pos)
+                    continue  # себя не считаем
+                pos = info.get("Position", (0, 0))
+                win_w = info.get("Width", 0)
+                win_h = info.get("Height", 0)
+                # Если окно любого размера стоит близко к рабочей позиции — занято
+                for wp in WORK_POSITIONS:
+                    if (abs(pos[0] - wp[0]) <= POSITION_TOLERANCE and
+                        abs(pos[1] - wp[1]) <= POSITION_TOLERANCE):
+                        occupied.add(wp)
+
+            # Также проверяем окно по hwnd — может быть развёрнуто но не в findAllWindows
+            import pygetwindow as gw
+            try:
+                all_gw_wins = gw.getAllWindows()
+                for w in all_gw_wins:
+                    if "Lineage2M" not in w.title:
+                        continue
+                    if w.title == my_title:
+                        continue
+                    for wp in WORK_POSITIONS:
+                        if (abs(w.left - wp[0]) <= POSITION_TOLERANCE and
+                            abs(w.top - wp[1]) <= POSITION_TOLERANCE):
+                            occupied.add(wp)
+            except Exception:
+                pass
+
             for pos in WORK_POSITIONS:
                 if pos not in occupied:
                     chosen_pos = pos
                     break
             if chosen_pos is None:
-                # Все заняты — берём первую (перекрытие, но не падаем)
                 chosen_pos = WORK_POSITIONS[0]
                 log(f"Аук: все рабочие позиции заняты, использую {chosen_pos} "
                     f"(возможно перекрытие)", self.window_id, level="WARNING")
