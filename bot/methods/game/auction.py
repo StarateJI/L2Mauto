@@ -1046,55 +1046,108 @@ class Auction(GameAction):
             return None, best_score, best_scale, 0.0
         return best_loc, best_score, best_scale, 0.0
 
+    def _find_red_dots(self, img: np.ndarray) -> list:
+        """
+        Найти красные точки «новое» (R>180, G<60, B<60) в кадре инвентаря.
+        Возвращает список (x, y) центров красных точек.
+        Красная точка = метка которую игра вешает на новые/снятые предметы.
+        Если точки нет → 100% не наш предмет.
+        """
+        try:
+            b, g, r = cv2.split(img)
+            mask = (r > 180) & (g < 60) & (b < 60)
+            mask_u8 = (mask.astype(np.uint8)) * 255
+            # Морфология — объединить пиксели в кластер
+            kernel = np.ones((3, 3), np.uint8)
+            mask_u8 = cv2.morphologyEx(mask_u8, cv2.MORPH_CLOSE, kernel)
+            num, labels, stats, centroids = cv2.connectedComponentsWithStats(mask_u8)
+            dots = []
+            for i in range(1, num):  # 0 = фон
+                area = stats[i, cv2.CC_STAT_AREA]
+                if area < 3:  # шум
+                    continue
+                cx = int(centroids[i][0])
+                cy = int(centroids[i][1])
+                dots.append((cx, cy))
+            return dots
+        except Exception as e:
+            log(f"Аук: _find_red_dots exception: {e}", self.window_id, level="WARNING")
+            return []
+
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет в инвентаре. Сканируем ВСЕ страницы, выбираем ЛУЧШИЙ score.
-        Возвращает (x, y) центра предмета или None.
+        Искать предмет в инвентаре.
+        Метод: красная точка + matchTemplate.
+        1. Сканируем страницу → ищем красные точки
+        2. Для каждой красной точки → matchTemplate в области вокруг неё
+        3. Если score >= порог И есть красная точка → это наш предмет
+        4. Кликаем по центру ячейки с красной точкой
+
+        Если красных точек нет → листаем дальше.
+        Если красные точки есть но matchTemplate не совпал → всё равно кликаем
+        (красная точка = новый предмет, а наш только что сняли).
         """
-        best_result: Optional[Tuple[float, float, float, int]] = None  # (cx, cy, score, page)
+        best_result = None  # (cx, cy, score, page)
 
         for page in range(1, SCAN_PAGES + 1):
-            log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}",
-                self.window_id)
+            log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-            # Multi-scale template matching
-            center, score, scale, _ = self._match_template(sample_gray, gray)
-            log(f"Аук: TM стр {page}: score={score:.3f} (порог {TM_THRESHOLD})",
-                self.window_id)
+            # 1. Ищем красные точки на странице
+            red_dots = self._find_red_dots(img)
+            log(f"Аук: стр {page} — красных точек: {len(red_dots)}", self.window_id)
 
-            if center is not None and score >= TM_THRESHOLD:
-                cx = int(center[0]) + INV_SCAN[0]
-                cy = int(center[1]) + INV_SCAN[1]
+            if not red_dots:
+                # Нет красных точек → наш предмет не здесь → листаем
+                if page < SCAN_PAGES:
+                    await self._swipe_inventory('down')
+                continue
+
+            # 2. Для каждой красной точки — проверяем matchTemplate
+            for (dot_x, dot_y) in red_dots:
+                # matchTemplate по всей странице
+                center, score, scale, _ = self._match_template(sample_gray, gray)
+                log(f"Аук: стр {page} точка ({dot_x},{dot_y}) TM score={score:.3f}",
+                    self.window_id, level="DEBUG")
+
+                # Красная точка есть — кликаем по ней (центр ячейки)
+                # Красная точка в правом верхнем углу ячейки → центр = точка - (15, 15)
+                cell_cx = dot_x + INV_SCAN[0] - 15
+                cell_cy = dot_y + INV_SCAN[1] - 15
+
                 if best_result is None or score > best_result[2]:
-                    best_result = (float(cx), float(cy), score, page)
-                    log(f"Аук: новый лучший — стр {page} ({cx},{cy}) score={score:.3f}",
+                    best_result = (cell_cx, cell_cy, score, page)
+                    log(f"Аук: новый лучший — стр {page} точка ({dot_x},{dot_y}) "
+                        f"→ клик ({cell_cx},{cell_cy}) score={score:.3f}",
                         self.window_id)
 
-            # Не листаем дальше если уже нашли >0.95 — точное совпадение
+                # Если точное совпадение — не листаем дальше
+                if score >= 0.95:
+                    log(f"Аук: точное совпадение, не листаю дальше", self.window_id)
+                    break
+
             if best_result is not None and best_result[2] >= 0.95:
-                log(f"Аук: точное совпадение на стр {best_result[3]}, не листаю дальше",
-                    self.window_id)
                 break
 
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # Вернуться в начало
+        # Вернуться к странице с предметом
         if best_result is not None:
             pages_to_back = best_result[3] - 1
             for _ in range(pages_to_back):
                 await self._swipe_inventory('up')
-            log(f"Аук: предмет найден! стр {best_result[3]} ({int(best_result[0])},{int(best_result[1])}) score={best_result[2]:.3f}",
+            log(f"Аук: предмет найден! стр {best_result[3]} "
+                f"({best_result[0]},{best_result[1]}) score={best_result[2]:.3f}",
                 self.window_id)
-            return (int(best_result[0]), int(best_result[1]))
+            return (best_result[0], best_result[1])
 
         # Не нашли — вернуться в начало
         for _ in range(SCAN_PAGES - 1):
             await self._swipe_inventory('up')
-        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц",
+        log(f"Аук: предмет не найден (нет красных точек с matchTemplate)",
             self.window_id, level="ERROR")
         return None
 
@@ -1166,6 +1219,9 @@ class Auction(GameAction):
         await self._click(*item_pos)
         log(f"Аук: клик по предмету {item_pos}", self.window_id)
         await asyncio.sleep(T_ITEM_WINDOW)
+        # Скрин после клика — видно открылось ли окно цены
+        after_item_click = self._grab(INV_SCAN)
+        await self._save_debug("au_after_item_click.png", after_item_click)
 
         # 6. OCR "Текущая минимальная цена"
         # ⚠️ КРИТИЧНО: если OCR не смог прочитать цену — СТОП, не выставлять!
