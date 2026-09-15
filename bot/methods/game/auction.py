@@ -133,7 +133,7 @@ TM_THRESHOLD = 0.75
 TM_SCALES = [0.85, 0.92, 1.0, 1.08, 1.15]
 
 # ── Лимиты ────────────────────────────────────────────────────────────────
-SCAN_PAGES = 3          # страниц инвентаря (предмет падает в КОНЕЦ, но 3 достаточно — раньше было 5, бот листал слишком далеко)
+SCAN_PAGES = 5          # страниц инвентаря (предмет падает в КОНЕЦ)
 MAX_OK_RETRIES = 4      # попыток кликнуть ОК отмены
 MAX_ITEMS = 10          # максимум предметов за один прогон
 
@@ -171,58 +171,12 @@ class Auction(GameAction):
         resize_done = False  # чтобы в finally знать — надо ли возвращать размер
 
         try:
-            # 1. Разбудить окно — выйти из энерго.
-            # Проблема (Zakamsk 17:15, v5.6.14): turn_off(ignore=True) делал
-            # swipe, но swipe НЕ срабатывал на спящем окне → окно оставалось
-            # в сне. Дальше бот кликал main_menu_gui → клик уходил в спящее
-            # окно → НО пиксель случайно совпадал на чужом окне/рабочем столе
-            # → бот думал «Аук: загрузился» → SIFT 0 → «список пуст».
-            # Логи врали, скрины показывали что окно реально в сне.
-            #
-            # Решение: ЦИКЛ из 3 попыток turn_off с проверкой is_on() между.
-            # Если после swipe окно всё ещё в энерго — повторяем. ignore=False
-            # чтобы turn_off сам проверял результат (не trust blindly).
-            woke = False
-            for attempt in range(1, 4):
-                try:
-                    # ignore=False только на последней попытке — turn_off
-                    # сам проверит пиксель zalupka_gui после swipe (телепорт).
-                    # На первых попытках ignore=True (быстро, без долгих проверок).
-                    ignore_flag = (attempt < 3)
-                    await self.profile.energo.turn_off(ignore=ignore_flag)
-                except Exception as e:
-                    log(f"Аук: turn_off попытка {attempt}/3 exception: {e}",
-                        self.window_id, level="WARNING")
-
-                await asyncio.sleep(1.0)
-
-                # Проверка — реально вышло ли из сна?
+            # 1. Разбудить окно — выйти из энерго
+            try:
                 if await self.profile.energo.is_on():
-                    log(f"Аук: после turn_off попытка {attempt}/3 — окно "
-                        f"ВСЁ ЕЩЁ в энерго (swipe не сработал) — повторяю",
-                        self.window_id, level="WARNING")
-                    continue
-                # is_on() = False — окно вышло из сна (или не было в нём)
-                woke = True
-                if attempt > 1:
-                    log(f"Аук: окно вышло из сна с попытки {attempt}/3",
-                        self.window_id)
-                break
-
-            if not woke:
-                log("Аук: ВАЖНО — окно НЕ вышло из энерго за 3 попытки! "
-                    "Аукцион не откроется — будет пустой кадр. Пропускаю окно.",
-                    self.window_id, level="ERROR")
-                # Добавить в пропущенные — вернёмся в конце прогона
-                try:
-                    from gui.maingui import NedoGui
-                    gui = NedoGui._instance if hasattr(NedoGui, '_instance') else None
-                    if gui and hasattr(gui, '_skipped_windows'):
-                        gui._skipped_windows.append(self.window_id)
-                except Exception:
-                    pass
-                return False
-
+                    await self.profile.energo.turn_off()
+            except Exception as e:
+                log(f"Аук: энерго-выход не удался: {e}", self.window_id, level="WARNING")
             # Пауза после выхода из энерго — окно должно «проснуться» полностью
             await asyncio.sleep(T_AFTER_ENERGY_OFF)
 
@@ -285,12 +239,9 @@ class Auction(GameAction):
                     log(f"Аук: лотов больше нет на странице (предмет {i})", self.window_id)
                     break
                 else:  # 'error'
-                    log(f"Аук: ошибка на предмете {i} — пропускаю, иду к следующему",
-                        self.window_id, level="WARNING")
-                    # НЕ break — продолжаем к следующему предмету.
-                    # Пользователь: «из за того что он не нашёл этот предмет,
-                    # он не стал снимать с продажи следующий на этом окне»
-                    continue
+                    log(f"Аук: ошибка на предмете {i} — стоп, сделано {made}",
+                        self.window_id, level="ERROR")
+                    break
 
         except asyncio.CancelledError:
             # Пользователь нажал СТОП ВСЕ. finally всё равно выполнится —
@@ -685,39 +636,12 @@ class Auction(GameAction):
         """
         Захват зоны rect=(x, y, w, h) в window-relative координатах.
         Возвращает BGR ndarray. mss отдаёт BGRA — конвертируем.
-
-        mss использует thread-local handles. Если _grab вызывается из
-        потока где handles не созданы → AttributeError srcdc.
-        Решение: при ошибке создаём НОВЫЙ mss ЛОКАЛЬНО (не меняем global
-        _sct). Старый global _sct остаётся для главного потока.
         """
         win = self.window_info[self.window_id]
         wx, wy = win["Position"]
         x, y, w, h = rect
         monitor = {"left": wx + x, "top": wy + y, "width": w, "height": h}
-        try:
-            shot = _sct.grab(monitor)
-        except AttributeError as e:
-            if 'srcdc' in str(e) or 'memdc' in str(e):
-                # thread-local handles не созданы в этом потоке.
-                # Создаём ЛОКАЛЬНЫЙ mss — НЕ трогаем global _sct.
-                log(f"Аук: mss thread-local handles нет в этом потоке ({e}) — "
-                    f"создаю локальный mss", self.window_id, level="DEBUG")
-                try:
-                    local_sct = mss.mss()
-                except AttributeError:
-                    local_sct = mss.MSS()
-                shot = local_sct.grab(monitor)
-                # НЕ закрываем local_sct — будет переиспользован при
-                # следующем вызове _grab из этого потока? Нет, mss
-                # кэширует handles в thread-local, поэтому новый объект
-                # в каждом вызове. Можно закрыть.
-                try:
-                    local_sct.close()
-                except Exception:
-                    pass
-            else:
-                raise
+        shot = _sct.grab(monitor)
         arr = np.array(shot)  # BGRA
         return cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
 
@@ -746,30 +670,12 @@ class Auction(GameAction):
             # Берём главный монитор (обычно 2560×1440)
             # monitors[0] = все мониторы вместе (virtual screen)
             # monitors[1] = первый реальный монитор
-            try:
-                monitors = _sct.monitors
-                if len(monitors) > 1:
-                    monitor = monitors[1]
-                else:
-                    monitor = monitors[0]
-                shot = _sct.grab(monitor)
-            except AttributeError as e:
-                if 'srcdc' in str(e) or 'memdc' in str(e):
-                    log(f"Аук: mss в _take_fullscreen сломался ({e}) — "
-                        f"создаю локальный", self.window_id, level="DEBUG")
-                    try:
-                        local_sct = mss.mss()
-                    except AttributeError:
-                        local_sct = mss.MSS()
-                    monitors = local_sct.monitors
-                    monitor = monitors[1] if len(monitors) > 1 else monitors[0]
-                    shot = local_sct.grab(monitor)
-                    try:
-                        local_sct.close()
-                    except Exception:
-                        pass
-                else:
-                    raise
+            monitors = _sct.monitors
+            if len(monitors) > 1:
+                monitor = monitors[1]
+            else:
+                monitor = monitors[0]
+            shot = _sct.grab(monitor)
             arr = np.array(shot)  # BGRA
             img = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
             cv2.imwrite(path, img)
@@ -780,83 +686,21 @@ class Auction(GameAction):
                 self.window_id, level="WARNING")
 
     # ──────────────────────────────────────────────────────────────────────
-    # FOREGROUND — гарантия что окно на переднем плане
-    # ──────────────────────────────────────────────────────────────────────
-    def _ensure_foreground(self) -> bool:
-        """
-        Принудительно вывести окно на передний план и проверить результат.
-
-        Проблема: SetForegroundWindow в Windows не работает если текущий
-        foreground принадлежит другому процессу (или окно перекрыто).
-        Решение — трюк с AttachThreadInput: прикрепляем input-поток текущего
-        foreground окна к нашему, тогда SetForegroundWindow срабатывает.
-
-        Возвращает True если после всех попыток наше окно стало foreground.
-        """
-        try:
-            import ctypes
-            from ctypes import wintypes
-
-            user32 = ctypes.windll.user32
-            hwnd_val = self.window_info[self.window_id].get("ID")
-            if not hwnd_val:
-                return False
-            hwnd = int(hwnd_val)
-
-            # Если уже foreground — выходим быстро
-            fg_now = user32.GetForegroundWindow()
-            if fg_now == hwnd:
-                return True
-
-            # Трюк с AttachThreadInput: позволяет «украсть» foreground
-            fg_thread = user32.GetWindowThreadProcessId(fg_now, None)
-            my_thread = user32.GetCurrentThreadId()
-
-            attached = False
-            if fg_thread and fg_thread != my_thread:
-                # Прикрепляем поток foreground окна к нашему
-                if user32.AttachThreadInput(my_thread, fg_thread, True):
-                    attached = True
-
-            # Пробуем несколько раз — иногда нужно с задержкой
-            ok = False
-            for _ in range(3):
-                # Альт-трюк: нажать+отпустить Alt «снимает» foreground lock
-                user32.keybd_event(0x12, 0, 0, 0)        # VK_MENU down
-                user32.keybd_event(0x12, 0, 0x0002, 0)   # VK_MENU up (KEYEVENTF_KEYUP)
-                # Теперь SetForegroundWindow должен сработать
-                user32.SetForegroundWindow(hwnd)
-                # Если окно свёрнуто — восстановить
-                if user32.IsIconic(hwnd):
-                    user32.ShowWindow(hwnd, 9)  # SW_RESTORE
-                # Небольшая задержка
-                import time as _t
-                _t.sleep(0.05)
-                if user32.GetForegroundWindow() == hwnd:
-                    ok = True
-                    break
-                _t.sleep(0.05)
-
-            # Открепляем потоки
-            if attached:
-                user32.AttachThreadInput(my_thread, fg_thread, False)
-
-            if not ok:
-                log(f"Аук: _ensure_foreground НЕ смог вывести окно на передний план "
-                    f"(hwnd={hwnd})", self.window_id, level="WARNING")
-            return ok
-        except Exception as e:
-            log(f"Аук: _ensure_foreground exception: {e}", self.window_id,
-                level="WARNING")
-            return False
-
-    # ──────────────────────────────────────────────────────────────────────
     # КЛИКИ
     # ──────────────────────────────────────────────────────────────────────
     async def _click(self, x: int, y: int) -> None:
         """Клик по window-relative координатам через очередь мыши.
-        Сначала _ensure_foreground — гарантия что клик уйдёт в правильное окно."""
-        self._ensure_foreground()
+        SetForegroundWindow перед кликом — без проверки/ожидания."""
+        try:
+            import ctypes
+            hwnd_val = self.window_info[self.window_id].get("ID")
+            if hwnd_val:
+                try:
+                    ctypes.windll.user32.SetForegroundWindow(int(hwnd_val))
+                except Exception:
+                    pass
+        except Exception:
+            pass
         await self.mouse.click(self.window_info, x, y)
 
     async def _click_and_verify(self, x: int, y: int, label: str = "",
@@ -955,21 +799,13 @@ class Auction(GameAction):
     def _is_status_prodano(self) -> bool:
         """
         Проверить, что первый лот в статусе «Продаётся» (только что переставлен).
-        Возвращает True только если статус «Продаётся» — НЕ трогаем.
-        Возвращает False для «Не продано», таймера, или любого другого.
+        Возвращает True если ХОТЯ БЫ ОДИН из 3 методов нашёл признак «Продаётся»:
+          1. OCR: слово «продаётся»/«продается»/«прода» в зоне статуса
+          2. Цвет: много зелёных пикселей (статус «Продаётся» рисуется зелёным)
+          3. Цвет: мало тёмных пикселей (статус-таймер обычно серый, не яркий)
 
-        Пользователь (простыми словами):
-          - «Продаётся»  → пропускаем (return True)
-          - «Отмена»     → переставляем (return False)
-          - «Забрать»    → переставляем (return False) — это «Не продано»
-
-        Метод: проверка ЦВЕТА статуса (надёжнее OCR который может не работать
-        если pytesseract не установлен на ПК).
-          - «Продаётся»  → ЗЕЛЁНЫЙ текст (G высокий, R низкий, B низкий)
-          - «Не продано» → КРАСНЫЙ текст (R высокий, G низкий, B низкий)
-          - таймер       → СЕРЫЙ/БЕЛЫЙ текст (все каналы средние)
-        Только зелёный = «Продаётся» = return True.
-        Красный/серый/белый = НЕ «Продаётся» = return False.
+        Такие лоты НЕ трогаем — иначе вечный цикл.
+        Если хотя бы один метод сработал → возвращаем True (лучше пропустить).
         """
         try:
             img = self._grab(STATUS_ZONE)
@@ -980,100 +816,74 @@ class Auction(GameAction):
                                       "au_status.png")
             cv2.imwrite(debug_path, img)
 
-            b, g, r = cv2.split(img)
-            total_pixels = img.shape[0] * img.shape[1]
-
-            # ── Метод 1 (основной): ЦВЕТ статуса ────────────────────────────
-            # Зелёный текст «Продаётся»: G высокий, R и B низкие.
-            # HSV: H 40..90, S>50, V>100
-            try:
-                hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-                green_mask = cv2.inRange(hsv,
-                                         np.array([40, 50, 100]),
-                                         np.array([90, 255, 255]))
-                green_count = int(np.sum(green_mask > 0))
-                green_ratio = green_count / max(total_pixels, 1)
-
-                # Красный текст «Не продано»: R высокий, G и B низкие.
-                # HSV: H 0..10 или 170..180 (красный на краях круга)
-                red_mask1 = cv2.inRange(hsv,
-                                        np.array([0, 50, 100]),
-                                        np.array([10, 255, 255]))
-                red_mask2 = cv2.inRange(hsv,
-                                        np.array([170, 50, 100]),
-                                        np.array([180, 255, 255]))
-                red_mask = cv2.bitwise_or(red_mask1, red_mask2)
-                red_count = int(np.sum(red_mask > 0))
-                red_ratio = red_count / max(total_pixels, 1)
-
-                log(f"Аук: статус цвет: зелёный={green_count} ({green_ratio:.2%}), "
-                    f"красный={red_count} ({red_ratio:.2%})",
-                    self.window_id, level="DEBUG")
-
-                # Зелёный > 3% → «Продаётся» (пропускаем)
-                if green_ratio > 0.03:
-                    log(f"Аук: статус = «Продаётся» (зелёный текст {green_ratio:.1%})",
-                        self.window_id)
-                    return True
-                # Красный > 3% → «Не продано» (Забрать, переставляем)
-                if red_ratio > 0.03:
-                    log(f"Аук: статус = «Не продано» (красный текст {red_ratio:.1%}) — "
-                        f"иду нажимать «Забрать»", self.window_id)
-                    return False
-            except Exception as e:
-                log(f"Аук: цветовая проверка статуса не удалась: {e}",
-                    self.window_id, level="DEBUG")
-
-            # ── Метод 2 (fallback): OCR если цвет не сработал ────────────────
-            # (серый/белый текст = таймер, не «Продаётся» и не «Не продано»)
+            # ── Метод 1: OCR ────────────────────────────────────────────────
             h, w = img.shape[:2]
             big = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_CUBIC)
             gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
             pt = _get_pytesseract()
             if pt is None:
-                # pytesseract не установлен — не можем читать OCR.
-                # Но если цвет не сработал (ни зелёный ни красный), значит
-                # это таймер или пусто → НЕ «Продаётся» → переставляем.
-                log("Аук: pytesseract недоступен, цвет не зелёный/красный — "
-                    "НЕ «Продаётся» (вероятно таймер), переставляю",
-                    self.window_id, level="DEBUG")
-                return False
+                log("Аук: pytesseract недоступен — НЕ ТРОГАЮ лот (безопасно)",
+                    self.window_id, level="WARNING")
+                return True
             text = pt.image_to_string(
                 gray, lang="rus+eng", config="--psm 7",
             ).strip().lower()
             log(f"Аук: статус лота OCR: '{text}'", self.window_id, level="DEBUG")
 
-            # OCR ключевые слова для «Продаётся».
             ocr_match = any(kw in text for kw in
                             ("продаёт", "продает", "продаю", "продажа",
-                             "продаё", "продае", "продаетс"))
+                             "продаё", "продае", "прода", "продаетс"))
             if ocr_match:
                 log("Аук: статус = «Продаётся» (OCR method)", self.window_id)
                 return True
 
-            # Если OCR не нашёл «Продаётся» — это таймер или «Не продано».
-            # В обоих случаях НЕ «Продаётся» → переставляем.
+            # ── Метод 2: зелёные пиксели (статус обычно зелёный) ─────────────
+            # В Lineage2M статус «Продаётся» часто подсвечен зелёным.
+            # HSV: H в [40..90] (зелёный), S>50, V>100
+            try:
+                hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+                # Зелёный: H 40..90, S 50..255, V 100..255
+                lower = np.array([40, 50, 100])
+                upper = np.array([90, 255, 255])
+                green_mask = cv2.inRange(hsv, lower, upper)
+                green_count = int(np.sum(green_mask > 0))
+                total_pixels = img.shape[0] * img.shape[1]
+                green_ratio = green_count / max(total_pixels, 1)
+                log(f"Аук: статус зелёных пикселей: {green_count} "
+                    f"({green_ratio:.2%})", self.window_id, level="DEBUG")
+                # Если >5% пикселей зелёные — почти наверняка «Продаётся»
+                if green_ratio > 0.05:
+                    log(f"Аук: статус = «Продаётся» (зелёный метод, "
+                        f"{green_ratio:.1%})", self.window_id)
+                    return True
+            except Exception as e:
+                log(f"Аук: green check failed: {e}", self.window_id, level="DEBUG")
+
+            # ── Метод 3: OCR вернул что-то похожее на таймер? ───────────────
+            # Если OCR вернул цифры + «д.»/«ч.» — это таймер, не «Продаётся».
+            # Если OCR вернул текст похожий на «прод...» — это «Продаётся».
+            # Если OCR вернул пустоту — не уверены, НЕ трогаем (безопасно).
+            if not text or text in ("", "=", "-", "]"):
+                # OCR пустой — возможно текста вообще нет, или зона смещена.
+                # Безопасно: пропустить (пусть пользователь проверит руками).
+                log(f"Аук: OCR вернул пусто ('{text}') — НЕ ТРОГАЮ лот "
+                    f"(безопасно, вдруг это «Продаётся»)", self.window_id,
+                    level="WARNING")
+                return True
+
+            # ── Все 3 метода: не «Продаётся», есть таймер/текст ─────────────
             return False
 
         except Exception as e:
-            log(f"Аук: проверка статуса не удалась: {e} — НЕ ТРОГАЮ (безопасно)",
+            log(f"Аук: OCR статуса не удался: {e} — НЕ ТРОГАЮ (безопасно)",
                 self.window_id, level="WARNING")
             return True  # Если проверка упала — лучше не трогать
 
     async def _cancel_lot(self) -> bool:
-        """
-        Клик 'Отмена лота' (или 'Забрать' — та же кнопка на том же месте,
-        другой текст). После клика появляется окно подтверждения.
-
-        Пользователь: «забудь про цвет вообще, кнопка находится точно в том
-        же месте, где и Отмена, всё, тебе больше не нужно ничего».
-
-        До 2 попыток клика с ожиданием окна подтверждения.
-        """
+        """Клик 'Отмена лота' и ожидание окна подтверждения."""
         for attempt in range(1, 3):
             await self._click(*BTN_CANCEL_LOT)
-            log(f"Аук: клик Отмена/Забрать ({attempt}/2) {BTN_CANCEL_LOT}",
-                self.window_id)
+            log(f"Аук: клик Отмена лота ({attempt}/2) {BTN_CANCEL_LOT}", self.window_id)
             await asyncio.sleep(1.5)
             if self._confirm_window_visible():
                 log("Аук: окно подтверждения появилось", self.window_id)
@@ -1247,10 +1057,6 @@ class Auction(GameAction):
             b, g, r = cv2.split(img)
             # R>200, G=70-130, B<30 — точный цвет красной точки Lineage2M
             mask = (r > 200) & (g > 70) & (g < 130) & (b < 30)
-            # Дополнительно: красно-оранжевый (R>180, G<100, B<60)
-            # (другие оттенки красной точки на разных предметах)
-            mask2 = (r > 180) & (g < 100) & (b < 60)
-            mask = mask | mask2
             mask_u8 = (mask.astype(np.uint8)) * 255
             # Морфология — объединить пиксели в кластер
             kernel = np.ones((3, 3), np.uint8)
@@ -1263,10 +1069,6 @@ class Auction(GameAction):
                     continue
                 cx = int(centroids[i][0])
                 cy = int(centroids[i][1])
-                # Игнорировать точки в самом верху (y < 25) — это скорее
-                # всего шум от заголовка инвентаря, не от ячейки предмета.
-                if cy < 25:
-                    continue
                 dots.append((cx, cy))
             return dots
         except Exception as e:
@@ -1339,27 +1141,23 @@ class Auction(GameAction):
             red_dots = self._find_red_dots(img)
             log(f"Аук: стр {page} — кандидатов TM: {len(deduped)} "
                 f"(лучший score={best_page_score:.3f}), "
-                f"красных точек: {len(red_dots)} {red_dots[:5]}", self.window_id)
+                f"красных точек: {len(red_dots)}", self.window_id)
 
             # 3. Ищем кандидата с красной точкой рядом.
-            #    Красная точка в Lineage2M — в углу ячейки с предметом.
-            #    Радиус 80px (увеличил с 40 — точка может быть в любом углу
-            #    ячейки 60×53, плюс запас на неточность matchTemplate).
+            #    Красная точка в Lineage2M — правый верхний угол ячейки,
+            #    т.е. в пределах ~40px от центра иконки 60×53.
             for (cx, cy, score) in deduped:
                 confirmed_dot = None
                 for (dx, dy) in red_dots:
-                    # Евклидово расстояние (точнее чем abs по осям)
-                    dist = ((dx - cx) ** 2 + (dy - cy) ** 2) ** 0.5
-                    if dist <= 80:
+                    if abs(dx - cx) <= 40 and abs(dy - cy) <= 40:
                         confirmed_dot = (dx, dy)
                         break
                 if confirmed_dot is None:
                     # Иконка сматчилась, но красной точки рядом нет →
                     # это B&W-дубликат (непродаваемый), не наш предмет.
                     log(f"Аук: стр {page} — иконка ({cx},{cy}) "
-                        f"score={score:.3f} НО без красной точки рядом "
-                        f"(точки: {red_dots[:3]}) → дубликат, пропускаю",
-                        self.window_id, level="DEBUG")
+                        f"score={score:.3f} НО без красной точки → дубликат, "
+                        f"пропускаю", self.window_id, level="DEBUG")
                     continue
 
                 # Есть И иконка И красная точка → наш предмет.
@@ -1383,30 +1181,19 @@ class Auction(GameAction):
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # ВСЕГДА вернуться в НАЧАЛО — независимо от того нашли или нет.
-        # Раньше: если нашли → pages_to_back свайпов up (мало).
-        #         если не нашли → SCAN_PAGES-1 свайпов up.
-        # Проблема: после неудачи бот не возвращался до конца → следующий
-        # предмет начинал не с 1-й страницы → "предмет был наверху, но вверх
-        # не стал листать".
-        # Теперь: всегда SCAN_PAGES свайпов up — гарантия возврата на стр 1.
-        for _ in range(SCAN_PAGES):
-            await self._swipe_inventory('up')
-
-        # Пауза чтобы инвентарь осел после свайпов
-        await asyncio.sleep(1.0)
-
+        # Вернуться к странице с предметом
         if best_result is not None:
-            # Нашли — но после свайпов up мы на стр 1, а предмет может быть
-            # на другой странице. Свайпаем down до нужной страницы.
-            pages_to_go = best_result[3] - 1
-            for _ in range(pages_to_go):
-                await self._swipe_inventory('down')
+            pages_to_back = best_result[3] - 1
+            for _ in range(pages_to_back):
+                await self._swipe_inventory('up')
             log(f"Аук: предмет найден и подтверждён красной точкой! "
                 f"стр {best_result[3]} ({best_result[0]},{best_result[1]}) "
                 f"score={best_result[2]:.3f}", self.window_id)
             return (best_result[0], best_result[1])
 
+        # Не нашли — вернуться в начало
+        for _ in range(SCAN_PAGES - 1):
+            await self._swipe_inventory('up')
         log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
             f"(ни иконки с красной точкой)", self.window_id, level="ERROR")
         return None
@@ -1437,36 +1224,29 @@ class Auction(GameAction):
 
         sample_gray = cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY)
 
-        # 2. Защита от вечного цикла: если первый лот в статусе «Продаётся» —
-        # значит он только что выставлен, снимать/переставлять его НЕ НАДО.
-        # Пропускаем. (TEST_MODE выключен — проверка возвращена.)
-        if self._is_status_prodano():
-            log("Аук: первый лот в статусе «Продаётся» — пропускаю",
-                self.window_id)
-            return 'empty'
+        # 2. ТЕСТ: проверка статуса «Продаётся» ОТКЛЮЧЕНА для тестирования.
+        # Будет включена обратно после отладки поиска предмета.
+        # if self._is_status_prodano():
+        #     log("Аук: первый лот в статусе «Продаётся» — пропускаю", self.window_id)
+        #     return 'empty'
 
         # 2b. Если образец пустой (0 SIFT точек) и статус не «Продаётся» —
         # значит строка лота пустая (нет лотов на продаже вообще).
         # Это НЕ ошибка — просто нечего переставлять. Возвращаем 'empty'.
         if kp_count == 0:
-            log("Аук: образец лота пустой (нет иконки) — список лотов пуст. "
-                "Завершаю прогон (не ошибка).",
+            log("Аук: образец лота пустой (нет иконки) и статус не «Продаётся» — "
+                "видимо список лотов пуст. Завершаю прогон (не ошибка).",
                 self.window_id, level="INFO")
             return 'empty'
 
-        # 3. Клик "Отмена лота" (или "Забрать" — та же кнопка, другой текст).
-        # Пользователь: «просто текст другой, действуй по скрипту».
-        # Обе кнопки одинакового цвета (серый фон + белый текст). После клика
-        # окно подтверждения появляется в обоих случаях одинаково.
+        # 3. Клик "Отмена лота"
         if not await self._cancel_lot():
-            log("Аук: окно подтверждения не появилось — список лотов пуст "
-                "(кнопка серая). Завершаю прогон (не ошибка).",
-                self.window_id, level="INFO")
-            return 'empty'
+            return 'error'
 
         # 4. Подождать анимацию и кликнуть ОК
         await asyncio.sleep(T_CONFIRM_SETTLE)
         if not await self._click_ok_cancel():
+            # Окно подтверждения не закрылось — попробуем закрыть вручную
             await self._click(*BTN_CLOSE)
             return 'error'
 
