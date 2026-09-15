@@ -1176,51 +1176,20 @@ class Auction(GameAction):
                 f"(лучший score={best_page_score:.3f}), "
                 f"красных точек: {len(red_dots)}", self.window_id)
 
-            # 3. Ищем кандидата с красной точкой рядом.
-            #    Красная точка в Lineage2M — правый верхний угол ячейки,
-            #    т.е. в пределах ~40px от центра иконки 60×53.
+            # 3. Ищем лучшего кандидата — кликаем по нему.
+            #    Без красной точки (не получалось её нормально ловить).
             for (cx, cy, score) in deduped:
-                # Если score >= 0.95 — это почти идеальное совпадение.
-                # B&W дубликаты (серые иконки) дают ниже score при сравнении
-                # с цветным образцом. Раз score такой высокий — это наш
-                # предмет, красная точка не нужна.
-                if score >= 0.95:
-                    win_cx = cx + INV_SCAN[0]
-                    win_cy = cy + INV_SCAN[1]
-                    if best_result is None or score > best_result[2]:
-                        best_result = (win_cx, win_cy, score, page)
-                        log(f"Аук: НАЙДЕН (score>=0.95, без точки) — стр {page} "
-                            f"иконка ({cx},{cy}) → клик ({win_cx},{win_cy}) "
-                            f"score={score:.3f}", self.window_id)
-                    break
-
-                # score < 0.95 — проверяем красную точку как подтверждение
-                confirmed_dot = None
-                for (dx, dy) in red_dots:
-                    if abs(dx - cx) <= 40 and abs(dy - cy) <= 40:
-                        confirmed_dot = (dx, dy)
-                        break
-                if confirmed_dot is None:
-                    # Иконка сматчилась, но красной точки рядом нет →
-                    # это B&W-дубликат (непродаваемый), не наш предмет.
-                    log(f"Аук: стр {page} — иконка ({cx},{cy}) "
-                        f"score={score:.3f} НО без красной точки → дубликат, "
-                        f"пропускаю", self.window_id, level="DEBUG")
-                    continue
-
-                # Есть И иконка И красная точка → наш предмет.
                 win_cx = cx + INV_SCAN[0]
                 win_cy = cy + INV_SCAN[1]
                 if best_result is None or score > best_result[2]:
                     best_result = (win_cx, win_cy, score, page)
-                    log(f"Аук: НАЙДЕН И ПОДТВЕРЖДЁН — стр {page} "
-                        f"иконка ({cx},{cy}) + точка {confirmed_dot} "
+                    log(f"Аук: НАЙДЕН — стр {page} иконка ({cx},{cy}) "
                         f"→ клик ({win_cx},{win_cy}) score={score:.3f}",
                         self.window_id)
-                # Точное совпадение с подтверждением — дальше не листаем.
+                # Точное совпадение — дальше не листаем.
                 if score >= 0.90:
-                    log(f"Аук: точное совпадение с красной точкой "
-                        f"(score >= 0.90), не листаю дальше", self.window_id)
+                    log(f"Аук: точное совпадение (score >= 0.90), "
+                        f"не листаю дальше", self.window_id)
                     break
 
             if best_result is not None and best_result[2] >= 0.90:
