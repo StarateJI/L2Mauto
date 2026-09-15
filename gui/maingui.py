@@ -477,7 +477,7 @@ class NedoGui(QWidget):
                         return
                     if self.controller.batch_cancelled:
                         return
-                    # Пауза 1 сек между пачками (была 1 — оставил)
+                    # Пауза 1 сек между пачками
                     def _start_next():
                         if getattr(self, '_batch_stop', False):
                             log(f"start_all: СТОП — _start_next прерван перед batch {batch_idx + 1}")
@@ -485,28 +485,7 @@ class NedoGui(QWidget):
                         process_batch(batch_idx + 1)
                     QTimer.singleShot(1000, _start_next)
                     return
-
-                # ЖЁСТКИЙ ТАЙМАУТ на пачку: 5 минут (300 сек × 1 опрос = 300 попыток).
-                # Если пачка зависла (окно застряло в _wait_auction_loaded или в
-                # бесконечных повторах) — принудительно переходим к следующей пачке.
-                # Раньше тут было «НЕТ таймаута — ждём пока пачка не закончится»,
-                # что давало паузы по 5-15-30 минут если окно зависало.
-                BATCH_TIMEOUT_SEC = 300  # 5 минут на всю пачку
-                if attempts >= BATCH_TIMEOUT_SEC:
-                    log(f"start_all: ПАЧКА {batch_idx + 1} превысила "
-                        f"{BATCH_TIMEOUT_SEC}с таймаут — ещё бегут: {running}. "
-                        f"Принудительно перехожу к следующей пачке.",
-                        level="WARNING")
-                    # НЕ убиваем зависшие окна (пусть допишут логи в finally) —
-                    # просто запускаем следующую пачку
-                    def _force_next():
-                        if getattr(self, '_batch_stop', False):
-                            return
-                        process_batch(batch_idx + 1)
-                    QTimer.singleShot(1000, _force_next)
-                    return
-
-                # Опрос каждую секунду
+                # НЕТ таймаута — ждём пока пачка не закончит.
                 QTimer.singleShot(1000, lambda: wait_f(attempts + 1))
 
             wait_c()

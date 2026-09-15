@@ -193,10 +193,8 @@ class Auction(GameAction):
 
             await asyncio.sleep(0.3)
 
-            # 4. Дождаться загрузки аукциона (пиксель auction_nalog, до 30с)
-            #    Было 120с — давало паузы по 2 минуты если аук зависал на
-            #    «Поиск информации». 30с достаточно: пиксель появляется за 3-5с.
-            if not await self._wait_auction_loaded(timeout=30):
+            # 4. Дождаться загрузки аукциона (пиксель auction_nalog, до 120с)
+            if not await self._wait_auction_loaded(timeout=120):
                 log("Чет пошло не так, не прогрузился аук =( Пробую выйти в меню", self.window_id)
                 # Добавить в список пропущенных — вернёмся в конце прогона
                 try:
