@@ -61,11 +61,18 @@ class Scheduler(GameAction):
             log("Кнопка «Начать расписание» не найдена — выхожу из меню "
                 "и усыпаю окно (возможно расписание уже идёт)",
                 self.window_id, level="WARNING")
-            # Кнопка выхода из меню шедули (стрелочка в левом верхнем углу)
-            await self.wait_and_click("npc_global_quit_button", timeout=3)
-            await asyncio.sleep(1)
-            # Если всё ещё в меню (кнопка выхода не сработала) — ещё попытка
-            # через главное меню (закрыть всё)
+            # Кнопка выхода из меню шедули — стрелочка в ПРАВОМ ВЕРХНЕМ углу
+            # заголовка «Расписание». npc_global_quit_button на (377,10) может
+            # промахиваться (чуть выше). Кликаем по (385, 30) — точные
+            # координаты кнопки выхода в окне 400×225 (подтверждено VLM).
+            await self.mouse.click(self.window_info, 385, 30)
+            log("Шедуля: клик выхода из меню (385, 30) — стрелочка",
+                self.window_id, level="DEBUG")
+            await asyncio.sleep(1.5)
+            # Если всё ещё в меню — пробуем npc_global_quit_button как запас
+            await self.wait_and_click("npc_global_quit_button", timeout=2)
+            await asyncio.sleep(0.5)
+            # Запас — главное меню (закрыть всё)
             await self.wait_and_click("main_menu_gui", timeout=2)
             await asyncio.sleep(1)
             # Усыпить окно
