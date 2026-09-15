@@ -133,7 +133,7 @@ TM_THRESHOLD = 0.75
 TM_SCALES = [0.85, 0.92, 1.0, 1.08, 1.15]
 
 # ── Лимиты ────────────────────────────────────────────────────────────────
-SCAN_PAGES = 5          # страниц инвентаря (предмет падает в КОНЕЦ)
+SCAN_PAGES = 3          # страниц инвентаря (предмет падает в КОНЕЦ, но 3 достаточно — 5 было слишком далеко)
 MAX_OK_RETRIES = 4      # попыток кликнуть ОК отмены
 MAX_ITEMS = 10          # максимум предметов за один прогон
 
@@ -1198,21 +1198,27 @@ class Auction(GameAction):
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # Вернуться к странице с предметом
+        # ВСЕГДА вернуться в НАЧАЛО — SCAN_PAGES свайпов up.
+        # Бот после цикла находится на последней отсканированной странице.
+        # Чтобы вернуться на стр 1 — нужно SCAN_PAGES свайпов up.
+        # Раньше было pages_to_back = best_result[3] - 1 — неправильно,
+        # потому что бот уже не на стр 1, а на последней.
+        for _ in range(SCAN_PAGES):
+            await self._swipe_inventory('up')
+
         if best_result is not None:
-            pages_to_back = best_result[3] - 1
-            for _ in range(pages_to_back):
-                await self._swipe_inventory('up')
-            log(f"Аук: предмет найден и подтверждён красной точкой! "
-                f"стр {best_result[3]} ({best_result[0]},{best_result[1]}) "
-                f"score={best_result[2]:.3f}", self.window_id)
+            # Нашли — после свайпов up мы на стр 1. Если предмет на стр 2+ —
+            # свайпаем down до нужной.
+            pages_to_go = best_result[3] - 1
+            for _ in range(pages_to_go):
+                await self._swipe_inventory('down')
+            log(f"Аук: предмет найден! стр {best_result[3]} "
+                f"({best_result[0]},{best_result[1]}) score={best_result[2]:.3f}",
+                self.window_id)
             return (best_result[0], best_result[1])
 
-        # Не нашли — вернуться в начало
-        for _ in range(SCAN_PAGES - 1):
-            await self._swipe_inventory('up')
-        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
-            f"(ни иконки с красной точкой)", self.window_id, level="ERROR")
+        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц",
+            self.window_id, level="ERROR")
         return None
 
     # ──────────────────────────────────────────────────────────────────────
