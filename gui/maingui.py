@@ -477,12 +477,9 @@ class NedoGui(QWidget):
                     # Пауза 5 сек между пачками — окна могут сворачиваться не мгновенно
                     QTimer.singleShot(5000, lambda: process_batch(batch_idx + 1))
                     return
-                # Таймаут: 3 минуты (180 сек) на пачку.
-                # Если окно зависло — пропускаем через 3 минуты.
-                if attempts >= 180:
-                    log(f"Пачка {batch_idx + 1}: слишком долго ({running}), пропускаю дальше", level="WARNING")
-                    QTimer.singleShot(5000, lambda: process_batch(batch_idx + 1))
-                    return
+                # НЕТ таймаута — ждём пока пачка не закончит.
+                # Если окно зависнет — пользователь жмёт STOP ВСЕ.
+                # Раньше было 8 часов, потом 3 минуты, теперь бесконечно.
                 QTimer.singleShot(1000, lambda: wait_f(attempts + 1))
 
             wait_c()

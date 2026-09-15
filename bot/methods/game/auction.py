@@ -207,7 +207,7 @@ class Auction(GameAction):
             await asyncio.sleep(0.3)
 
             # 4. Дождаться загрузки аукциона (пиксель auction_nalog, до 60с)
-            if not await self._wait_auction_loaded(timeout=60):
+            if not await self._wait_auction_loaded(timeout=120):
                 log("Чет пошло не так, не прогрузился аук =( Пробую выйти в меню", self.window_id)
                 await self.wait_and_click("main_menu_gui", timeout=1)
                 return False
@@ -580,21 +580,35 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     # ОЖИДАНИЕ ЗАГРУЗКИ АУКЦИОНА
     # ──────────────────────────────────────────────────────────────────────
-    async def _wait_auction_loaded(self, timeout: int = 60) -> bool:
-        """Ждать пиксель auction_nalog. До timeout секунд, проверка каждые 3с."""
+    async def _wait_auction_loaded(self, timeout: int = 120) -> bool:
+        """
+        Ждать пока аукцион загрузится. До timeout секунд.
+        Проверяет пиксель auction_nalog (что аукцион прогрузился).
+        Если на экране «Поиск информации» — ждём, это нормально.
+        Логирует прогресс каждые 10 сек.
+        """
         xy, rgb = parseCBT("auction_nalog", profile=self.profile)
         if xy is None:
             log("Аук: auction_nalog не найден в CBT", self.window_id, level="ERROR")
             return False
 
         deadline = time.monotonic() + timeout
+        last_log = time.monotonic()
         while time.monotonic() < deadline:
             try:
                 if await self.profile.check_pixel(xy, rgb, timeout=1, thr=4):
                     return True
             except Exception:
                 pass
-            await asyncio.sleep(3)
+            # Лог прогресса каждые 10 сек
+            now = time.monotonic()
+            if now - last_log >= 10:
+                remaining = int(deadline - now)
+                log(f"Аук: жду загрузки... осталось {remaining}с", self.window_id)
+                last_log = now
+            await asyncio.sleep(2)
+        log(f"Аук: не прогрузился за {timeout} сек (Поиск информации?) — пропускаю",
+            self.window_id, level="WARNING")
         return False
 
     # ──────────────────────────────────────────────────────────────────────
