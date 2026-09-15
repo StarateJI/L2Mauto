@@ -636,7 +636,12 @@ class Auction(GameAction):
         """
         Захват зоны rect=(x, y, w, h) в window-relative координатах.
         Возвращает BGR ndarray. mss отдаёт BGRA — конвертируем.
+
+        Сначала _ensure_foreground — иначе при перекрытии mss.grab снимет
+        другое окно и мы получим чужой кадр (поэтому «страницы не меняются»
+        и matchTemplate матчит одни и те же иконки).
         """
+        self._ensure_foreground()
         win = self.window_info[self.window_id]
         wx, wy = win["Position"]
         x, y, w, h = rect
@@ -686,21 +691,83 @@ class Auction(GameAction):
                 self.window_id, level="WARNING")
 
     # ──────────────────────────────────────────────────────────────────────
+    # FOREGROUND — гарантия что окно на переднем плане
+    # ──────────────────────────────────────────────────────────────────────
+    def _ensure_foreground(self) -> bool:
+        """
+        Принудительно вывести окно на передний план и проверить результат.
+
+        Проблема: SetForegroundWindow в Windows не работает если текущий
+        foreground принадлежит другому процессу (или окно перекрыто).
+        Решение — трюк с AttachThreadInput: прикрепляем input-поток текущего
+        foreground окна к нашему, тогда SetForegroundWindow срабатывает.
+
+        Возвращает True если после всех попыток наше окно стало foreground.
+        """
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            user32 = ctypes.windll.user32
+            hwnd_val = self.window_info[self.window_id].get("ID")
+            if not hwnd_val:
+                return False
+            hwnd = int(hwnd_val)
+
+            # Если уже foreground — выходим быстро
+            fg_now = user32.GetForegroundWindow()
+            if fg_now == hwnd:
+                return True
+
+            # Трюк с AttachThreadInput: позволяет «украсть» foreground
+            fg_thread = user32.GetWindowThreadProcessId(fg_now, None)
+            my_thread = user32.GetCurrentThreadId()
+
+            attached = False
+            if fg_thread and fg_thread != my_thread:
+                # Прикрепляем поток foreground окна к нашему
+                if user32.AttachThreadInput(my_thread, fg_thread, True):
+                    attached = True
+
+            # Пробуем несколько раз — иногда нужно с задержкой
+            ok = False
+            for _ in range(3):
+                # Альт-трюк: нажать+отпустить Alt «снимает» foreground lock
+                user32.keybd_event(0x12, 0, 0, 0)        # VK_MENU down
+                user32.keybd_event(0x12, 0, 0x0002, 0)   # VK_MENU up (KEYEVENTF_KEYUP)
+                # Теперь SetForegroundWindow должен сработать
+                user32.SetForegroundWindow(hwnd)
+                # Если окно свёрнуто — восстановить
+                if user32.IsIconic(hwnd):
+                    user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+                # Небольшая задержка
+                import time as _t
+                _t.sleep(0.05)
+                if user32.GetForegroundWindow() == hwnd:
+                    ok = True
+                    break
+                _t.sleep(0.05)
+
+            # Открепляем потоки
+            if attached:
+                user32.AttachThreadInput(my_thread, fg_thread, False)
+
+            if not ok:
+                log(f"Аук: _ensure_foreground НЕ смог вывести окно на передний план "
+                    f"(hwnd={hwnd})", self.window_id, level="WARNING")
+            return ok
+        except Exception as e:
+            log(f"Аук: _ensure_foreground exception: {e}", self.window_id,
+                level="WARNING")
+            return False
+
+    # ──────────────────────────────────────────────────────────────────────
     # КЛИКИ
     # ──────────────────────────────────────────────────────────────────────
     async def _click(self, x: int, y: int) -> None:
         """Клик по window-relative координатам через очередь мыши.
-        SetForegroundWindow перед кликом — без проверки/ожидания."""
-        try:
-            import ctypes
-            hwnd_val = self.window_info[self.window_id].get("ID")
-            if hwnd_val:
-                try:
-                    ctypes.windll.user32.SetForegroundWindow(int(hwnd_val))
-                except Exception:
-                    pass
-        except Exception:
-            pass
+        Сначала _ensure_foreground — гарантия что клик уйдёт в правильное окно."""
+        self._ensure_foreground()
         await self.mouse.click(self.window_info, x, y)
 
     async def _click_and_verify(self, x: int, y: int, label: str = "",
@@ -743,11 +810,16 @@ class Auction(GameAction):
         """
         Свайп инвентаря. direction='down' — следующая страница, 'up' — назад.
 
+        Сначала _ensure_foreground — иначе при перекрытии окон свайп уходит
+        в чужое окно (поэтому в логе страницы 1 и 2 выглядят одинаково:
+        иконка на одних и тех же координатах).
+
         Генерирует ~20 промежуточных точек между start и end — swipe
         получается медленным и плавным. Старый вариант с 2 точками делал
         FLICK (быстрый резкий жест) и эластичный скролл Lineage2M улетал
         далеко за пределы («сразу в самый низ»).
         """
+        self._ensure_foreground()
         cx = INV_CX
         top_y = INV_SCAN[1] + 20
         bot_y = INV_SCAN[1] + INV_SCAN[3] - 20
@@ -862,14 +934,17 @@ class Auction(GameAction):
             # ── Метод 3: OCR вернул что-то похожее на таймер? ───────────────
             # Если OCR вернул цифры + «д.»/«ч.» — это таймер, не «Продаётся».
             # Если OCR вернул текст похожий на «прод...» — это «Продаётся».
-            # Если OCR вернул пустоту — не уверены, НЕ трогаем (безопасно).
+            # Если OCR вернул явный мусор ('=', 'a if', 'at "24.34...') —
+            # это НЕ «Продаётся» (мусор = OCR не смог прочитать таймер).
+            # Раньше тут было «вернуть True при пустом OCR — вдруг Продаётся»,
+            # но это вызывало ЛОЖНЫЕ пропуски: бот не переставлял рабочие лоты.
+            # Правильно: мусор/пусто → НЕ «Продаётся» → возвращаем False.
             if not text or text in ("", "=", "-", "]"):
-                # OCR пустой — возможно текста вообще нет, или зона смещена.
-                # Безопасно: пропустить (пусть пользователь проверит руками).
-                log(f"Аук: OCR вернул пусто ('{text}') — НЕ ТРОГАЮ лот "
-                    f"(безопасно, вдруг это «Продаётся»)", self.window_id,
-                    level="WARNING")
-                return True
+                # OCR пустой/мусор — не можем сказать что это «Продаётся».
+                # Возвращаем False — пусть бот работает (снимает лот).
+                log(f"Аук: OCR вернул пусто/мусор ('{text}') — НЕ «Продаётся», "
+                    f"работаю дальше (снимаю лот)", self.window_id, level="DEBUG")
+                return False
 
             # ── Все 3 метода: не «Продаётся», есть таймер/текст ─────────────
             return False
