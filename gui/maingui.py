@@ -615,4 +615,17 @@ class NedoGui(QWidget):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.setModal(False)
             msg.show()
-            QTimer.singleShot(10, update)
+            # Запускаем update() в отдельном потоке — иначе requests.get
+            # блокирует event loop и GUI зависает на 30 сек (до 30 сек
+            # скачивание ZIP). Пользователь видит «не обновляется».
+            from PyQt5.QtCore import QThread
+            class _UpdaterThread(QThread):
+                def run(self):
+                    try:
+                        from bot.updater import update
+                        update()
+                    except Exception as e:
+                        log(f"show_update: updater thread exception: {e}",
+                            level="ERROR")
+            self._updater_thread = _UpdaterThread()
+            self._updater_thread.start()
