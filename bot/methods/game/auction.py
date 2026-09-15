@@ -967,13 +967,21 @@ class Auction(GameAction):
     def _is_status_prodano(self) -> bool:
         """
         Проверить, что первый лот в статусе «Продаётся» (только что переставлен).
-        Возвращает True если ХОТЯ БЫ ОДИН из 3 методов нашёл признак «Продаётся»:
-          1. OCR: слово «продаётся»/«продается»/«прода» в зоне статуса
-          2. Цвет: много зелёных пикселей (статус «Продаётся» рисуется зелёным)
-          3. Цвет: мало тёмных пикселей (статус-таймер обычно серый, не яркий)
+        Возвращает True только если статус «Продаётся» — НЕ трогаем.
+        Возвращает False для «Не продано», таймера, или любого другого.
 
-        Такие лоты НЕ трогаем — иначе вечный цикл.
-        Если хотя бы один метод сработал → возвращаем True (лучше пропустить).
+        Пользователь (простыми словами):
+          - «Продаётся»  → пропускаем (return True)
+          - «Отмена»     → переставляем (return False)
+          - «Забрать»    → переставляем (return False) — это «Не продано»
+
+        Метод: проверка ЦВЕТА статуса (надёжнее OCR который может не работать
+        если pytesseract не установлен на ПК).
+          - «Продаётся»  → ЗЕЛЁНЫЙ текст (G высокий, R низкий, B низкий)
+          - «Не продано» → КРАСНЫЙ текст (R высокий, G низкий, B низкий)
+          - таймер       → СЕРЫЙ/БЕЛЫЙ текст (все каналы средние)
+        Только зелёный = «Продаётся» = return True.
+        Красный/серый/белый = НЕ «Продаётся» = return False.
         """
         try:
             img = self._grab(STATUS_ZONE)
@@ -984,24 +992,70 @@ class Auction(GameAction):
                                       "au_status.png")
             cv2.imwrite(debug_path, img)
 
-            # ── Метод 1: OCR ────────────────────────────────────────────────
+            b, g, r = cv2.split(img)
+            total_pixels = img.shape[0] * img.shape[1]
+
+            # ── Метод 1 (основной): ЦВЕТ статуса ────────────────────────────
+            # Зелёный текст «Продаётся»: G высокий, R и B низкие.
+            # HSV: H 40..90, S>50, V>100
+            try:
+                hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+                green_mask = cv2.inRange(hsv,
+                                         np.array([40, 50, 100]),
+                                         np.array([90, 255, 255]))
+                green_count = int(np.sum(green_mask > 0))
+                green_ratio = green_count / max(total_pixels, 1)
+
+                # Красный текст «Не продано»: R высокий, G и B низкие.
+                # HSV: H 0..10 или 170..180 (красный на краях круга)
+                red_mask1 = cv2.inRange(hsv,
+                                        np.array([0, 50, 100]),
+                                        np.array([10, 255, 255]))
+                red_mask2 = cv2.inRange(hsv,
+                                        np.array([170, 50, 100]),
+                                        np.array([180, 255, 255]))
+                red_mask = cv2.bitwise_or(red_mask1, red_mask2)
+                red_count = int(np.sum(red_mask > 0))
+                red_ratio = red_count / max(total_pixels, 1)
+
+                log(f"Аук: статус цвет: зелёный={green_count} ({green_ratio:.2%}), "
+                    f"красный={red_count} ({red_ratio:.2%})",
+                    self.window_id, level="DEBUG")
+
+                # Зелёный > 3% → «Продаётся» (пропускаем)
+                if green_ratio > 0.03:
+                    log(f"Аук: статус = «Продаётся» (зелёный текст {green_ratio:.1%})",
+                        self.window_id)
+                    return True
+                # Красный > 3% → «Не продано» (Забрать, переставляем)
+                if red_ratio > 0.03:
+                    log(f"Аук: статус = «Не продано» (красный текст {red_ratio:.1%}) — "
+                        f"иду нажимать «Забрать»", self.window_id)
+                    return False
+            except Exception as e:
+                log(f"Аук: цветовая проверка статуса не удалась: {e}",
+                    self.window_id, level="DEBUG")
+
+            # ── Метод 2 (fallback): OCR если цвет не сработал ────────────────
+            # (серый/белый текст = таймер, не «Продаётся» и не «Не продано»)
             h, w = img.shape[:2]
             big = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_CUBIC)
             gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
             pt = _get_pytesseract()
             if pt is None:
-                log("Аук: pytesseract недоступен — НЕ ТРОГАЮ лот (безопасно)",
-                    self.window_id, level="WARNING")
-                return True
+                # pytesseract не установлен — не можем читать OCR.
+                # Но если цвет не сработал (ни зелёный ни красный), значит
+                # это таймер или пусто → НЕ «Продаётся» → переставляем.
+                log("Аук: pytesseract недоступен, цвет не зелёный/красный — "
+                    "НЕ «Продаётся» (вероятно таймер), переставляю",
+                    self.window_id, level="DEBUG")
+                return False
             text = pt.image_to_string(
                 gray, lang="rus+eng", config="--psm 7",
             ).strip().lower()
             log(f"Аук: статус лота OCR: '{text}'", self.window_id, level="DEBUG")
 
             # OCR ключевые слова для «Продаётся».
-            # ВАЖНО: НЕ используем «прода» — оно совпадает с «Не продано»
-            # (когда лот не продан, срок истёк, надо нажимать «Забрать»).
-            # Оставляем только полные формы.
             ocr_match = any(kw in text for kw in
                             ("продаёт", "продает", "продаю", "продажа",
                              "продаё", "продае", "продаетс"))
@@ -1009,48 +1063,12 @@ class Auction(GameAction):
                 log("Аук: статус = «Продаётся» (OCR method)", self.window_id)
                 return True
 
-            # ── Метод 2: зелёные пиксели (статус обычно зелёный) ─────────────
-            # В Lineage2M статус «Продаётся» часто подсвечен зелёным.
-            # HSV: H в [40..90] (зелёный), S>50, V>100
-            try:
-                hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-                # Зелёный: H 40..90, S 50..255, V 100..255
-                lower = np.array([40, 50, 100])
-                upper = np.array([90, 255, 255])
-                green_mask = cv2.inRange(hsv, lower, upper)
-                green_count = int(np.sum(green_mask > 0))
-                total_pixels = img.shape[0] * img.shape[1]
-                green_ratio = green_count / max(total_pixels, 1)
-                log(f"Аук: статус зелёных пикселей: {green_count} "
-                    f"({green_ratio:.2%})", self.window_id, level="DEBUG")
-                # Если >5% пикселей зелёные — почти наверняка «Продаётся»
-                if green_ratio > 0.05:
-                    log(f"Аук: статус = «Продаётся» (зелёный метод, "
-                        f"{green_ratio:.1%})", self.window_id)
-                    return True
-            except Exception as e:
-                log(f"Аук: green check failed: {e}", self.window_id, level="DEBUG")
-
-            # ── Метод 3: OCR вернул что-то похожее на таймер? ───────────────
-            # Если OCR вернул цифры + «д.»/«ч.» — это таймер, не «Продаётся».
-            # Если OCR вернул текст похожий на «прод...» — это «Продаётся».
-            # Если OCR вернул явный мусор ('=', 'a if', 'at "24.34...') —
-            # это НЕ «Продаётся» (мусор = OCR не смог прочитать таймер).
-            # Раньше тут было «вернуть True при пустом OCR — вдруг Продаётся»,
-            # но это вызывало ЛОЖНЫЕ пропуски: бот не переставлял рабочие лоты.
-            # Правильно: мусор/пусто → НЕ «Продаётся» → возвращаем False.
-            if not text or text in ("", "=", "-", "]"):
-                # OCR пустой/мусор — не можем сказать что это «Продаётся».
-                # Возвращаем False — пусть бот работает (снимает лот).
-                log(f"Аук: OCR вернул пусто/мусор ('{text}') — НЕ «Продаётся», "
-                    f"работаю дальше (снимаю лот)", self.window_id, level="DEBUG")
-                return False
-
-            # ── Все 3 метода: не «Продаётся», есть таймер/текст ─────────────
+            # Если OCR не нашёл «Продаётся» — это таймер или «Не продано».
+            # В обоих случаях НЕ «Продаётся» → переставляем.
             return False
 
         except Exception as e:
-            log(f"Аук: OCR статуса не удался: {e} — НЕ ТРОГАЮ (безопасно)",
+            log(f"Аук: проверка статуса не удалась: {e} — НЕ ТРОГАЮ (безопасно)",
                 self.window_id, level="WARNING")
             return True  # Если проверка упала — лучше не трогать
 
