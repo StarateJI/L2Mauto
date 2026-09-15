@@ -471,16 +471,21 @@ class NedoGui(QWidget):
                 running = [nick for nick in batch
                            if self.controller.is_running(nick)]
                 if not running:
-                    # Проверка стопа ПЕРЕД запуском следующей пачки
+                    # Тройная проверка стопа
                     if getattr(self, '_batch_stop', False):
                         log(f"start_all: СТОП — wait_f прерван перед batch {batch_idx + 1}")
                         return
-                    # Пауза 1 сек между пачками — окна могут сворачиваться не мгновенно
-                    QTimer.singleShot(1000, lambda: process_batch(batch_idx + 1))
+                    if self.controller.batch_cancelled:
+                        return
+                    # Пауза 1 сек между пачками
+                    def _start_next():
+                        if getattr(self, '_batch_stop', False):
+                            log(f"start_all: СТОП — _start_next прерван перед batch {batch_idx + 1}")
+                            return
+                        process_batch(batch_idx + 1)
+                    QTimer.singleShot(1000, _start_next)
                     return
                 # НЕТ таймаута — ждём пока пачка не закончит.
-                # Если окно зависнет — пользователь жмёт STOP ВСЕ.
-                # Раньше было 8 часов, потом 3 минуты, теперь бесконечно.
                 QTimer.singleShot(1000, lambda: wait_f(attempts + 1))
 
             wait_c()

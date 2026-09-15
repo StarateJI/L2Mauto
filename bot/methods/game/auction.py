@@ -337,23 +337,15 @@ class Auction(GameAction):
                     log(f"Аук: не удалось вернуть размер окна: {e}",
                         self.window_id, level="WARNING")
 
-            # 8c. Включить энергорежим (увести в сон) + ПРОВЕРИТЬ что реально включился.
-            #     «Недо-энерго» = бот думает что включил, но по факту окно не в энерго.
-            #     Проверяем пикселем, если не совпало — ещё раз пытаемся.
+            # 8c. Включить энергорежим — 1 попытка, без 3×8сек ожидания.
             try:
-                for attempt in range(1, 4):  # до 3 попыток
-                    if await self.profile.energo.is_on():
-                        log(f"Аук: окно уложено спать (энерго включён, "
-                            f"попытка {attempt})", self.window_id)
-                        break
-                    log(f"Аук: энерго не включился (попытка {attempt}/3) — "
-                        f"пытаюсь ещё раз", self.window_id, level="WARNING")
+                if not await self.profile.energo.is_on():
                     await self.profile.energo.turn_on()
                     await asyncio.sleep(2.0)
+                if await self.profile.energo.is_on():
+                    log("Аук: окно уложено спать", self.window_id)
                 else:
-                    log(f"Аук: ВАЖНО — энерго НЕ включился за 3 попытки! "
-                        f"Окно может остаться в «недо-энерго»",
-                        self.window_id, level="ERROR")
+                    log("Аук: энерго не включился (не критично)", self.window_id, level="WARNING")
             except Exception as e:
                 log(f"Аук: не удалось включить энерго: {e}",
                     self.window_id, level="WARNING")
@@ -390,10 +382,19 @@ class Auction(GameAction):
                     self.window_id, level="WARNING")
 
             # 10. Загрузить логи + debug PNG в GitHub (ветка bot-logs)
+            #     В отдельном потоке — НЕ блокирует finally (не создаёт паузы).
             try:
+                import threading
                 from bot.log_uploader import upload_run_logs
-                upload_run_logs(self.window_id, made=made,
-                              error=str(last_error) if last_error else None)
+                error_str = str(last_error) if last_error else None
+                t = threading.Thread(
+                    target=upload_run_logs,
+                    args=(self.window_id,),
+                    kwargs={"made": made, "error": error_str},
+                    daemon=True
+                )
+                t.start()
+                log(f"Аук: log_uploader запущен в фоне", self.window_id, level="DEBUG")
             except Exception as e:
                 log(f"Аук: log_uploader не сработал: {e}",
                     self.window_id, level="WARNING")
@@ -1047,61 +1048,54 @@ class Auction(GameAction):
 
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет в инвентаре. До SCAN_PAGES страниц.
-        Сначала сканирует текущую страницу, потом свайпает.
-        Использует multi-scale template matching (основной) + SIFT (fallback).
+        Искать предмет в инвентаре. Сканируем ВСЕ страницы, выбираем ЛУЧШИЙ score.
         Возвращает (x, y) центра предмета или None.
         """
-        best_overall: Tuple[int, float, str] = (0, 0.0, "none")  # (page, score, method)
+        best_result: Optional[Tuple[float, float, float, int]] = None  # (cx, cy, score, page)
 
         for page in range(1, SCAN_PAGES + 1):
-            log(f"Аук: сканирую страницу {page}/{SCAN_PAGES} (свайпов до этого: {page-1})",
+            log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}",
                 self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-            # ── Основной метод: multi-scale template matching ──────────────
+            # Multi-scale template matching
             center, score, scale, _ = self._match_template(sample_gray, gray)
-            log(f"Аук: TM стр {page}: score={score:.3f} (порог {TM_THRESHOLD}) "
-                f"scale={scale:.2f}", self.window_id)
-
-            if score > best_overall[1]:
-                best_overall = (page, score, "TM")
+            log(f"Аук: TM стр {page}: score={score:.3f} (порог {TM_THRESHOLD})",
+                self.window_id)
 
             if center is not None and score >= TM_THRESHOLD:
                 cx = int(center[0]) + INV_SCAN[0]
                 cy = int(center[1]) + INV_SCAN[1]
-                log(f"Аук: предмет найден (TM) на стр {page} в ({cx},{cy}) "
-                    f"score={score:.3f}", self.window_id)
-                for _ in range(page - 1):
-                    await self._swipe_inventory('up')
-                return (cx, cy)
+                if best_result is None or score > best_result[2]:
+                    best_result = (float(cx), float(cy), score, page)
+                    log(f"Аук: новый лучший — стр {page} ({cx},{cy}) score={score:.3f}",
+                        self.window_id)
 
-            # ── Fallback: SIFT (если TM не сработал) ────────────────────────
-            sift_center, sift_cluster, sift_total = self._sift_match(sample_gray, gray)
-            log(f"Аук: SIFT стр {page}: {sift_total} совп., кластер {sift_cluster}",
-                self.window_id, level="DEBUG")
-            if score > best_overall[1]:
-                best_overall = (page, score, "SIFT")
-            if sift_center is not None and sift_cluster >= SIFT_THRESHOLD:
-                cx = int(sift_center[0]) + INV_SCAN[0]
-                cy = int(sift_center[1]) + INV_SCAN[1]
-                log(f"Аук: предмет найден (SIFT) на стр {page} в ({cx},{cy}) "
-                    f"кластер={sift_cluster}", self.window_id)
-                for _ in range(page - 1):
-                    await self._swipe_inventory('up')
-                return (cx, cy)
+            # Не листаем дальше если уже нашли >0.95 — точное совпадение
+            if best_result is not None and best_result[2] >= 0.95:
+                log(f"Аук: точное совпадение на стр {best_result[3]}, не листаю дальше",
+                    self.window_id)
+                break
 
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
+        # Вернуться в начало
+        if best_result is not None:
+            pages_to_back = best_result[3] - 1
+            for _ in range(pages_to_back):
+                await self._swipe_inventory('up')
+            log(f"Аук: предмет найден! стр {best_result[3]} ({int(best_result[0])},{int(best_result[1])}) score={best_result[2]:.3f}",
+                self.window_id)
+            return (int(best_result[0]), int(best_result[1]))
+
+        # Не нашли — вернуться в начало
         for _ in range(SCAN_PAGES - 1):
             await self._swipe_inventory('up')
-        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц. "
-            f"Лучший результат: стр {best_overall[0]}, {best_overall[2]} "
-            f"score={best_overall[1]:.3f} (порог TM={TM_THRESHOLD}, "
-            f"SIFT={SIFT_THRESHOLD})", self.window_id, level="ERROR")
+        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц",
+            self.window_id, level="ERROR")
         return None
 
     # ──────────────────────────────────────────────────────────────────────
@@ -1130,14 +1124,11 @@ class Auction(GameAction):
 
         sample_gray = cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY)
 
-        # 2. ПРОВЕРКА СТАТУСА «Продаётся» — ДО клика «Отмена».
-        # Если первый лот в статусе «Продаётся» (только что переставлен) —
-        # НЕ трогаем его. Возвращаем 'empty' → reregister() break →
-        # защита от вечного цикла: снять → поставить → «Продаётся» → снять → ∞
-        if self._is_status_prodano():
-            log("Аук: первый лот в статусе «Продаётся» — пропускаю, "
-                "не трогаю (защита от вечного цикла)", self.window_id)
-            return 'empty'
+        # 2. ТЕСТ: проверка статуса «Продаётся» ОТКЛЮЧЕНА для тестирования.
+        # Будет включена обратно после отладки поиска предмета.
+        # if self._is_status_prodano():
+        #     log("Аук: первый лот в статусе «Продаётся» — пропускаю", self.window_id)
+        #     return 'empty'
 
         # 2b. Если образец пустой (0 SIFT точек) и статус не «Продаётся» —
         # значит строка лота пустая (нет лотов на продаже вообще).
