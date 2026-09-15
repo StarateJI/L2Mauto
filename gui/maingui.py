@@ -206,29 +206,11 @@ class NedoGui(QWidget):
         self.btn_otdel.clicked.connect(self.open_otdel)
         self.layout_main.addWidget(self.btn_otdel)
 
-        # Маппинг имён профилей в русские подписи кнопок.
-        # Ключ — имя класса профиля (как в self.profiles).
-        # Значение — русский текст кнопки.
-        PROFILE_LABELS = {
-            "Auction":      "Аукцион",
-            "Dungeon":      "Данжи",
-            "MainAlchemy":  "Химка",
-            "PvPDodge":     "ПВП",
-            "Rewards":      "Бонусы",
-            "Scheduler":    "Шедуля",
-            "BuyerProfile": "Байер",
-        }
-
         for name, cls in self.profiles.items():
-            # Русская подпись из маппинга, если нет — само имя класса
-            label = PROFILE_LABELS.get(name, name)
-            btn = QPushButton(f"▶ {label}")
+            btn = QPushButton(f"▶ {name} ВСЕ")
             btn.setFont(font_btn)
             btn.setCursor(Qt.PointingHandCursor)
             btn.setFixedHeight(28)
-            # Сохраняем имя класса профиля в свойстве кнопки — для подсчёта
-            # активных окон (метод _update_running_counters ниже).
-            btn.setProperty("profile_name", name)
 
             if name == "MainAlchemy":
                 btn.clicked.connect(lambda _, c=cls: self.start_alchemy(c))
@@ -237,8 +219,8 @@ class NedoGui(QWidget):
 
             self.layout_main.addWidget(btn)
 
-        # ── СТОП — красная, крупная ────────────────────────────────────────
-        self.btn_stop_all = QPushButton("⏹ СТОП")
+        # ── STOP ВСЕ — красная, крупная ─────────────────────────────────────
+        self.btn_stop_all = QPushButton("⏹ STOP ВСЕ")
         self.btn_stop_all.setObjectName("stop_all")
         self.btn_stop_all.setFont(QFont("Segoe UI", 10, QFont.Bold))
         self.btn_stop_all.setCursor(Qt.PointingHandCursor)
@@ -579,14 +561,10 @@ class NedoGui(QWidget):
         for i in range(self.layout_main.count()):
             item = self.layout_main.itemAt(i)
             w = item.widget()
-            if isinstance(w, QPushButton):
-                # Профильная кнопка — у неё есть свойство profile_name
-                prof_name = w.property("profile_name")
-                if prof_name is None:
-                    continue
-                # Базовый текст без счётчика «(N)»
+            if isinstance(w, QPushButton) and "ВСЕ" in w.text() and not "STOP ВСЕ" in w.text(): # эбат накостылил, потом переделать #todo
                 base_text = w.text().split(" (")[0]
-                count = running.get(prof_name, 0)
+                profile_name = base_text.replace(" ВСЕ", "")
+                count = running.get(profile_name, 0)
                 w.setText(f"{base_text} ({count})")
 
     def show_update_button(self):
@@ -615,17 +593,4 @@ class NedoGui(QWidget):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.setModal(False)
             msg.show()
-            # Запускаем update() в отдельном потоке — иначе requests.get
-            # блокирует event loop и GUI зависает на 30 сек (до 30 сек
-            # скачивание ZIP). Пользователь видит «не обновляется».
-            from PyQt5.QtCore import QThread
-            class _UpdaterThread(QThread):
-                def run(self):
-                    try:
-                        from bot.updater import update
-                        update()
-                    except Exception as e:
-                        log(f"show_update: updater thread exception: {e}",
-                            level="ERROR")
-            self._updater_thread = _UpdaterThread()
-            self._updater_thread.start()
+            QTimer.singleShot(10, update)

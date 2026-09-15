@@ -133,7 +133,7 @@ TM_THRESHOLD = 0.75
 TM_SCALES = [0.85, 0.92, 1.0, 1.08, 1.15]
 
 # ── Лимиты ────────────────────────────────────────────────────────────────
-SCAN_PAGES = 3          # страниц инвентаря (предмет падает в КОНЕЦ, но 3 достаточно — 5 было слишком далеко)
+SCAN_PAGES = 5          # страниц инвентаря (предмет падает в КОНЕЦ)
 MAX_OK_RETRIES = 4      # попыток кликнуть ОК отмены
 MAX_ITEMS = 10          # максимум предметов за один прогон
 
@@ -171,12 +171,58 @@ class Auction(GameAction):
         resize_done = False  # чтобы в finally знать — надо ли возвращать размер
 
         try:
-            # 1. Разбудить окно — выйти из энерго
-            try:
+            # 1. Разбудить окно — выйти из энерго.
+            # Проблема (Zakamsk 17:15, v5.6.14): turn_off(ignore=True) делал
+            # swipe, но swipe НЕ срабатывал на спящем окне → окно оставалось
+            # в сне. Дальше бот кликал main_menu_gui → клик уходил в спящее
+            # окно → НО пиксель случайно совпадал на чужом окне/рабочем столе
+            # → бот думал «Аук: загрузился» → SIFT 0 → «список пуст».
+            # Логи врали, скрины показывали что окно реально в сне.
+            #
+            # Решение: ЦИКЛ из 3 попыток turn_off с проверкой is_on() между.
+            # Если после swipe окно всё ещё в энерго — повторяем. ignore=False
+            # чтобы turn_off сам проверял результат (не trust blindly).
+            woke = False
+            for attempt in range(1, 4):
+                try:
+                    # ignore=False только на последней попытке — turn_off
+                    # сам проверит пиксель zalupka_gui после swipe (телепорт).
+                    # На первых попытках ignore=True (быстро, без долгих проверок).
+                    ignore_flag = (attempt < 3)
+                    await self.profile.energo.turn_off(ignore=ignore_flag)
+                except Exception as e:
+                    log(f"Аук: turn_off попытка {attempt}/3 exception: {e}",
+                        self.window_id, level="WARNING")
+
+                await asyncio.sleep(1.0)
+
+                # Проверка — реально вышло ли из сна?
                 if await self.profile.energo.is_on():
-                    await self.profile.energo.turn_off()
-            except Exception as e:
-                log(f"Аук: энерго-выход не удался: {e}", self.window_id, level="WARNING")
+                    log(f"Аук: после turn_off попытка {attempt}/3 — окно "
+                        f"ВСЁ ЕЩЁ в энерго (swipe не сработал) — повторяю",
+                        self.window_id, level="WARNING")
+                    continue
+                # is_on() = False — окно вышло из сна (или не было в нём)
+                woke = True
+                if attempt > 1:
+                    log(f"Аук: окно вышло из сна с попытки {attempt}/3",
+                        self.window_id)
+                break
+
+            if not woke:
+                log("Аук: ВАЖНО — окно НЕ вышло из энерго за 3 попытки! "
+                    "Аукцион не откроется — будет пустой кадр. Пропускаю окно.",
+                    self.window_id, level="ERROR")
+                # Добавить в пропущенные — вернёмся в конце прогона
+                try:
+                    from gui.maingui import NedoGui
+                    gui = NedoGui._instance if hasattr(NedoGui, '_instance') else None
+                    if gui and hasattr(gui, '_skipped_windows'):
+                        gui._skipped_windows.append(self.window_id)
+                except Exception:
+                    pass
+                return False
+
             # Пауза после выхода из энерго — окно должно «проснуться» полностью
             await asyncio.sleep(T_AFTER_ENERGY_OFF)
 
@@ -636,29 +682,17 @@ class Auction(GameAction):
         """
         Захват зоны rect=(x, y, w, h) в window-relative координатах.
         Возвращает BGR ndarray. mss отдаёт BGRA — конвертируем.
+
+        Сначала _ensure_foreground — иначе при перекрытии mss.grab снимет
+        другое окно и мы получим чужой кадр (поэтому «страницы не меняются»
+        и matchTemplate матчит одни и те же иконки).
         """
+        self._ensure_foreground()
         win = self.window_info[self.window_id]
         wx, wy = win["Position"]
         x, y, w, h = rect
         monitor = {"left": wx + x, "top": wy + y, "width": w, "height": h}
-        try:
-            shot = _sct.grab(monitor)
-        except AttributeError as e:
-            if 'srcdc' in str(e) or 'memdc' in str(e):
-                # mss использует thread-local handles. Если вызван из потока
-                # где handles не созданы → краш. Создаём НОВЫЙ mss локально
-                # (НЕ меняем global _sct) и используем его.
-                try:
-                    local_sct = mss.mss()
-                except AttributeError:
-                    local_sct = mss.MSS()
-                shot = local_sct.grab(monitor)
-                try:
-                    local_sct.close()
-                except Exception:
-                    pass
-            else:
-                raise
+        shot = _sct.grab(monitor)
         arr = np.array(shot)  # BGRA
         return cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
 
@@ -687,28 +721,12 @@ class Auction(GameAction):
             # Берём главный монитор (обычно 2560×1440)
             # monitors[0] = все мониторы вместе (virtual screen)
             # monitors[1] = первый реальный монитор
-            try:
-                monitors = _sct.monitors
-                if len(monitors) > 1:
-                    monitor = monitors[1]
-                else:
-                    monitor = monitors[0]
-                shot = _sct.grab(monitor)
-            except AttributeError as e:
-                if 'srcdc' in str(e) or 'memdc' in str(e):
-                    try:
-                        local_sct = mss.mss()
-                    except AttributeError:
-                        local_sct = mss.MSS()
-                    monitors = local_sct.monitors
-                    monitor = monitors[1] if len(monitors) > 1 else monitors[0]
-                    shot = local_sct.grab(monitor)
-                    try:
-                        local_sct.close()
-                    except Exception:
-                        pass
-                else:
-                    raise
+            monitors = _sct.monitors
+            if len(monitors) > 1:
+                monitor = monitors[1]
+            else:
+                monitor = monitors[0]
+            shot = _sct.grab(monitor)
             arr = np.array(shot)  # BGRA
             img = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
             cv2.imwrite(path, img)
@@ -719,21 +737,83 @@ class Auction(GameAction):
                 self.window_id, level="WARNING")
 
     # ──────────────────────────────────────────────────────────────────────
+    # FOREGROUND — гарантия что окно на переднем плане
+    # ──────────────────────────────────────────────────────────────────────
+    def _ensure_foreground(self) -> bool:
+        """
+        Принудительно вывести окно на передний план и проверить результат.
+
+        Проблема: SetForegroundWindow в Windows не работает если текущий
+        foreground принадлежит другому процессу (или окно перекрыто).
+        Решение — трюк с AttachThreadInput: прикрепляем input-поток текущего
+        foreground окна к нашему, тогда SetForegroundWindow срабатывает.
+
+        Возвращает True если после всех попыток наше окно стало foreground.
+        """
+        try:
+            import ctypes
+            from ctypes import wintypes
+
+            user32 = ctypes.windll.user32
+            hwnd_val = self.window_info[self.window_id].get("ID")
+            if not hwnd_val:
+                return False
+            hwnd = int(hwnd_val)
+
+            # Если уже foreground — выходим быстро
+            fg_now = user32.GetForegroundWindow()
+            if fg_now == hwnd:
+                return True
+
+            # Трюк с AttachThreadInput: позволяет «украсть» foreground
+            fg_thread = user32.GetWindowThreadProcessId(fg_now, None)
+            my_thread = user32.GetCurrentThreadId()
+
+            attached = False
+            if fg_thread and fg_thread != my_thread:
+                # Прикрепляем поток foreground окна к нашему
+                if user32.AttachThreadInput(my_thread, fg_thread, True):
+                    attached = True
+
+            # Пробуем несколько раз — иногда нужно с задержкой
+            ok = False
+            for _ in range(3):
+                # Альт-трюк: нажать+отпустить Alt «снимает» foreground lock
+                user32.keybd_event(0x12, 0, 0, 0)        # VK_MENU down
+                user32.keybd_event(0x12, 0, 0x0002, 0)   # VK_MENU up (KEYEVENTF_KEYUP)
+                # Теперь SetForegroundWindow должен сработать
+                user32.SetForegroundWindow(hwnd)
+                # Если окно свёрнуто — восстановить
+                if user32.IsIconic(hwnd):
+                    user32.ShowWindow(hwnd, 9)  # SW_RESTORE
+                # Небольшая задержка
+                import time as _t
+                _t.sleep(0.05)
+                if user32.GetForegroundWindow() == hwnd:
+                    ok = True
+                    break
+                _t.sleep(0.05)
+
+            # Открепляем потоки
+            if attached:
+                user32.AttachThreadInput(my_thread, fg_thread, False)
+
+            if not ok:
+                log(f"Аук: _ensure_foreground НЕ смог вывести окно на передний план "
+                    f"(hwnd={hwnd})", self.window_id, level="WARNING")
+            return ok
+        except Exception as e:
+            log(f"Аук: _ensure_foreground exception: {e}", self.window_id,
+                level="WARNING")
+            return False
+
+    # ──────────────────────────────────────────────────────────────────────
     # КЛИКИ
     # ──────────────────────────────────────────────────────────────────────
     async def _click(self, x: int, y: int) -> None:
         """Клик по window-relative координатам через очередь мыши.
-        SetForegroundWindow перед кликом — без проверки/ожидания."""
-        try:
-            import ctypes
-            hwnd_val = self.window_info[self.window_id].get("ID")
-            if hwnd_val:
-                try:
-                    ctypes.windll.user32.SetForegroundWindow(int(hwnd_val))
-                except Exception:
-                    pass
-        except Exception:
-            pass
+        Сначала _ensure_foreground — гарантия что клик уйдёт в правильное окно."""
+        self._ensure_foreground()
         await self.mouse.click(self.window_info, x, y)
 
     async def _click_and_verify(self, x: int, y: int, label: str = "",
@@ -776,11 +856,16 @@ class Auction(GameAction):
         """
         Свайп инвентаря. direction='down' — следующая страница, 'up' — назад.
 
+        Сначала _ensure_foreground — иначе при перекрытии окон свайп уходит
+        в чужое окно (поэтому в логе страницы 1 и 2 выглядят одинаково:
+        иконка на одних и тех же координатах).
+
         Генерирует ~20 промежуточных точек между start и end — swipe
         получается медленным и плавным. Старый вариант с 2 точками делал
         FLICK (быстрый резкий жест) и эластичный скролл Lineage2M улетал
         далеко за пределы («сразу в самый низ»).
         """
+        self._ensure_foreground()
         cx = INV_CX
         top_y = INV_SCAN[1] + 20
         bot_y = INV_SCAN[1] + INV_SCAN[3] - 20
@@ -895,14 +980,17 @@ class Auction(GameAction):
             # ── Метод 3: OCR вернул что-то похожее на таймер? ───────────────
             # Если OCR вернул цифры + «д.»/«ч.» — это таймер, не «Продаётся».
             # Если OCR вернул текст похожий на «прод...» — это «Продаётся».
-            # Если OCR вернул пустоту — не уверены, НЕ трогаем (безопасно).
+            # Если OCR вернул явный мусор ('=', 'a if', 'at "24.34...') —
+            # это НЕ «Продаётся» (мусор = OCR не смог прочитать таймер).
+            # Раньше тут было «вернуть True при пустом OCR — вдруг Продаётся»,
+            # но это вызывало ЛОЖНЫЕ пропуски: бот не переставлял рабочие лоты.
+            # Правильно: мусор/пусто → НЕ «Продаётся» → возвращаем False.
             if not text or text in ("", "=", "-", "]"):
-                # OCR пустой — возможно текста вообще нет, или зона смещена.
-                # Безопасно: пропустить (пусть пользователь проверит руками).
-                log(f"Аук: OCR вернул пусто ('{text}') — НЕ ТРОГАЮ лот "
-                    f"(безопасно, вдруг это «Продаётся»)", self.window_id,
-                    level="WARNING")
-                return True
+                # OCR пустой/мусор — не можем сказать что это «Продаётся».
+                # Возвращаем False — пусть бот работает (снимает лот).
+                log(f"Аук: OCR вернул пусто/мусор ('{text}') — НЕ «Продаётся», "
+                    f"работаю дальше (снимаю лот)", self.window_id, level="DEBUG")
+                return False
 
             # ── Все 3 метода: не «Продаётся», есть таймер/текст ─────────────
             return False
@@ -1176,20 +1264,36 @@ class Auction(GameAction):
                 f"(лучший score={best_page_score:.3f}), "
                 f"красных точек: {len(red_dots)}", self.window_id)
 
-            # 3. Ищем лучшего кандидата — кликаем по нему.
-            #    Без красной точки (не получалось её нормально ловить).
+            # 3. Ищем кандидата с красной точкой рядом.
+            #    Красная точка в Lineage2M — правый верхний угол ячейки,
+            #    т.е. в пределах ~40px от центра иконки 60×53.
             for (cx, cy, score) in deduped:
+                confirmed_dot = None
+                for (dx, dy) in red_dots:
+                    if abs(dx - cx) <= 40 and abs(dy - cy) <= 40:
+                        confirmed_dot = (dx, dy)
+                        break
+                if confirmed_dot is None:
+                    # Иконка сматчилась, но красной точки рядом нет →
+                    # это B&W-дубликат (непродаваемый), не наш предмет.
+                    log(f"Аук: стр {page} — иконка ({cx},{cy}) "
+                        f"score={score:.3f} НО без красной точки → дубликат, "
+                        f"пропускаю", self.window_id, level="DEBUG")
+                    continue
+
+                # Есть И иконка И красная точка → наш предмет.
                 win_cx = cx + INV_SCAN[0]
                 win_cy = cy + INV_SCAN[1]
                 if best_result is None or score > best_result[2]:
                     best_result = (win_cx, win_cy, score, page)
-                    log(f"Аук: НАЙДЕН — стр {page} иконка ({cx},{cy}) "
+                    log(f"Аук: НАЙДЕН И ПОДТВЕРЖДЁН — стр {page} "
+                        f"иконка ({cx},{cy}) + точка {confirmed_dot} "
                         f"→ клик ({win_cx},{win_cy}) score={score:.3f}",
                         self.window_id)
-                # Точное совпадение — дальше не листаем.
+                # Точное совпадение с подтверждением — дальше не листаем.
                 if score >= 0.90:
-                    log(f"Аук: точное совпадение (score >= 0.90), "
-                        f"не листаю дальше", self.window_id)
+                    log(f"Аук: точное совпадение с красной точкой "
+                        f"(score >= 0.90), не листаю дальше", self.window_id)
                     break
 
             if best_result is not None and best_result[2] >= 0.90:
@@ -1198,27 +1302,21 @@ class Auction(GameAction):
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # ВСЕГДА вернуться в НАЧАЛО — SCAN_PAGES свайпов up.
-        # Бот после цикла находится на последней отсканированной странице.
-        # Чтобы вернуться на стр 1 — нужно SCAN_PAGES свайпов up.
-        # Раньше было pages_to_back = best_result[3] - 1 — неправильно,
-        # потому что бот уже не на стр 1, а на последней.
-        for _ in range(SCAN_PAGES):
-            await self._swipe_inventory('up')
-
+        # Вернуться к странице с предметом
         if best_result is not None:
-            # Нашли — после свайпов up мы на стр 1. Если предмет на стр 2+ —
-            # свайпаем down до нужной.
-            pages_to_go = best_result[3] - 1
-            for _ in range(pages_to_go):
-                await self._swipe_inventory('down')
-            log(f"Аук: предмет найден! стр {best_result[3]} "
-                f"({best_result[0]},{best_result[1]}) score={best_result[2]:.3f}",
-                self.window_id)
+            pages_to_back = best_result[3] - 1
+            for _ in range(pages_to_back):
+                await self._swipe_inventory('up')
+            log(f"Аук: предмет найден и подтверждён красной точкой! "
+                f"стр {best_result[3]} ({best_result[0]},{best_result[1]}) "
+                f"score={best_result[2]:.3f}", self.window_id)
             return (best_result[0], best_result[1])
 
-        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц",
-            self.window_id, level="ERROR")
+        # Не нашли — вернуться в начало
+        for _ in range(SCAN_PAGES - 1):
+            await self._swipe_inventory('up')
+        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
+            f"(ни иконки с красной точкой)", self.window_id, level="ERROR")
         return None
 
     # ──────────────────────────────────────────────────────────────────────
@@ -1249,8 +1347,7 @@ class Auction(GameAction):
 
         # 2. Защита от вечного цикла: если первый лот в статусе «Продаётся» —
         # значит он только что выставлен, снимать/переставлять его НЕ НАДО.
-        # Без этой проверки бот снимет только что выставленный лот и будет
-        # искать его снова → вечный цикл.
+        # Пропускаем. (TEST_MODE выключен — проверка возвращена.)
         if self._is_status_prodano():
             log("Аук: первый лот в статусе «Продаётся» — пропускаю",
                 self.window_id)
@@ -1267,7 +1364,15 @@ class Auction(GameAction):
 
         # 3. Клик "Отмена лота"
         if not await self._cancel_lot():
-            return 'error'
+            # Окно подтверждения НЕ появилось после 2 кликов по «Отмена лота».
+            # Это значит список лотов ПУСТОЙ — кнопка серая/неактивная, клик
+            # по ней ничего не делает. Это НЕ ошибка — просто нечего снимать.
+            # Раньше тут было return 'error' → бот стопал весь прогон.
+            # Правильно: return 'empty' — завершить как «нечего переставлять».
+            log("Аук: окно подтверждения не появилось — список лотов пуст "
+                "(кнопка «Отмена» серая). Завершаю прогон (не ошибка).",
+                self.window_id, level="INFO")
+            return 'empty'
 
         # 4. Подождать анимацию и кликнуть ОК
         await asyncio.sleep(T_CONFIRM_SETTLE)

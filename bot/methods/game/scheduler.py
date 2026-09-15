@@ -51,34 +51,13 @@ class Scheduler(GameAction):
                 return None
 
         if not await self.wait_and_click(tag, timeout=5):
-            # Кнопка «Начать расписание» не найдена. Частая причина —
-            # расписание уже запущено, тогда на её месте кнопка «Остановить».
-            # schedule_stop не имеет RGB в CBT (rgb="no"), поэтому проверить
-            # пикселем не выйдет. Просто выходим из меню и усыпляем окно —
-            # безопасно для любого случая (уже запущено / меню глюкнуло).
-            # Пользователь: «ему надо просто выйти отсюда и уйти в сон,
-            # выход я подметил так же как кнопки со стрелочкой (цифра 3).»
-            log("Кнопка «Начать расписание» не найдена — выхожу из меню "
-                "и усыпаю окно (возможно расписание уже идёт)",
-                self.window_id, level="WARNING")
-            # Кнопка выхода из меню шедули — стрелочка в ПРАВОМ ВЕРХНЕМ углу
-            # заголовка «Расписание». npc_global_quit_button на (377,10) может
-            # промахиваться (чуть выше). Кликаем по (385, 30) — точные
-            # координаты кнопки выхода в окне 400×225 (подтверждено VLM).
-            await self.mouse.click(self.window_info, 385, 30)
-            log("Шедуля: клик выхода из меню (385, 30) — стрелочка",
-                self.window_id, level="DEBUG")
-            await asyncio.sleep(1.5)
-            # Если всё ещё в меню — пробуем npc_global_quit_button как запас
-            await self.wait_and_click("npc_global_quit_button", timeout=2)
-            await asyncio.sleep(0.5)
-            # Запас — главное меню (закрыть всё)
-            await self.wait_and_click("main_menu_gui", timeout=2)
-            await asyncio.sleep(1)
-            # Усыпить окно
-            if not await self.profile.energo.is_on():
-                await self.profile.energo.turn_on()
-            return None  # не ошибка — просто выходим
+            log("Окно сломалось?", self.window_id)
+            self.profile.notify(
+                "error",
+                f"Возможно окно залипло, подойди глянь плиз\n\ntry schedule {state} | {tag}",
+            )
+            self.profile.notify_screenshot("Кажись залипли, #важно")
+            return False
 
         if state == "off":
             if await self.wait_and_click("main_menu_gui", timeout=7):

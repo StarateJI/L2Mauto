@@ -45,31 +45,9 @@ class Scheduler(BaseProfile):
             await asyncio.sleep(2)  # меню расписания прогрузится
 
             if not await sch.wait_and_click("schedule_start", timeout=7):
-                # Кнопка «Начать расписание» не найдена. Частая причина —
-                # расписание уже запущено, тогда на её месте кнопка «Остановить».
-                # Пользователь: «если уже окно в шедуле и я запускаю кнопку Шедуля,
-                # бот ломается — там кнопка Остановить вместо Начать. Надо просто
-                # выйти отсюда и уйти в сон, выход кнопка со стрелочкой.»
-                log("Кнопка «Начать расписание» не найдена — выхожу из меню "
-                    "и усыпаю окно (возможно расписание уже идёт)",
-                    self.window_id, level="WARNING")
-                # Кнопка выхода из меню шедули — стрелочка в ПРАВОМ ВЕРХНЕМ углу
-                # заголовка «Расписание» (VLM подтвердил координаты по скрину).
-                await self.mouse.click(self.window_info, 365, 45)
-                log("Шедуля: клик выхода из меню (365, 45) — стрелочка",
-                    self.window_id, level="DEBUG")
-                await asyncio.sleep(1.5)
-                # Запас — npc_global_quit_button (правый верхний угол)
-                await sch.wait_and_click("npc_global_quit_button", timeout=2)
-                await asyncio.sleep(0.5)
-                # Запас — главное меню (закрыть всё)
-                await sch.wait_and_click("main_menu_gui", timeout=2)
-                await asyncio.sleep(1)
-                # Усыпить окно
-                if not await self.energo.is_on():
-                    await self.energo.turn_on()
-                log("Шедуля: окно уложено спать (расписание уже идёт или "
-                    "кнопка не найдена)", self.window_id)
+                log("Не смог запустить schedule", self.window_id)
+                self.notify("error", "Scheduler: schedule_start не нажалась")
+                self.notify_screenshot("Scheduler: schedule_start не нажалась")
                 return
 
             log("Schedule запущен, жду 40 сек (окно само летит в город и закупается)", self.window_id)
