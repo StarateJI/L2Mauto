@@ -474,13 +474,14 @@ class NedoGui(QWidget):
                     if getattr(self, '_batch_stop', False):
                         log(f"start_all: СТОП — wait_f прерван перед batch {batch_idx + 1}")
                         return
-                    process_batch(batch_idx + 1)
+                    # Пауза 5 сек между пачками — окна могут сворачиваться не мгновенно
+                    QTimer.singleShot(5000, lambda: process_batch(batch_idx + 1))
                     return
-                # Таймаут: 5 минут (300 сек) на пачку.
-                # Было 8 часов (8*3600=28800) — бот ждал часами если окно зависло.
-                if attempts >= 300:
+                # Таймаут: 3 минуты (180 сек) на пачку.
+                # Если окно зависло — пропускаем через 3 минуты.
+                if attempts >= 180:
                     log(f"Пачка {batch_idx + 1}: слишком долго ({running}), пропускаю дальше", level="WARNING")
-                    process_batch(batch_idx + 1)
+                    QTimer.singleShot(5000, lambda: process_batch(batch_idx + 1))
                     return
                 QTimer.singleShot(1000, lambda: wait_f(attempts + 1))
 
