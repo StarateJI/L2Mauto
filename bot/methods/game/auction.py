@@ -54,10 +54,36 @@ from bot.methods.game._base import GameAction
 # ── mss singleton: открывается ОДИН раз, не на каждый захват ───────────────
 # mss.mss() — класс в нижнем регистре (да, это легально в Python).
 # На некоторых версиях mss модуль называется mss.mss, на других mss.MSS.
-try:
-    _sct = mss.mss()
-except AttributeError:
-    _sct = mss.MSS()
+#
+# ВАЖНО: mss использует thread-local handles. Если _grab вызывается из
+# другого потока (LogUploader QThread и т.д.), handles не созданы в этом
+# потоке → AttributeError: '_thread._local' object has no attribute 'srcdc'
+# Решение: _grab пересоздаёт mss при ошибке (см. _recreate_sct).
+_sct = None
+
+def _get_sct():
+    """Возвращает singleton mss. Создаёт при первом вызове."""
+    global _sct
+    if _sct is None:
+        try:
+            _sct = mss.mss()
+        except AttributeError:
+            _sct = mss.MSS()
+    return _sct
+
+def _recreate_sct():
+    """Пересоздать mss singleton — если сломался thread-local handles."""
+    global _sct
+    try:
+        if _sct is not None:
+            _sct.close()
+    except Exception:
+        pass
+    try:
+        _sct = mss.mss()
+    except AttributeError:
+        _sct = mss.MSS()
+    return _sct
 
 # ── Рабочий размер окна ───────────────────────────────────────────────────
 # 960×540 — OCR 100% точность, 4 окна на 2560×1440 (2×2), меньше перекрытие
@@ -692,7 +718,19 @@ class Auction(GameAction):
         wx, wy = win["Position"]
         x, y, w, h = rect
         monitor = {"left": wx + x, "top": wy + y, "width": w, "height": h}
-        shot = _sct.grab(monitor)
+        # _grab может вызываться из разных потоков (LogUploader QThread и т.д.)
+        # mss использует thread-local handles — при ошибке пересоздаём.
+        try:
+            shot = _get_sct().grab(monitor)
+        except AttributeError as e:
+            if 'srcdc' in str(e) or 'memdc' in str(e):
+                # thread-local handles сломаны — пересоздаём mss
+                log(f"Аук: mss сломался ({e}) — пересоздаю",
+                    self.window_id, level="WARNING")
+                _recreate_sct()
+                shot = _get_sct().grab(monitor)
+            else:
+                raise
         arr = np.array(shot)  # BGRA
         return cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
 
@@ -721,12 +759,24 @@ class Auction(GameAction):
             # Берём главный монитор (обычно 2560×1440)
             # monitors[0] = все мониторы вместе (virtual screen)
             # monitors[1] = первый реальный монитор
-            monitors = _sct.monitors
-            if len(monitors) > 1:
-                monitor = monitors[1]
-            else:
-                monitor = monitors[0]
-            shot = _sct.grab(monitor)
+            sct = _get_sct()
+            try:
+                monitors = sct.monitors
+                if len(monitors) > 1:
+                    monitor = monitors[1]
+                else:
+                    monitor = monitors[0]
+                shot = sct.grab(monitor)
+            except AttributeError as e:
+                if 'srcdc' in str(e) or 'memdc' in str(e):
+                    log(f"Аук: mss сломался в _take_fullscreen ({e}) — пересоздаю",
+                        self.window_id, level="WARNING")
+                    sct = _recreate_sct()
+                    monitors = sct.monitors
+                    monitor = monitors[1] if len(monitors) > 1 else monitors[0]
+                    shot = sct.grab(monitor)
+                else:
+                    raise
             arr = np.array(shot)  # BGRA
             img = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
             cv2.imwrite(path, img)
