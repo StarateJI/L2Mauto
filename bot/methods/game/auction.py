@@ -206,9 +206,18 @@ class Auction(GameAction):
 
             await asyncio.sleep(0.3)
 
-            # 4. Дождаться загрузки аукциона (пиксель auction_nalog, до 60с)
+            # 4. Дождаться загрузки аукциона (пиксель auction_nalog, до 120с)
             if not await self._wait_auction_loaded(timeout=120):
                 log("Чет пошло не так, не прогрузился аук =( Пробую выйти в меню", self.window_id)
+                # Добавить в список пропущенных — вернёмся в конце прогона
+                try:
+                    from gui.maingui import NedoGui
+                    gui = NedoGui._instance if hasattr(NedoGui, '_instance') else None
+                    if gui and hasattr(gui, '_skipped_windows'):
+                        gui._skipped_windows.append(self.window_id)
+                        log(f"Аук: окно {self.window_id} добавлено в пропущенные", self.window_id)
+                except Exception:
+                    pass
                 await self.wait_and_click("main_menu_gui", timeout=1)
                 return False
 

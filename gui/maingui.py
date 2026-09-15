@@ -436,9 +436,18 @@ class NedoGui(QWidget):
         batches = [windows[i:i + num] for i in range(0, len(windows), num)]
         self.controller.reset_batch_cancel()
         self._batch_stop = False  # флаг жёсткой остановки process_batch
+        self._skipped_windows = []  # окна которые не загрузились (Поиск информации)
 
         def process_batch(batch_idx=0):
             if batch_idx >= len(batches):
+                # Все пачки прошли — проверяем пропущенные окна
+                if self._skipped_windows and not getattr(self, '_batch_stop', False):
+                    log(f"Прогон завершён. Повторяю {len(self._skipped_windows)} пропущенных окон: {self._skipped_windows}")
+                    retry_windows = self._skipped_windows.copy()
+                    self._skipped_windows.clear()
+                    retry_batches = [retry_windows[i:i + num] for i in range(0, len(retry_windows), num)]
+                    batches.extend(retry_batches)
+                    QTimer.singleShot(5000, lambda: process_batch(batch_idx))
                 return
             if self.controller.batch_cancelled:
                 return
