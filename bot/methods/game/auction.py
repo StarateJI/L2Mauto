@@ -133,7 +133,7 @@ TM_THRESHOLD = 0.75
 TM_SCALES = [0.85, 0.92, 1.0, 1.08, 1.15]
 
 # ── Лимиты ────────────────────────────────────────────────────────────────
-SCAN_PAGES = 5          # страниц инвентаря (предмет падает в КОНЕЦ)
+SCAN_PAGES = 3          # страниц инвентаря (предмет падает в КОНЕЦ, но 3 достаточно — раньше было 5, бот листал слишком далеко)
 MAX_OK_RETRIES = 4      # попыток кликнуть ОК отмены
 MAX_ITEMS = 10          # максимум предметов за один прогон
 
@@ -285,9 +285,12 @@ class Auction(GameAction):
                     log(f"Аук: лотов больше нет на странице (предмет {i})", self.window_id)
                     break
                 else:  # 'error'
-                    log(f"Аук: ошибка на предмете {i} — стоп, сделано {made}",
-                        self.window_id, level="ERROR")
-                    break
+                    log(f"Аук: ошибка на предмете {i} — пропускаю, иду к следующему",
+                        self.window_id, level="WARNING")
+                    # НЕ break — продолжаем к следующему предмету.
+                    # Пользователь: «из за того что он не нашёл этот предмет,
+                    # он не стал снимать с продажи следующий на этом окне»
+                    continue
 
         except asyncio.CancelledError:
             # Пользователь нажал СТОП ВСЕ. finally всё равно выполнится —
@@ -1328,23 +1331,27 @@ class Auction(GameAction):
             red_dots = self._find_red_dots(img)
             log(f"Аук: стр {page} — кандидатов TM: {len(deduped)} "
                 f"(лучший score={best_page_score:.3f}), "
-                f"красных точек: {len(red_dots)}", self.window_id)
+                f"красных точек: {len(red_dots)} {red_dots[:5]}", self.window_id)
 
             # 3. Ищем кандидата с красной точкой рядом.
-            #    Красная точка в Lineage2M — правый верхний угол ячейки,
-            #    т.е. в пределах ~40px от центра иконки 60×53.
+            #    Красная точка в Lineage2M — в углу ячейки с предметом.
+            #    Радиус 80px (увеличил с 40 — точка может быть в любом углу
+            #    ячейки 60×53, плюс запас на неточность matchTemplate).
             for (cx, cy, score) in deduped:
                 confirmed_dot = None
                 for (dx, dy) in red_dots:
-                    if abs(dx - cx) <= 40 and abs(dy - cy) <= 40:
+                    # Евклидово расстояние (точнее чем abs по осям)
+                    dist = ((dx - cx) ** 2 + (dy - cy) ** 2) ** 0.5
+                    if dist <= 80:
                         confirmed_dot = (dx, dy)
                         break
                 if confirmed_dot is None:
                     # Иконка сматчилась, но красной точки рядом нет →
                     # это B&W-дубликат (непродаваемый), не наш предмет.
                     log(f"Аук: стр {page} — иконка ({cx},{cy}) "
-                        f"score={score:.3f} НО без красной точки → дубликат, "
-                        f"пропускаю", self.window_id, level="DEBUG")
+                        f"score={score:.3f} НО без красной точки рядом "
+                        f"(точки: {red_dots[:3]}) → дубликат, пропускаю",
+                        self.window_id, level="DEBUG")
                     continue
 
                 # Есть И иконка И красная точка → наш предмет.
