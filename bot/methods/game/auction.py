@@ -171,23 +171,58 @@ class Auction(GameAction):
         resize_done = False  # чтобы в finally знать — надо ли возвращать размер
 
         try:
-            # 1. Разбудить окно — ВСЕГДА выйти из энерго (без проверки is_on()).
-            # Проблема: is_on() даёт false negative если окно в энерго но
-            # пиксель energomode_center_gui не совпал (тёмный фильтр, другая
-            # локация). Тогда turn_off не вызывается → окно остаётся в сне →
-            # главное меню не открывается → _wait_auction_loaded ждёт 120с
-            # впустую → «не прогрузился за 120 сек» (как Снегопад 16:59).
+            # 1. Разбудить окно — выйти из энерго.
+            # Проблема (Zakamsk 17:15, v5.6.14): turn_off(ignore=True) делал
+            # swipe, но swipe НЕ срабатывал на спящем окне → окно оставалось
+            # в сне. Дальше бот кликал main_menu_gui → клик уходил в спящее
+            # окно → НО пиксель случайно совпадал на чужом окне/рабочем столе
+            # → бот думал «Аук: загрузился» → SIFT 0 → «список пуст».
+            # Логи врали, скрины показывали что окно реально в сне.
             #
-            # Решение: всегда вызываем turn_off(ignore=True) — это просто
-            # swipe по центру для выхода из энерго. Если окно не в энерго —
-            # swipe безобидно кликнет по центру, ничего не сломав.
-            # ignore=True пропускает долгую проверку zalupka_gui/телепорта.
-            try:
-                await self.profile.energo.turn_off(ignore=True)
-                log("Аук: выход из энерго (turn_off ignore=True) — всегда",
-                    self.window_id, level="DEBUG")
-            except Exception as e:
-                log(f"Аук: энерго-выход не удался: {e}", self.window_id, level="WARNING")
+            # Решение: ЦИКЛ из 3 попыток turn_off с проверкой is_on() между.
+            # Если после swipe окно всё ещё в энерго — повторяем. ignore=False
+            # чтобы turn_off сам проверял результат (не trust blindly).
+            woke = False
+            for attempt in range(1, 4):
+                try:
+                    # ignore=False только на последней попытке — turn_off
+                    # сам проверит пиксель zalupka_gui после swipe (телепорт).
+                    # На первых попытках ignore=True (быстро, без долгих проверок).
+                    ignore_flag = (attempt < 3)
+                    await self.profile.energo.turn_off(ignore=ignore_flag)
+                except Exception as e:
+                    log(f"Аук: turn_off попытка {attempt}/3 exception: {e}",
+                        self.window_id, level="WARNING")
+
+                await asyncio.sleep(1.0)
+
+                # Проверка — реально вышло ли из сна?
+                if await self.profile.energo.is_on():
+                    log(f"Аук: после turn_off попытка {attempt}/3 — окно "
+                        f"ВСЁ ЕЩЁ в энерго (swipe не сработал) — повторяю",
+                        self.window_id, level="WARNING")
+                    continue
+                # is_on() = False — окно вышло из сна (или не было в нём)
+                woke = True
+                if attempt > 1:
+                    log(f"Аук: окно вышло из сна с попытки {attempt}/3",
+                        self.window_id)
+                break
+
+            if not woke:
+                log("Аук: ВАЖНО — окно НЕ вышло из энерго за 3 попытки! "
+                    "Аукцион не откроется — будет пустой кадр. Пропускаю окно.",
+                    self.window_id, level="ERROR")
+                # Добавить в пропущенные — вернёмся в конце прогона
+                try:
+                    from gui.maingui import NedoGui
+                    gui = NedoGui._instance if hasattr(NedoGui, '_instance') else None
+                    if gui and hasattr(gui, '_skipped_windows'):
+                        gui._skipped_windows.append(self.window_id)
+                except Exception:
+                    pass
+                return False
+
             # Пауза после выхода из энерго — окно должно «проснуться» полностью
             await asyncio.sleep(T_AFTER_ENERGY_OFF)
 
