@@ -1365,33 +1365,27 @@ class Auction(GameAction):
                 # Есть И иконка И красная точка → наш предмет.
                 win_cx = cx + INV_SCAN[0]
                 win_cy = cy + INV_SCAN[1]
-                best_result = (win_cx, win_cy, score, page)
-                log(f"Аук: НАЙДЕН И ПОДТВЕРЖДЁН — стр {page} "
-                    f"иконка ({cx},{cy}) + точка {confirmed_dot} "
-                    f"→ клик ({win_cx},{win_cy}) score={score:.3f}",
-                    self.window_id)
-                # Подтверждён красной точкой → СРАЗУ break, не листаем дальше.
-                # Раньше требовалось score >= 0.90 — но 0.891 < 0.90 и бот
-                # продолжал листать на стр 2, 3, 4, 5 хотя уже нашёл.
-                # Красная точка — достаточное подтверждение, score не важен.
-                break
+                if best_result is None or score > best_result[2]:
+                    best_result = (win_cx, win_cy, score, page)
+                    log(f"Аук: НАЙДЕН И ПОДТВЕРЖДЁН — стр {page} "
+                        f"иконка ({cx},{cy}) + точка {confirmed_dot} "
+                        f"→ клик ({win_cx},{win_cy}) score={score:.3f}",
+                        self.window_id)
+                # Точное совпадение с подтверждением — дальше не листаем.
+                if score >= 0.90:
+                    log(f"Аук: точное совпадение с красной точкой "
+                        f"(score >= 0.90), не листаю дальше", self.window_id)
+                    break
 
-            if best_result is not None:
-                # Нашли подтверждённый предмет — прекращаем сканирование.
+            if best_result is not None and best_result[2] >= 0.90:
                 break
 
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # Вернуться к странице с предметом.
-        # ВАЖНО: pages_to_back = сколько свайпов UP нужно сделать.
-        # Бот сейчас на стр `page` (последняя отсканированная). Чтобы вернуться
-        # на стр `best_result[3]`, нужно (page - best_result[3]) свайпов up.
-        # Раньше было `best_result[3] - 1` — неправильно (давало 0 для стр 1,
-        # хотя бот уже на стр 5 и нужно 4 свайпа up).
+        # Вернуться к странице с предметом
         if best_result is not None:
-            last_page_scanned = page  # текущая страница после цикла
-            pages_to_back = last_page_scanned - best_result[3]
+            pages_to_back = best_result[3] - 1
             for _ in range(pages_to_back):
                 await self._swipe_inventory('up')
             log(f"Аук: предмет найден и подтверждён красной точкой! "
@@ -1477,17 +1471,12 @@ class Auction(GameAction):
                                f"Аук: ПРЕДМЕТ НЕ НАЙДЕН (SIFT, {SCAN_PAGES} стр)")
             return 'error'
 
-        # 5. Двойной клик по найденному предмету.
-        # ВАЖНО: 2 отдельных клика с паузой 1 сек НЕ открывают окно цены.
-        # Lineage2M требует быстрый двойной клик (как в Windows — между кликами
-        # должно быть <0.3 сек). VLM по au_after_item_click.png подтвердил:
-        # «окно цены НЕ открылось, на экране обычный вид инвентаря».
-        # Делаем 2 клика подряд с минимальной паузой (0.1 сек).
+        # 5. Кликнуть по найденному предмету (двойной клик — первый выделяет, второй открывает окно)
         await self._click(*item_pos)
-        log(f"Аук: двойной клик по предмету {item_pos} (быстрый, пауза 0.1с)",
-            self.window_id)
-        await asyncio.sleep(0.1)
+        log(f"Аук: клик 1 по предмету {item_pos}", self.window_id)
+        await asyncio.sleep(1.0)
         await self._click(*item_pos)
+        log(f"Аук: клик 2 по предмету {item_pos}", self.window_id)
         await asyncio.sleep(T_ITEM_WINDOW)
         # Скрин после клика — видно открылось ли окно цены
         after_item_click = self._grab(INV_SCAN)
