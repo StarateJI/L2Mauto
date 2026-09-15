@@ -708,12 +708,7 @@ class Auction(GameAction):
         """
         Захват зоны rect=(x, y, w, h) в window-relative координатах.
         Возвращает BGR ndarray. mss отдаёт BGRA — конвертируем.
-
-        Сначала _ensure_foreground — иначе при перекрытии mss.grab снимет
-        другое окно и мы получим чужой кадр (поэтому «страницы не меняются»
-        и matchTemplate матчит одни и те же иконки).
         """
-        self._ensure_foreground()
         win = self.window_info[self.window_id]
         wx, wy = win["Position"]
         x, y, w, h = rect
@@ -906,16 +901,11 @@ class Auction(GameAction):
         """
         Свайп инвентаря. direction='down' — следующая страница, 'up' — назад.
 
-        Сначала _ensure_foreground — иначе при перекрытии окон свайп уходит
-        в чужое окно (поэтому в логе страницы 1 и 2 выглядят одинаково:
-        иконка на одних и тех же координатах).
-
         Генерирует ~20 промежуточных точек между start и end — swipe
         получается медленным и плавным. Старый вариант с 2 точками делал
         FLICK (быстрый резкий жест) и эластичный скролл Lineage2M улетал
         далеко за пределы («сразу в самый низ»).
         """
-        self._ensure_foreground()
         cx = INV_CX
         top_y = INV_SCAN[1] + 20
         bot_y = INV_SCAN[1] + INV_SCAN[3] - 20
