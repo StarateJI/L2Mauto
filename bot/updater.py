@@ -279,9 +279,17 @@ echo Python: {python_exe} >> "{root_dir}\\apply_update.log"
 REM Ждём пока старый Python полностью закроется (отпустит .pyd и .py)
 echo Waiting 5 sec for Python to exit... >> "{root_dir}\\apply_update.log"
 timeout /t 5 /nobreak >nul
-REM Принудительно убиваем зависший Python если ещё жив
+REM Принудительно убиваем ВСЕ python.exe процессы
 taskkill /f /im python.exe 2>nul
+taskkill /f /im pythonw.exe 2>nul
 timeout /t 2 /nobreak >nul
+REM Проверяем что python точно мёртв
+tasklist /fi "imagename eq python.exe" 2>nul | find /i "python.exe" >nul
+if not errorlevel 1 (
+    echo WARNING: python.exe still running! Force kill again... >> "{root_dir}\\apply_update.log"
+    taskkill /f /im python.exe 2>nul
+    timeout /t 3 /nobreak >nul
+)
 
 REM ---- Шаг 1: .pyd/.dll (rename old -> copy new) ----
 echo Step 1: copy .pyd/.dll files... >> "{root_dir}\\apply_update.log"
@@ -293,7 +301,8 @@ echo Step 2: copy settings (if missing)... >> "{root_dir}\\apply_update.log"
 
 REM ---- Шаг 3: остальные файлы (overwrite) ----
 echo Step 3: xcopy other files... >> "{root_dir}\\apply_update.log"
-xcopy "{temp_dir}\\*" "{root_dir}\\" /e /y /i >> "{root_dir}\\apply_update.log" 2>&1
+xcopy "{temp_dir}\\*" "{root_dir}\\" /e /y /i /f >> "{root_dir}\\apply_update.log" 2>&1
+echo Step 3 done. >> "{root_dir}\\apply_update.log"
 
 REM ---- Шаг 4: cleanup ----
 echo Step 4: cleanup temp_dir... >> "{root_dir}\\apply_update.log"
