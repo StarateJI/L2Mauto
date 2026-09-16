@@ -238,7 +238,7 @@ class RustBackend(CaptureBackend):
                             return True
                     except Exception as e2:
                         self._log_error("wait_for_pixel(monitor fallback)", e2)
-                        return False
+                        # continue loop, не return False — deadline проверится ниже
             if time.monotonic() >= deadline:
                 return False
             await asyncio.sleep(poll_s)

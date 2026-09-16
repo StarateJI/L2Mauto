@@ -181,12 +181,13 @@ class BaseProfile(ABC):
 
         EventsManager.unregister(window_id)
 
-        tasks = [self._task] if self._task else []
+        tasks = []
 
         if self._event_task:
             self._event_task.cancel()
             tasks.append(self._event_task)
 
+        # НЕ отменяем self._task — on_stop вызывается изнутри него
         for task in tasks:
             task.cancel()
 

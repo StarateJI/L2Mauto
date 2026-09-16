@@ -59,7 +59,15 @@ def _try_autofix(window_info) -> bool:
         log(f"Окно {window_info.get('Nickname')} свёрнуто/не на экране — пропускаю", level="WARNING")
         return False
 
-    hwnd = int(window_info.get("ID"))
+    hwnd_val = window_info.get("ID")
+    if hwnd_val is None:
+        log(f"Окно {window_info.get('Nickname')}: нет HWND — пропускаю автоподгон", level="WARNING")
+        return False
+    try:
+        hwnd = int(hwnd_val)
+    except (TypeError, ValueError):
+        log(f"Окно {window_info.get('Nickname')}: HWND не парсится — пропускаю", level="WARNING")
+        return False
 
     for attempt in range(1, 4):
         try:

@@ -187,6 +187,12 @@ class NedoGui(QWidget):
         if hasattr(self, 'log_uploader_thread') and self.log_uploader_thread.isRunning():
             self.log_uploader_thread.stop()
             self.log_uploader_thread.wait(100)
+        # F10 hotkey cleanup
+        try:
+            import keyboard
+            keyboard.remove_hotkey("F10")
+        except Exception:
+            pass
         super().closeEvent(event)
 
     def init_ui(self):
@@ -578,16 +584,19 @@ class NedoGui(QWidget):
 
         for i in range(self.layout_main.count()):
             item = self.layout_main.itemAt(i)
+            if item is None:
+                continue
             w = item.widget()
-            if isinstance(w, QPushButton):
-                # Профильная кнопка — у неё есть свойство profile_name
-                prof_name = w.property("profile_name")
-                if prof_name is None:
-                    continue
-                # Базовый текст без счётчика «(N)»
-                base_text = w.text().split(" (")[0]
-                count = running.get(prof_name, 0)
-                w.setText(f"{base_text} ({count})")
+            if w is None or not isinstance(w, QPushButton):
+                continue
+            # Профильная кнопка — у неё есть свойство profile_name
+            prof_name = w.property("profile_name")
+            if prof_name is None:
+                continue
+            # Базовый текст без счётчика «(N)»
+            base_text = w.text().split(" (")[0]
+            count = running.get(prof_name, 0)
+            w.setText(f"{base_text} ({count})")
 
     def show_update_button(self):
         if hasattr(self, 'btn_update'):
