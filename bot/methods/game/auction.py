@@ -1418,12 +1418,11 @@ class Auction(GameAction):
                                f"Аук: ПРЕДМЕТ НЕ НАЙДЕН (SIFT, {SCAN_PAGES} стр)")
             return 'error'
 
-        # 5. Кликнуть по найденному предмету (двойной клик — первый выделяет, второй открывает окно)
+        # 5. ОДИН клик по найденному предмету — открывает окно цены.
+        # Пользователь: «там не нужен двойной клик, открывается одним кликом»
+        # Раньше был двойной клик — мог ломать открытие окна цены.
         await self._click(*item_pos)
-        log(f"Аук: клик 1 по предмету {item_pos}", self.window_id)
-        await asyncio.sleep(0.2)
-        await self._click(*item_pos)
-        log(f"Аук: клик 2 по предмету {item_pos}", self.window_id)
+        log(f"Аук: клик по предмету {item_pos}", self.window_id)
         await asyncio.sleep(T_ITEM_WINDOW)
         # Скрин после клика — видно открылось ли окно цены
         after_item_click = self._grab(INV_SCAN)
