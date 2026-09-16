@@ -187,13 +187,6 @@ class NedoGui(QWidget):
         if hasattr(self, 'log_uploader_thread') and self.log_uploader_thread.isRunning():
             self.log_uploader_thread.stop()
             self.log_uploader_thread.wait(100)
-        # FIX: F10 hotkey registered in __init__ via keyboard.add_hotkey was
-        # never removed — leaving a dangling callback that could fire on a
-        # destroyed QWidget. Remove it defensively before close.
-        try:
-            keyboard.remove_hotkey("F10")
-        except Exception:
-            pass
         super().closeEvent(event)
 
     def init_ui(self):
@@ -411,15 +404,6 @@ class NedoGui(QWidget):
         self.controller.stop_windows(nicks)
 
     def start_all(self, profile_class):
-        # FIX: Concurrent start_all calls (e.g. user double-clicks a profile
-        # button) would schedule two independent batch chains via QTimer,
-        # doubling window launches and corrupting shared state
-        # (_batch_stop, _skipped_windows). Guard with a re-entrancy flag.
-        if getattr(self, "_batch_running", False):
-            log("start_all: уже идёт прогон, игнорирую повторный вызов",
-                level="WARNING")
-            return
-
         windows = list(findAllWindows().keys())
         if not windows:
             QMessageBox.information(self, "Info", "Окон не найдено")
@@ -463,13 +447,10 @@ class NedoGui(QWidget):
         self.controller.reset_batch_cancel()
         self._batch_stop = False  # флаг жёсткой остановки process_batch
         self._skipped_windows = []  # окна которые не загрузились (Поиск информации)
-        # FIX: re-entrancy flag — set True here, cleared at every exit point
-        # of process_batch / wait_c / wait_f / stop_profile.
-        self._batch_running = True
 
-        # Запоминаем время старта всего прогона — для финального отчёта.
-        # `time` уже импортирован в начале модуля, отдельный алиас не нужен.
-        _run_start_ts = time.monotonic()
+        # Запоминаем время старта всего прогона — для финального отчёта
+        import time as _time
+        _run_start_ts = _time.monotonic()
 
         def process_batch(batch_idx=0):
             if batch_idx >= len(batches):
@@ -483,32 +464,24 @@ class NedoGui(QWidget):
                     QTimer.singleShot(5000, lambda: process_batch(batch_idx))
                 else:
                     # Финал — всё прошло, пропущенных нет
-                    total_sec = time.monotonic() - _run_start_ts
+                    total_sec = _time.monotonic() - _run_start_ts
                     log(f"Прогон завершён за {total_sec:.0f}с ({total_sec/60:.1f} мин). "
                         f"Пачек: {batch_idx}.")
-                    # FIX: re-entrancy guard released at natural end of run
-                    self._batch_running = False
                 return
             if self.controller.batch_cancelled:
-                # FIX: re-entrancy guard released on cancel
-                self._batch_running = False
                 return
             if getattr(self, '_batch_stop', False):
                 log(f"start_all: СТОП — process_batch прерван (batch_idx={batch_idx})")
-                # FIX: re-entrancy guard released on hard stop
-                self._batch_running = False
                 return
 
             batch = batches[batch_idx]
             # Лог старта пачки — пользователь видит прогресс в консоли
             log(f"Пачка {batch_idx + 1}/{len(batches)}: старт ({len(batch)} окон: {batch})")
-            _batch_start_ts = time.monotonic()
+            _batch_start_ts = _time.monotonic()
             self.start_windows(profile_class, batch)
 
             def wait_c(attempts=0):
                 if self.controller.batch_cancelled or self._batch_stop:
-                    # FIX: re-entrancy guard released on early exit
-                    self._batch_running = False
                     return
                 stalled = [nick for nick in batch
                            if self.controller.bot_manager.get_bot(nick) is None]
@@ -524,8 +497,6 @@ class NedoGui(QWidget):
 
             def wait_f(attempts=0):
                 if self.controller.batch_cancelled or getattr(self, '_batch_stop', False):
-                    # FIX: re-entrancy guard released on early exit
-                    self._batch_running = False
                     return
                 running = [nick for nick in batch
                            if self.controller.is_running(nick)]
@@ -533,22 +504,16 @@ class NedoGui(QWidget):
                     # Тройная проверка стопа
                     if getattr(self, '_batch_stop', False):
                         log(f"start_all: СТОП — wait_f прерван перед batch {batch_idx + 1}")
-                        # FIX: re-entrancy guard released on hard stop
-                        self._batch_running = False
                         return
                     if self.controller.batch_cancelled:
-                        # FIX: re-entrancy guard released on cancel
-                        self._batch_running = False
                         return
                     # Лог завершения пачки — пользователь видит прогресс в консоли
-                    _batch_dur = time.monotonic() - _batch_start_ts
+                    _batch_dur = _time.monotonic() - _batch_start_ts
                     log(f"Пачка {batch_idx + 1}/{len(batches)}: завершена за {_batch_dur:.0f}с")
                     # Пауза 1 сек между пачками
                     def _start_next():
                         if getattr(self, '_batch_stop', False):
                             log(f"start_all: СТОП — _start_next прерван перед batch {batch_idx + 1}")
-                            # FIX: re-entrancy guard released on hard stop
-                            self._batch_running = False
                             return
                         process_batch(batch_idx + 1)
                     QTimer.singleShot(1000, _start_next)
@@ -585,10 +550,6 @@ class NedoGui(QWidget):
             if hasattr(self, '_skipped_windows'):
                 self._skipped_windows.clear()
 
-            # FIX: re-entrancy guard released on manual stop — start_all may
-            # be invoked again immediately after the user hits STOP.
-            self._batch_running = False
-
             log(f"СТОП ВСЕ: команда отправлена, _batch_stop={self._batch_stop}")
         except Exception as e:
             log(f"СТОП ВСЕ: exception: {e}", level="ERROR")
@@ -617,11 +578,6 @@ class NedoGui(QWidget):
 
         for i in range(self.layout_main.count()):
             item = self.layout_main.itemAt(i)
-            # FIX: itemAt may return None for empty/spacer slots — without
-            # this guard, item.widget() raises AttributeError and crashes
-            # the 1-second QTimer that drives the running counters.
-            if item is None:
-                continue
             w = item.widget()
             if isinstance(w, QPushButton):
                 # Профильная кнопка — у неё есть свойство profile_name

@@ -62,13 +62,7 @@ class MssBackend(CaptureBackend):
                 try:
                     shot = sct.grab(monitor)
                 except Exception:
-                    # FIX: previously returned False on the first sct.grab
-                    # exception — a single transient mss hiccup (srcdc/
-                    # memdc release on Win, brief screen switch, etc.) would
-                    # abort the whole wait even though `timeout` had not yet
-                    # elapsed. Continue iterating so the deadline check
-                    # below still rules the wait duration.
-                    continue
+                    return False
                 arr = np.array(shot)[:, :, :3][:, :, ::-1].astype(np.int16)
                 if np.any(np.all(np.abs(arr - target) <= thr, axis=-1)):
                     return True

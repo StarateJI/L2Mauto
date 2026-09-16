@@ -59,21 +59,7 @@ def _try_autofix(window_info) -> bool:
         log(f"Окно {window_info.get('Nickname')} свёрнуто/не на экране — пропускаю", level="WARNING")
         return False
 
-    # FIX: window_info.get("ID") may return None if the window dict was
-    # built without an HWND (e.g. findAllWindows returned a stale entry,
-    # or the window vanished between enumerate and resize). int(None)
-    # raises TypeError which kills start_seq mid-flight. Bail out cleanly.
-    hwnd_raw = window_info.get("ID")
-    if hwnd_raw is None:
-        log(f"Окно {window_info.get('Nickname')}: нет HWND (ID is None) — пропускаю автоподгон",
-            level="WARNING")
-        return False
-    try:
-        hwnd = int(hwnd_raw)
-    except (TypeError, ValueError):
-        log(f"Окно {window_info.get('Nickname')}: HWND не парсится ({hwnd_raw!r}) — пропускаю автоподгон",
-            level="WARNING")
-        return False
+    hwnd = int(window_info.get("ID"))
 
     for attempt in range(1, 4):
         try:
@@ -141,13 +127,6 @@ class ProfileController:
         log(f"Запуск через {WAIT_BEFORE_START} сек. | {nicks}")
 
         async def start_seq():
-            # FIX: batch may have been cancelled while we were waiting
-            # WAIT_BEFORE_START seconds in call_later. Honour the cancel
-            # instead of spawning bots whose batch was already aborted.
-            if self._batch_cancel.is_set():
-                log(f"start_seq: batch_cancel уже выставлен — скипаю запуск {nicks}",
-                    level="WARNING")
-                return
             windows = findAllWindows()
             tasks = []
             started = []
@@ -196,15 +175,6 @@ class ProfileController:
                     log(f"Окно {nick} упало при запуске:\n{tb}", level="ERROR")
 
         def delayed():
-            # FIX: WAIT_BEFORE_START has just elapsed. If the user hit
-            # STOP (or another batch was cancelled) during the wait, do not
-            # bother scheduling start_seq — it would just no-op via its
-            # own check anyway, but skipping here avoids needless log spam
-            # and a pointless run_in_executor hop.
-            if self._batch_cancel.is_set():
-                log(f"delayed: batch_cancel выставлен за время ожидания — скипаю {nicks}",
-                    level="WARNING")
-                return
             fut = asyncio.run_coroutine_threadsafe(start_seq(), self.loop)
             self._watch_future(fut, "Ошибка запуска окон")
 
