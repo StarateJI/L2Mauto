@@ -18,8 +18,8 @@ VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
 #    используем только как последний fallback
 #    (для РФ где raw может быть недоступен)
 REPO_VERSION_URLS = [
-    "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt",
     "https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main",
+    "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt",
     "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/bot/version.txt",
 ]
 REPO_ZIP = "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip"
@@ -35,16 +35,31 @@ def parse_version(v: str):
     return tuple(map(int, v.split(".")))
 
 def _load_github_token() -> str | None:
-    """Прочитать GitHub-токен из tg.ini [github] token (для приватных репо/более высокого rate limit)."""
+    """Прочитать GitHub-токен. Приоритет:
+    1. tg.ini [github] token
+    2. Встроенный XOR-токен из log_uploader.py (тот же что для загрузки логов)
+    """
+    # 1. tg.ini
     try:
         ini_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), "tg.ini")
         cp = configparser.ConfigParser()
         cp.read(ini_path, encoding="utf-8")
         if cp.has_section("github") and cp.has_option("github", "token"):
             tok = cp.get("github", "token").strip()
-            return tok or None
+            if tok and len(tok) > 10:
+                return tok
     except Exception:
         pass
+
+    # 2. Встроенный XOR-токен (как в log_uploader.py)
+    try:
+        from bot.log_uploader import _decode_xor
+        tok = _decode_xor()
+        if tok and len(tok) > 10:
+            return tok
+    except Exception:
+        pass
+
     return None
 
 def _fetch_remote_version() -> str | None:
