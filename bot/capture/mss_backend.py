@@ -62,7 +62,10 @@ class MssBackend(CaptureBackend):
                 try:
                     shot = sct.grab(monitor)
                 except Exception:
-                    pass  # continue loop, не return False
+                    if time.monotonic() >= deadline:
+                        return False
+                    time.sleep(poll)
+                    continue
                 arr = np.array(shot)[:, :, :3][:, :, ::-1].astype(np.int16)
                 if np.any(np.all(np.abs(arr - target) <= thr, axis=-1)):
                     return True

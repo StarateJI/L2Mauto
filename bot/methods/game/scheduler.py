@@ -26,7 +26,11 @@ class Scheduler(GameAction):
             log("Пробую остановить расписание", self.window_id)
             self.profile.notify("info", "Пробую оффнуть шедулю")
             await self.profile.tp.safe_home()
-            tp1 = await asyncio.wait_for(self.profile.tp.wait_arrived(), timeout=30)
+            try:
+                tp1 = await asyncio.wait_for(self.profile.tp.wait_arrived(), timeout=30)
+            except asyncio.TimeoutError:
+                log("Шедуля: wait_arrived таймаут 30с — пропускаю", self.window_id, level="WARNING")
+                tp1 = False
             if tp1:
                 await self.profile.energo.turn_on()
                 return True

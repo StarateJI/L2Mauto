@@ -108,9 +108,11 @@ class LogUploader(QThread):
 
 class NedoGui(QWidget):
     _stop_signal = pyqtSignal()
+    _instance = None
 
     def __init__(self, kb: str, m: str):
         super().__init__()
+        NedoGui._instance = self
         if m is not None:
             self.setWindowTitle(f"L2Mauto | Клава {kb} | Мышь {m}")
         else:
@@ -543,6 +545,7 @@ class NedoGui(QWidget):
             log(f"СТОП ВСЕ: нажато, останавливаю...")
             # 1. ЖЁСТКИЙ флаг — убивает цепочку process_batch/wait_c/wait_f
             self._batch_stop = True
+            self._batch_running = False
             self.controller.cancel_batch()
 
             # 2. Остановить алхимию если была
@@ -569,6 +572,7 @@ class NedoGui(QWidget):
             import traceback
             log(traceback.format_exc(), level="ERROR")
             self._batch_stop = True
+            self._batch_running = False
             self.controller.cancel_batch()
 
     def ask_region(self, new_windows: list[str]) -> dict[str, str]:
