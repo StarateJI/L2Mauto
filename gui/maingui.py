@@ -410,6 +410,9 @@ class NedoGui(QWidget):
         self.controller.stop_windows(nicks)
 
     def start_all(self, profile_class):
+        if getattr(self, '_batch_running', False):
+            log("start_all: прогон уже идёт — игнорирую", level="WARNING")
+            return
         windows = list(findAllWindows().keys())
         if not windows:
             QMessageBox.information(self, "Info", "Окон не найдено")
@@ -453,6 +456,7 @@ class NedoGui(QWidget):
         self.controller.reset_batch_cancel()
         self._batch_stop = False  # флаг жёсткой остановки process_batch
         self._skipped_windows = []  # окна которые не загрузились (Поиск информации)
+        self._batch_running = True  # защита от двойного запуска
 
         # Запоминаем время старта всего прогона — для финального отчёта
         import time as _time
@@ -473,11 +477,14 @@ class NedoGui(QWidget):
                     total_sec = _time.monotonic() - _run_start_ts
                     log(f"Прогон завершён за {total_sec:.0f}с ({total_sec/60:.1f} мин). "
                         f"Пачек: {batch_idx}.")
+                    self._batch_running = False
                 return
             if self.controller.batch_cancelled:
+                self._batch_running = False
                 return
             if getattr(self, '_batch_stop', False):
                 log(f"start_all: СТОП — process_batch прерван (batch_idx={batch_idx})")
+                self._batch_running = False
                 return
 
             batch = batches[batch_idx]

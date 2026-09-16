@@ -42,11 +42,12 @@ class Energo(GameAction):
 
         if self.settings.PEACE_MODE:
             peace_xy, peace_rgb = parseCBT("peace_off", profile=self.profile)
-            peace = await self.profile.check_pixel(peace_xy, peace_rgb, timeout=0.2, thr=5)
-            if peace:
-                await self.mouse.click(self.window_info, peace_xy[0], peace_xy[1])
-                log("Врубил мирку, была выключена", self.window_id)
-                await asyncio.sleep(0.15)
+            if peace_xy is not None:
+                peace = await self.profile.check_pixel(peace_xy, peace_rgb, timeout=0.2, thr=5)
+                if peace:
+                    await self.mouse.click(self.window_info, peace_xy[0], peace_xy[1])
+                    log("Врубил мирку, была выключена", self.window_id)
+                    await asyncio.sleep(0.15)
 
         await self.mouse.click(self.window_info, center_x, center_y)
         return True
@@ -85,6 +86,11 @@ class Energo(GameAction):
         if ignore:
             return True
 
+        if xy1 is None:
+            log("Аук: zalupka_gui не найден в CBT — не могу проверить телепорт",
+                self.window_id, level="WARNING")
+            return False
+
         eth_err = await self.profile.errors.has_ethernet1()
         if eth_err:
             await self.profile.errors.close_ethernet1()
@@ -112,13 +118,15 @@ class Energo(GameAction):
 
     async def check_lvl_up(self) -> bool:
         need = ["lvl_up_black_2", "lvl_up_black"]
-        results = [
-            await self.profile.check_pixel(
-                *parseCBT(lvl_name, profile=self.profile),
-                timeout=0.3, wsize="1x1", thr=1,
-            )
-            for lvl_name in need
-        ]
+        results = []
+        for lvl_name in need:
+            xy, rgb = parseCBT(lvl_name, profile=self.profile)
+            if xy is None:
+                results.append(False)
+                continue
+            results.append(await self.profile.check_pixel(
+                xy, rgb, timeout=0.3, wsize="1x1", thr=1,
+            ))
 
         if all(results):
             log("Лвл ап вылез, закрываю", self.window_id)
@@ -137,5 +145,7 @@ class Energo(GameAction):
         if not await self.is_on():
             return None
         xy1, rgb1 = parseCBT("q_quiver", profile=self.profile)
+        if xy1 is None:
+            return None
         quiver = await self.profile.check_pixel(xy1, rgb1, timeout=2, thr=2, wsize="1x1")
         return not quiver

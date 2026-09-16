@@ -22,10 +22,11 @@ class Scheduler(GameAction):
             tag = "schedule_start"
 
         if state == "off":
+            tag = "schedule_stop"
             log("Пробую остановить расписание", self.window_id)
             self.profile.notify("info", "Пробую оффнуть шедулю")
             await self.profile.tp.safe_home()
-            tp1 = await self.profile.tp.wait_arrived()
+            tp1 = await asyncio.wait_for(self.profile.tp.wait_arrived(), timeout=30)
             if tp1:
                 await self.profile.energo.turn_on()
                 return True
@@ -44,11 +45,12 @@ class Scheduler(GameAction):
 
         if tag == "schedule_start":
             xy, rgb = parseCBT("schedule_cant_start", profile=self.profile)
-            is_true = await self.profile.check_pixel(xy, rgb, timeout=3, thr=2)
-            if is_true:
-                await self.wait_and_click("main_menu_gui", timeout=2)
-                await asyncio.sleep(1)
-                return None
+            if xy is not None:
+                is_true = await self.profile.check_pixel(xy, rgb, timeout=3, thr=2)
+                if is_true:
+                    await self.wait_and_click("main_menu_gui", timeout=2)
+                    await asyncio.sleep(1)
+                    return None
 
         if not await self.wait_and_click(tag, timeout=5):
             log("Окно сломалось?", self.window_id)
@@ -66,7 +68,11 @@ class Scheduler(GameAction):
                 return True
 
         await asyncio.sleep(2)
-        tp = await self.profile.tp.wait_arrived()
+        try:
+            tp = await asyncio.wait_for(self.profile.tp.wait_arrived(), timeout=30)
+        except asyncio.TimeoutError:
+            log("Шедуля: wait_arrived таймаут 30с — пропускаю", self.window_id, level="WARNING")
+            tp = False
         if tp:
             await self.profile.energo.turn_on()
             return True

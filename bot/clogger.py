@@ -3,6 +3,7 @@ import logging
 import logging.handlers
 import os
 import queue as _queue
+import threading
 from logging.handlers import RotatingFileHandler
 import colorlog
 from bot.constans import LOG_DIR
@@ -192,51 +193,54 @@ _stream_handler.addFilter(_ConsoleFilter())
 _logger_cache: dict = {}
 _file_handlers: dict = {}
 _listeners: dict = {}
+_setup_lock = threading.Lock()
 
 
 def _make_file_handler(log_filename: str) -> RotatingFileHandler:
-    handler = _file_handlers.get(log_filename)
-    if handler is not None:
+    with _setup_lock:
+        handler = _file_handlers.get(log_filename)
+        if handler is not None:
+            return handler
+        handler = RotatingFileHandler(
+            os.path.join(LOG_DIR, log_filename),
+            maxBytes=LOG_MAX_BYTES,
+            backupCount=LOG_BACKUP_COUNT,
+            encoding='utf-8',
+        )
+        handler.setLevel(logging.DEBUG)
+        handler.setFormatter(_file_formatter)
+        _file_handlers[log_filename] = handler
         return handler
-    handler = RotatingFileHandler(
-        os.path.join(LOG_DIR, log_filename),
-        maxBytes=LOG_MAX_BYTES,
-        backupCount=LOG_BACKUP_COUNT,
-        encoding='utf-8',
-    )
-    handler.setLevel(logging.DEBUG)
-    handler.setFormatter(_file_formatter)
-    _file_handlers[log_filename] = handler
-    return handler
 
 
 def setup_logger(log_filename: str) -> logging.Logger:
-    cached = _logger_cache.get(log_filename)
-    if cached is not None:
-        return cached
+    with _setup_lock:
+        cached = _logger_cache.get(log_filename)
+        if cached is not None:
+            return cached
 
-    logger = logging.getLogger(log_filename)
-    if not logger.hasHandlers():
-        logger.setLevel(logging.DEBUG)
-        logger.propagate = False
+        logger = logging.getLogger(log_filename)
+        if not logger.hasHandlers():
+            logger.setLevel(logging.DEBUG)
+            logger.propagate = False
 
-        log_queue: _queue.Queue = _queue.Queue(maxsize=_LOG_QUEUE_MAXSIZE)
-        queue_handler = logging.handlers.QueueHandler(log_queue)
-        queue_handler.setLevel(logging.DEBUG)
-        logger.addHandler(queue_handler)
+            log_queue: _queue.Queue = _queue.Queue(maxsize=_LOG_QUEUE_MAXSIZE)
+            queue_handler = logging.handlers.QueueHandler(log_queue)
+            queue_handler.setLevel(logging.DEBUG)
+            logger.addHandler(queue_handler)
 
-        file_handler = _make_file_handler(log_filename)
-        listener = logging.handlers.QueueListener(
-            log_queue,
-            file_handler,
-            _stream_handler,
-            respect_handler_level=True,
-        )
-        listener.start()
-        _listeners[log_filename] = listener
+            file_handler = _make_file_handler(log_filename)
+            listener = logging.handlers.QueueListener(
+                log_queue,
+                file_handler,
+                _stream_handler,
+                respect_handler_level=True,
+            )
+            listener.start()
+            _listeners[log_filename] = listener
 
-    _logger_cache[log_filename] = logger
-    return logger
+        _logger_cache[log_filename] = logger
+        return logger
 
 
 def _shutdown_listeners() -> None:

@@ -82,14 +82,19 @@ class Claims(GameAction):
 
     async def _open_menu(self, timeout: float = 5) -> bool:
         if await self._menu_open():
+            await self._close_ad_banners()
             return True
         await self.wait_and_click("main_menu_gui", timeout=timeout)
         if await self._menu_open(timeout=3):
+            await self._close_ad_banners()
             return True
         # v2: одна повторная попытка входа в меню (лаг на старте — частый гость)
         await asyncio.sleep(1.5)
         await self.wait_and_click("main_menu_gui", timeout=3)
-        return await self._menu_open(timeout=3)
+        if await self._menu_open(timeout=3):
+            await self._close_ad_banners()
+            return True
+        return False
 
     async def _close_menu(self):
         if await self._menu_open():
@@ -198,9 +203,13 @@ class Claims(GameAction):
             return grouped
 
         def colorfinder(target_rgb, thre, s_ranges):
-            with mss.mss() as sct:
-                monitor = {"left": left, "top": top, "width": width, "height": height}
-                screenshot = np.array(sct.grab(monitor))
+            try:
+                with mss.mss() as sct:
+                    monitor = {"left": left, "top": top, "width": width, "height": height}
+                    screenshot = np.array(sct.grab(monitor))
+            except Exception as e:
+                log(f"claims: mss grab failed in colorfinder: {e}", self.window_id, level="WARNING")
+                return []
 
             img_rgb = screenshot[:, :, :3][:, :, ::-1].astype(np.int16)
             target = np.array(target_rgb, dtype=np.int16)
@@ -278,9 +287,13 @@ class Claims(GameAction):
             x_search = DAILY[region]["y_vkladki"]
             red_rgb = tuple(map(int, DAILY[region]["red_dot_clr"][0].split(', ')))
             log("Ищем вкладки", self.window_id)
-            with mss.mss() as sct:
-                monitor = {"left": left + x_search, "top": top, "width": 1, "height": height}
-                screenshot = np.array(sct.grab(monitor))
+            try:
+                with mss.mss() as sct:
+                    monitor = {"left": left + x_search, "top": top, "width": 1, "height": height}
+                    screenshot = np.array(sct.grab(monitor))
+            except Exception as e:
+                log(f"claims: mss grab failed in find_daily_tabs: {e}", self.window_id, level="WARNING")
+                return []
 
             col = screenshot[:, 0, :3][:, ::-1].astype(np.int16)
             target = np.array(red_rgb, dtype=np.int16)
@@ -506,10 +519,14 @@ class Claims(GameAction):
             y_search = BATTLE_PASS["y_vkladki"]
             red_rgb = tuple(map(int, BATTLE_PASS["red_dot_clr_vkladka"][0].split(', ')))
 
-            with mss.mss() as sct:
-                monitor = {"left": left, "top": top + y_search, "width": width, "height": 1}
-                log(f"{monitor}", self.window_id)
-                screenshot = np.array(sct.grab(monitor))[:, :, :3][:, :, ::-1]
+            try:
+                with mss.mss() as sct:
+                    monitor = {"left": left, "top": top + y_search, "width": width, "height": 1}
+                    log(f"{monitor}", self.window_id)
+                    screenshot = np.array(sct.grab(monitor))[:, :, :3][:, :, ::-1]
+            except Exception as e:
+                log(f"claims: mss grab failed in find_BP_1: {e}", self.window_id, level="WARNING")
+                return []
 
             row = screenshot[0, ::step, :].astype(np.int16)
             target = np.array(red_rgb, dtype=np.int16)
@@ -542,9 +559,13 @@ class Claims(GameAction):
             x_search = BATTLE_PASS["x_podvkladki"]
             red_rgb = tuple(map(int, BATTLE_PASS["red_dot_clr_podvkladka"][0].split(', ')))
 
-            with mss.mss() as sct:
-                monitor = {"left": left + x_search, "top": top, "width": 1, "height": height}
-                screenshot = np.array(sct.grab(monitor))[:, :, :3][:, :, ::-1]
+            try:
+                with mss.mss() as sct:
+                    monitor = {"left": left + x_search, "top": top, "width": 1, "height": height}
+                    screenshot = np.array(sct.grab(monitor))[:, :, :3][:, :, ::-1]
+            except Exception as e:
+                log(f"claims: mss grab failed in find_BP_2: {e}", self.window_id, level="WARNING")
+                return []
 
             col = screenshot[::step, 0, :].astype(np.int16)
             target = np.array(red_rgb, dtype=np.int16)
