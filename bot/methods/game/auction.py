@@ -1340,9 +1340,6 @@ class Auction(GameAction):
                 f"score={best_result[2]:.3f}", self.window_id)
             return (best_result[0], best_result[1])
 
-        # Не нашли — вернуться в начало
-        for _ in range(SCAN_PAGES - 1):
-            await self._swipe_inventory('up')
         log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
             f"(ни иконки с красной точкой)", self.window_id, level="ERROR")
         return None
