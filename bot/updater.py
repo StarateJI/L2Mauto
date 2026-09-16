@@ -276,9 +276,12 @@ echo === apply_update.bat started at %DATE% %TIME% === > "{root_dir}\\apply_upda
 echo Working dir: {root_dir} >> "{root_dir}\\apply_update.log"
 echo Python: {python_exe} >> "{root_dir}\\apply_update.log"
 
-REM Ждём пока старый Python полностью закроется (отпустит .pyd)
-echo Waiting 3 sec for Python to exit... >> "{root_dir}\\apply_update.log"
-timeout /t 3 /nobreak >nul
+REM Ждём пока старый Python полностью закроется (отпустит .pyd и .py)
+echo Waiting 5 sec for Python to exit... >> "{root_dir}\\apply_update.log"
+timeout /t 5 /nobreak >nul
+REM Принудительно убиваем зависший Python если ещё жив
+taskkill /f /im python.exe 2>nul
+timeout /t 2 /nobreak >nul
 
 REM ---- Шаг 1: .pyd/.dll (rename old -> copy new) ----
 echo Step 1: copy .pyd/.dll files... >> "{root_dir}\\apply_update.log"
