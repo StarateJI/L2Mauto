@@ -304,6 +304,21 @@ echo Step 3: xcopy other files... >> "{root_dir}\\apply_update.log"
 xcopy "{temp_dir}\\*" "{root_dir}\\" /e /y /i /f >> "{root_dir}\\apply_update.log" 2>&1
 echo Step 3 done. >> "{root_dir}\\apply_update.log"
 
+REM ---- Шаг 3b: удаляем __pycache__ чтобы Python не использовал старый .pyc ----
+echo Step 3b: cleanup __pycache__... >> "{root_dir}\\apply_update.log"
+attrib -r -s -h "{root_dir}\\__pycache__" 2>nul
+rd /s /q "{root_dir}\\__pycache__" 2>nul
+for /d %%D in ("{root_dir}\\*") do (
+    if exist "%%D\\__pycache__" rd /s /q "%%D\\__pycache__" 2>nul
+    for /d %%E in ("%%D\\*") do (
+        if exist "%%E\\__pycache__" rd /s /q "%%E\\__pycache__" 2>nul
+        for /d %%F in ("%%E\\*") do (
+            if exist "%%F\\__pycache__" rd /s /q "%%F\\__pycache__" 2>nul
+        )
+    )
+)
+echo Step 3b done. >> "{root_dir}\\apply_update.log"
+
 REM ---- Шаг 4: cleanup ----
 echo Step 4: cleanup temp_dir... >> "{root_dir}\\apply_update.log"
 rd /s /q "{temp_dir}" 2>nul
