@@ -1,0 +1,201 @@
+=== Log tail 2026-09-17T16:20:00.127329 | last 200 lines ===
+2026-09-17 16:13:27,442 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-17 16:13:27,442 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-17 16:13:28,262 - DEBUG - [global] _api_put: GET runs/20260917_161327_fail_periodic.log -> 404
+2026-09-17 16:13:29,790 - DEBUG - [global] _api_put: PUT runs/20260917_161327_fail_periodic.log -> 201 (10182 bytes)
+2026-09-17 16:13:29,792 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260917_161327_fail_periodic.log
+2026-09-17 16:13:29,792 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-17 16:13:30,769 - DEBUG - [global] _api_put: GET runs/20260917_161327_fail_global.log -> 404
+2026-09-17 16:13:32,435 - DEBUG - [global] _api_put: PUT runs/20260917_161327_fail_global.log -> 201 (20082 bytes)
+2026-09-17 16:13:32,437 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260917_161327_fail_global.log
+2026-09-17 16:13:32,437 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-17 16:13:32,437 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-17 16:13:42,544 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-17 16:13:51,139 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:13:55,358 - INFO - [global] Проверяю обновы...
+2026-09-17 16:13:56,207 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:13:56,874 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:13:57,480 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:13:57,480 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:13:57,482 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:13:57,483 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:14:19,995 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:14:20,632 - INFO - [global] Пачка 2/10: завершена за 58с
+2026-09-17 16:14:21,632 - INFO - [global] Пачка 3/10: старт (2 окон: ['Снегопад', 'Ken'])
+2026-09-17 16:14:21,632 - INFO - [global] Запуск через 3 сек. | ['Снегопад', 'Ken']
+2026-09-17 16:14:27,500 - INFO - [global] Проверяю обновы...
+2026-09-17 16:14:28,342 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:14:28,981 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:14:29,585 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:14:29,585 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:14:29,589 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:14:29,590 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:14:32,479 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-17 16:14:32,479 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-17 16:14:33,367 - DEBUG - [global] _api_put: GET runs/20260917_161432_fail_periodic.log -> 404
+2026-09-17 16:14:34,880 - DEBUG - [global] _api_put: PUT runs/20260917_161432_fail_periodic.log -> 201 (10182 bytes)
+2026-09-17 16:14:34,882 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260917_161432_fail_periodic.log
+2026-09-17 16:14:34,883 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-17 16:14:35,821 - DEBUG - [global] _api_put: GET runs/20260917_161432_fail_global.log -> 404
+2026-09-17 16:14:37,351 - DEBUG - [global] _api_put: PUT runs/20260917_161432_fail_global.log -> 409 (20127 bytes)
+2026-09-17 16:14:37,351 - WARNING - [global] _api_put: PUT failed body: {"message":"is at a837bbef7fa7385f0c58eef473d3fdf5eb486dcc but expected 92327972c5e62e54c655b769021fbc0d7050b854","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-17 16:14:37,353 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-09-17 16:14:37,353 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-17 16:14:37,353 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-17 16:14:41,019 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-17 16:14:49,633 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:14:59,608 - INFO - [global] Проверяю обновы...
+2026-09-17 16:15:00,447 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:15:01,081 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:15:01,721 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:15:01,721 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:15:01,723 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:15:01,723 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:15:18,464 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:15:19,171 - INFO - [global] Пачка 3/10: завершена за 58с
+2026-09-17 16:15:20,171 - INFO - [global] Пачка 4/10: старт (2 окон: ['Submariner', 'Zakamsk'])
+2026-09-17 16:15:20,171 - INFO - [global] Запуск через 3 сек. | ['Submariner', 'Zakamsk']
+2026-09-17 16:15:31,741 - INFO - [global] Проверяю обновы...
+2026-09-17 16:15:32,510 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:15:33,154 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:15:33,740 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:15:33,740 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:15:33,743 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:15:33,744 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:15:37,388 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-17 16:15:37,388 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-17 16:15:38,183 - DEBUG - [global] _api_put: GET runs/20260917_161537_fail_periodic.log -> 404
+2026-09-17 16:15:39,510 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-17 16:15:39,667 - DEBUG - [global] _api_put: PUT runs/20260917_161537_fail_periodic.log -> 201 (10182 bytes)
+2026-09-17 16:15:39,669 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260917_161537_fail_periodic.log
+2026-09-17 16:15:39,670 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-17 16:15:40,570 - DEBUG - [global] _api_put: GET runs/20260917_161537_fail_global.log -> 404
+2026-09-17 16:15:42,586 - DEBUG - [global] _api_put: PUT runs/20260917_161537_fail_global.log -> 201 (20530 bytes)
+2026-09-17 16:15:42,587 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260917_161537_fail_global.log
+2026-09-17 16:15:42,587 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-17 16:15:42,587 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-17 16:16:03,761 - INFO - [global] Проверяю обновы...
+2026-09-17 16:16:04,603 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:16:05,258 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:16:05,827 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:16:05,827 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:16:05,828 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:16:05,829 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:16:17,131 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:16:17,867 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:16:18,711 - INFO - [global] Пачка 4/10: завершена за 59с
+2026-09-17 16:16:19,712 - INFO - [global] Пачка 5/10: старт (2 окон: ['РспАнтохи', 'Numa'])
+2026-09-17 16:16:19,712 - INFO - [global] Запуск через 3 сек. | ['РспАнтохи', 'Numa']
+2026-09-17 16:16:35,844 - INFO - [global] Проверяю обновы...
+2026-09-17 16:16:36,688 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:16:37,345 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:16:38,016 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:16:38,017 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:16:38,018 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:16:38,019 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:16:38,191 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-17 16:16:38,894 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-17 16:16:42,628 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-17 16:16:42,628 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-17 16:16:43,484 - DEBUG - [global] _api_put: GET runs/20260917_161642_fail_periodic.log -> 404
+2026-09-17 16:16:45,058 - DEBUG - [global] _api_put: PUT runs/20260917_161642_fail_periodic.log -> 201 (10182 bytes)
+2026-09-17 16:16:45,059 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260917_161642_fail_periodic.log
+2026-09-17 16:16:45,060 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-17 16:16:46,007 - DEBUG - [global] _api_put: GET runs/20260917_161642_fail_global.log -> 404
+2026-09-17 16:16:47,798 - DEBUG - [global] _api_put: PUT runs/20260917_161642_fail_global.log -> 201 (20574 bytes)
+2026-09-17 16:16:47,799 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260917_161642_fail_global.log
+2026-09-17 16:16:47,799 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-17 16:16:47,800 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-17 16:17:08,036 - INFO - [global] Проверяю обновы...
+2026-09-17 16:17:08,921 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:17:09,578 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:17:10,216 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:17:10,216 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:17:10,218 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:17:10,218 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:17:16,599 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:17:17,432 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:17:18,255 - INFO - [global] Пачка 5/10: завершена за 59с
+2026-09-17 16:17:19,256 - INFO - [global] Пачка 6/10: старт (2 окон: ['Tundra', 'Керриганн'])
+2026-09-17 16:17:19,256 - INFO - [global] Запуск через 3 сек. | ['Tundra', 'Керриганн']
+2026-09-17 16:17:37,633 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-17 16:17:38,467 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-17 16:17:40,236 - INFO - [global] Проверяю обновы...
+2026-09-17 16:17:41,068 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:17:41,686 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:17:42,313 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:17:42,313 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:17:42,314 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:17:42,315 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:17:46,488 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:17:47,835 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-17 16:17:47,836 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-17 16:17:48,663 - DEBUG - [global] _api_put: GET runs/20260917_161747_fail_periodic.log -> 404
+2026-09-17 16:17:50,202 - DEBUG - [global] _api_put: PUT runs/20260917_161747_fail_periodic.log -> 201 (10182 bytes)
+2026-09-17 16:17:50,204 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260917_161747_fail_periodic.log
+2026-09-17 16:17:50,205 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-17 16:17:51,152 - DEBUG - [global] _api_put: GET runs/20260917_161747_fail_global.log -> 404
+2026-09-17 16:17:52,685 - DEBUG - [global] _api_put: PUT runs/20260917_161747_fail_global.log -> 201 (20972 bytes)
+2026-09-17 16:17:52,688 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260917_161747_fail_global.log
+2026-09-17 16:17:52,688 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-17 16:17:52,688 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-17 16:18:12,335 - INFO - [global] Проверяю обновы...
+2026-09-17 16:18:13,188 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:18:13,820 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:18:14,438 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:18:14,438 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:18:14,440 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:18:14,440 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:18:16,950 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:18:17,798 - INFO - [global] Пачка 6/10: завершена за 59с
+2026-09-17 16:18:18,799 - INFO - [global] Пачка 7/10: старт (2 окон: ['FranklinSaint', '2680V4'])
+2026-09-17 16:18:18,799 - INFO - [global] Запуск через 3 сек. | ['FranklinSaint', '2680V4']
+2026-09-17 16:18:38,022 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-17 16:18:44,520 - INFO - [global] Проверяю обновы...
+2026-09-17 16:18:46,187 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:18:46,873 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:18:47,479 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:18:47,479 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:18:47,481 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:18:47,481 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:18:52,787 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-17 16:18:52,788 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-17 16:18:53,631 - DEBUG - [global] _api_put: GET runs/20260917_161852_fail_periodic.log -> 404
+2026-09-17 16:18:55,144 - DEBUG - [global] _api_put: PUT runs/20260917_161852_fail_periodic.log -> 409 (10182 bytes)
+2026-09-17 16:18:55,145 - WARNING - [global] _api_put: PUT failed body: {"message":"is at c302e92e719f34f96fee45d0681c391e7d77abf3 but expected 64e6fafbf5ebf3b576402eba828ec3cbf8ce48c3","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-17 16:18:55,147 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-09-17 16:18:55,148 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-17 16:18:56,147 - DEBUG - [global] _api_put: GET runs/20260917_161852_fail_global.log -> 404
+2026-09-17 16:18:57,795 - DEBUG - [global] _api_put: PUT runs/20260917_161852_fail_global.log -> 201 (21280 bytes)
+2026-09-17 16:18:57,797 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260917_161852_fail_global.log
+2026-09-17 16:18:57,798 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-17 16:18:57,798 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-17 16:19:15,717 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:19:16,535 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:19:17,348 - INFO - [global] Пачка 7/10: завершена за 59с
+2026-09-17 16:19:17,500 - INFO - [global] Проверяю обновы...
+2026-09-17 16:19:18,349 - INFO - [global] Пачка 8/10: старт (2 окон: ['Floky', 'ФармерФиола'])
+2026-09-17 16:19:18,349 - INFO - [global] Запуск через 3 сек. | ['Floky', 'ФармерФиола']
+2026-09-17 16:19:18,359 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:19:19,000 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:19:19,573 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:19:19,573 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:19:19,576 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:19:19,576 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:19:36,767 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-17 16:19:37,578 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-17 16:19:46,408 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-17 16:19:49,593 - INFO - [global] Проверяю обновы...
+2026-09-17 16:19:50,418 - DEBUG - [global] needs_update: API GitHub → 5.9.1
+2026-09-17 16:19:51,036 - DEBUG - [global] needs_update: raw → 5.9.1
+2026-09-17 16:19:51,622 - DEBUG - [global] needs_update: jsdelivr → 5.9.0
+2026-09-17 16:19:51,622 - DEBUG - [global] needs_update: лучший источник API → 5.9.1 (из 3)
+2026-09-17 16:19:51,624 - INFO - [global] needs_update: local=(5, 9, 1) remote=(5, 9, 1) -> has_update=False
+2026-09-17 16:19:51,624 - INFO - [global] Установлена последняя версия бота | 5.9.1
+2026-09-17 16:19:57,836 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-17 16:19:57,836 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-17 16:19:58,627 - DEBUG - [global] _api_put: GET runs/20260917_161957_fail_periodic.log -> 404
+2026-09-17 16:20:00,025 - DEBUG - [global] _api_put: PUT runs/20260917_161957_fail_periodic.log -> 409 (10182 bytes)
+2026-09-17 16:20:00,026 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 71e7d184700369e8ad1c1c9859d72b91e3ee4ccd but expected aa7eec9c77876aa9cd2e7efe259d2a03b0e29a3a","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-17 16:20:00,027 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-09-17 16:20:00,027 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
