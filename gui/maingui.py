@@ -224,7 +224,7 @@ class NedoGui(QWidget):
             "PvPDodge":     "ПВП",
             "Rewards":      "Бонусы",
             "Scheduler":    "Шедуля",
-            "BuyerProfile": "Закуп",
+            "Buyer":         "Закуп",
         }
 
         for name, cls in self.profiles.items():
