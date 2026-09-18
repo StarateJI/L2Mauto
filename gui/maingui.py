@@ -213,10 +213,10 @@ class NedoGui(QWidget):
             "Auction":      "Аукцион",
             "Dungeon":      "Данжи",
             "MainAlchemy":  "Химка",
-            "PVPDodge":     "ПВП",
+            "PvPDodge":     "ПВП",
             "Rewards":      "Бонусы",
             "Scheduler":    "Шедуля",
-            "BuyerProfile": "Байер",
+            "Buyer":         "Закуп",
         }
 
         for name, cls in self.profiles.items():
