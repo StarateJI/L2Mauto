@@ -281,10 +281,8 @@ class Dungeon(EventDrivenProfile):
             await asyncio.sleep(2)
             log("Данжи: нажал телепорт", window_id)
 
-            # 7. Включить автоохоту
-            await asyncio.sleep(2)
-            await self.combat.toggle_autohunt()
-            log("Данжи: автоохота включена, жду окончания", window_id)
+            # 7. Автоохота уже включена — персонаж сам фармит
+            log("Данжи: автоохота уже включена, жду окончания", window_id)
 
             # 8. Ждать пока не закончится время данжа
             self.events_checker.start_monitoring(window_id, self, monitors=[MonitorType.DEATH])
