@@ -156,21 +156,25 @@ class Dungeon(EventDrivenProfile):
         """
         window_id = self.window_id
         try:
+            # PartyDungeon наследуется от GameAction — у него есть wait_and_click
+            from bot.methods.game import PartyDungeon
+            game = PartyDungeon(self)
+
             # 1. Выйти из сна (БЕЗ телепорта в город!)
             if await self.energo.is_on():
                 await self.energo.turn_off()
                 await asyncio.sleep(2)
 
             # 2. Открыть меню → Подземелья
-            if not await self.wait_and_click("main_menu_gui", timeout=7):
+            if not await game.wait_and_click("main_menu_gui", timeout=7):
                 log("Данжи: не открыл главное меню", window_id)
                 return False
 
             await asyncio.sleep(1)
 
-            if not await self.wait_and_click("dungeon_button_menu", timeout=5):
+            if not await game.wait_and_click("dungeon_button_menu", timeout=5):
                 log("Данжи: не нашёл кнопку подземелий", window_id)
-                await self.wait_and_click("main_menu_gui", timeout=2)
+                await game.wait_and_click("main_menu_gui", timeout=2)
                 return False
 
             await asyncio.sleep(2)
@@ -233,7 +237,7 @@ class Dungeon(EventDrivenProfile):
                     if red_count > 20 and white_count < 10:
                         log("Данжи: время доступа = 0 (красным) — сегодня уже был, усыпляю",
                             window_id, level="WARNING")
-                        await self.wait_and_click("npc_global_quit_button", timeout=2)
+                        await game.wait_and_click("npc_global_quit_button", timeout=2)
                         await asyncio.sleep(1)
                         if not await self.energo.is_on():
                             await self.energo.turn_on()
@@ -252,7 +256,7 @@ class Dungeon(EventDrivenProfile):
 
             if not found:
                 log("Данжи: 'Благословенная Земля' не найдена в списке", window_id, level="WARNING")
-                await self.wait_and_click("npc_global_quit_button", timeout=2)
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
                 return False
 
             # 4. Кликнуть по "Благословенная Земля" и нажать "Вход"
@@ -310,7 +314,7 @@ class Dungeon(EventDrivenProfile):
 
             if not level_found:
                 log("Данжи: не нашёл доступный уровень", window_id, level="WARNING")
-                await self.wait_and_click("npc_global_quit_button", timeout=2)
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
                 return False
 
             # 6. Нажать стрелку телепорта (справа от уровня)
