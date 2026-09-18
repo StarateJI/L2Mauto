@@ -208,6 +208,26 @@ class Dungeon(EventDrivenProfile):
                 except Exception as e:
                     log(f"Данжи: OCR failed: {e}", window_id, level="WARNING")
 
+                # Проверить "Время доступа" — если 0 (красным) → уже был сегодня
+                try:
+                    import cv2
+                    # Красный текст: R высокий, G и B низкие
+                    b_ch, g_ch, r_ch = cv2.split(shot)
+                    red_mask = (r_ch > 180) & (g_ch < 80) & (b_ch < 80)
+                    red_count = int(np.sum(red_mask))
+                    # Если в строке "Благословенная Земля" есть красные пиксели → время = 0
+                    if red_count > 20 and found:
+                        log("Данжи: время доступа = 0 (красным) — сегодня уже был, усыпляю",
+                            window_id, level="WARNING")
+                        await self.wait_and_click("npc_global_quit_button", timeout=2)
+                        await asyncio.sleep(1)
+                        if not await self.energo.is_on():
+                            await self.energo.turn_on()
+                            await asyncio.sleep(1)
+                        return True
+                except Exception:
+                    pass
+
                 # Скролл вниз
                 await self.mouse.wheel(self.window_info, [(ww // 2, wh // 2)],
                                        direction="down", times=5)
