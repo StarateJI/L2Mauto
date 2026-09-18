@@ -179,6 +179,7 @@ class Dungeon(EventDrivenProfile):
 
             # 3. Загрузить иконку и искать через matchTemplate
             icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     "..", "..", "bot", "methods", "game",
                                      "blessed_land_icon.jpg")
             if not os.path.exists(icon_path):
                 log("Данжи: файл иконки blessed_land_icon.jpg не найден", window_id, level="ERROR")
