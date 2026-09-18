@@ -206,11 +206,29 @@ class NedoGui(QWidget):
         self.btn_otdel.clicked.connect(self.open_otdel)
         self.layout_main.addWidget(self.btn_otdel)
 
+        # Маппинг имён профилей в русские подписи кнопок.
+        # Ключ — имя класса профиля (как в self.profiles).
+        # Значение — русский текст кнопки.
+        PROFILE_LABELS = {
+            "Auction":      "Аукцион",
+            "Dungeon":      "Данжи",
+            "MainAlchemy":  "Химка",
+            "PVPDodge":     "ПВП",
+            "Rewards":      "Бонусы",
+            "Scheduler":    "Шедуля",
+            "BuyerProfile": "Байер",
+        }
+
         for name, cls in self.profiles.items():
-            btn = QPushButton(f"▶ {name} ВСЕ")
+            # Русская подпись из маппинга, если нет — само имя класса
+            label = PROFILE_LABELS.get(name, name)
+            btn = QPushButton(f"▶ {label}")
             btn.setFont(font_btn)
             btn.setCursor(Qt.PointingHandCursor)
             btn.setFixedHeight(28)
+            # Сохраняем имя класса профиля в свойстве кнопки — для подсчёта
+            # активных окон (метод _update_running_counters ниже).
+            btn.setProperty("profile_name", name)
 
             if name == "MainAlchemy":
                 btn.clicked.connect(lambda _, c=cls: self.start_alchemy(c))
@@ -219,8 +237,8 @@ class NedoGui(QWidget):
 
             self.layout_main.addWidget(btn)
 
-        # ── STOP ВСЕ — красная, крупная ─────────────────────────────────────
-        self.btn_stop_all = QPushButton("⏹ STOP ВСЕ")
+        # ── СТОП — красная, крупная ────────────────────────────────────────
+        self.btn_stop_all = QPushButton("⏹ СТОП")
         self.btn_stop_all.setObjectName("stop_all")
         self.btn_stop_all.setFont(QFont("Segoe UI", 10, QFont.Bold))
         self.btn_stop_all.setCursor(Qt.PointingHandCursor)
@@ -425,6 +443,22 @@ class NedoGui(QWidget):
         self.cache[profile_name] = num
         save_cache(self.cache)
 
+        # Для Dungeon — выбор типа данжа
+        dungeon_type = None
+        if profile_name == "Dungeon":
+            last_dungeon = self.cache.get("DungeonType", "Пати данж")
+            items = ["Пати данж", "Благословенная Земля"]
+            dungeon_type, dok = QInputDialog.getItem(
+                self, "Выбор данжа",
+                "Какой данж запускать?", items,
+                items.index(last_dungeon) if last_dungeon in items else 0,
+                editable=False
+            )
+            if not dok:
+                return
+            self.cache["DungeonType"] = dungeon_type
+            save_cache(self.cache)
+
         batches = [windows[i:i + num] for i in range(0, len(windows), num)]
         self.controller.reset_batch_cancel()
         self._batch_stop = False  # флаг жёсткой остановки process_batch
@@ -460,7 +494,10 @@ class NedoGui(QWidget):
             # Лог старта пачки — пользователь видит прогресс в консоли
             log(f"Пачка {batch_idx + 1}/{len(batches)}: старт ({len(batch)} окон: {batch})")
             _batch_start_ts = _time.monotonic()
-            self.start_windows(profile_class, batch)
+            if dungeon_type:
+                self.start_windows(profile_class, batch, dungeon_type=dungeon_type)
+            else:
+                self.start_windows(profile_class, batch)
 
             def wait_c(attempts=0):
                 if self.controller.batch_cancelled or self._batch_stop:
@@ -559,12 +596,16 @@ class NedoGui(QWidget):
             running[profile_name] = running.get(profile_name, 0) + 1
 
         for i in range(self.layout_main.count()):
-            item = self.layout_main.itemAt(i)
+            item = self.layout_at(i)
             w = item.widget()
-            if isinstance(w, QPushButton) and "ВСЕ" in w.text() and not "STOP ВСЕ" in w.text(): # эбат накостылил, потом переделать #todo
+            if isinstance(w, QPushButton):
+                # Профильная кнопка — у неё есть свойство profile_name
+                prof_name = w.property("profile_name")
+                if prof_name is None:
+                    continue
+                # Базовый текст без счётчика «(N)»
                 base_text = w.text().split(" (")[0]
-                profile_name = base_text.replace(" ВСЕ", "")
-                count = running.get(profile_name, 0)
+                count = running.get(prof_name, 0)
                 w.setText(f"{base_text} ({count})")
 
     def show_update_button(self):

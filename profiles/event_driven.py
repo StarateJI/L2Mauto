@@ -10,8 +10,8 @@ class EventDrivenProfile(BaseProfile):
 
     EVENT_HANDLERS: dict = {}
 
-    def __init__(self, window_info, settings=None):
-        super().__init__(window_info, settings=settings)
+    def __init__(self, window_info, settings=None, **kwargs):
+        super().__init__(window_info, settings=settings, **kwargs)
         self._event_queue: asyncio.PriorityQueue = asyncio.PriorityQueue()
         self._event_worker_task: Optional[asyncio.Task] = None
         self._current_event_task: Optional[asyncio.Task] = None

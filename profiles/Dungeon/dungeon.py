@@ -11,6 +11,10 @@ class Dungeon(EventDrivenProfile):
         "death": "_handle_death",
     }
 
+    def __init__(self, window_info, settings=None, **kwargs):
+        super().__init__(window_info, settings=settings, **kwargs)
+        self.dungeon_type = kwargs.get("dungeon_type", "Пати данж")
+
     def profile_version(self):
         return "1.0.0"
 
@@ -21,6 +25,11 @@ class Dungeon(EventDrivenProfile):
         log("_Анлука, помер во время пати данжа. оффаюсь", self.window_id)
 
     async def main_loop(self):
+        if self.dungeon_type == "Благословенная Земля":
+            return await self._blessed_land_loop()
+        return await self._party_dungeon_loop()
+
+    async def _party_dungeon_loop(self):
         window_id, window = self.window_id, self.window_info[self.window_id]
         try:
             rip, btn = await self.combat.is_dead()
@@ -129,3 +138,187 @@ class Dungeon(EventDrivenProfile):
             task.cancel()
         await asyncio.gather(*self._child_tasks, return_exceptions=True)
         await super().on_stop()
+
+    async def _blessed_land_loop(self):
+        """
+        Благословенная Земля — одиночный данж.
+
+        Процесс:
+        1. Выйти из сна (БЕЗ телепорта в город!)
+        2. Открыть меню → Подземелья → вкладка "Простые"
+        3. Найти "Благословенная Земля" в списке
+        4. Кликнуть по ней → нажать "Вход"
+        5. В окне выбора уровня — выбрать ПОСЛЕДНИЙ яркий (доступный) уровень
+        6. Нажать стрелку телепорта
+        7. Включить автоохоту
+        8. Ждать пока не закончится время
+        9. После окончания — персонаж сам вернётся на спот
+        """
+        window_id = self.window_id
+        try:
+            # 1. Выйти из сна (БЕЗ телепорта в город!)
+            if await self.energo.is_on():
+                await self.energo.turn_off()
+                await asyncio.sleep(2)
+
+            # 2. Открыть меню → Подземелья
+            if not await self.wait_and_click("main_menu_gui", timeout=7):
+                log("Данжи: не открыл главное меню", window_id)
+                return False
+
+            await asyncio.sleep(1)
+
+            if not await self.wait_and_click("dungeon_button_menu", timeout=5):
+                log("Данжи: не нашёл кнопку подземелий", window_id)
+                await self.wait_and_click("main_menu_gui", timeout=2)
+                return False
+
+            await asyncio.sleep(2)
+            log("Данжи: меню подземелий открыто", window_id)
+
+            # 3. Найти "Благословенная Земля" в списке
+            # Список данжей — скроллим вниз пока не найдём или не дойдём до конца
+            found = False
+            for scroll_attempt in range(5):
+                # Скриншот списка данжей
+                import mss
+                import numpy as np
+                window = self.window_info[window_id]
+                wx, wy = window["Position"]
+                ww, wh = window["Width"], window["Height"]
+
+                # Зона списка данжей (левая часть окна)
+                monitor = {"left": wx, "top": wy, "width": ww, "height": wh}
+                try:
+                    with mss.mss() as sct:
+                        shot = np.array(sct.grab(monitor))
+                except Exception:
+                    log("Данжи: mss grab failed", window_id, level="WARNING")
+                    return False
+
+                # Ищем "Благословенная Земля" через OCR
+                try:
+                    import cv2
+                    gray = cv2.cvtColor(shot, cv2.COLOR_BGR2GRAY)
+                    text = self._ocr_dungeon_list(gray)
+                    if "благословен" in text.lower() or "благослов" in text.lower():
+                        found = True
+                        log(f"Данжи: 'Благословенная Земля' найдена на попытке {scroll_attempt+1}", window_id)
+                        break
+                except Exception as e:
+                    log(f"Данжи: OCR failed: {e}", window_id, level="WARNING")
+
+                # Скролл вниз
+                await self.mouse.wheel(self.window_info, [(ww // 2, wh // 2)],
+                                       direction="down", times=5)
+                await asyncio.sleep(1)
+
+            if not found:
+                log("Данжи: 'Благословенная Земля' не найдена в списке", window_id, level="WARNING")
+                await self.wait_and_click("npc_global_quit_button", timeout=2)
+                return False
+
+            # 4. Кликнуть по "Благословенная Земля" и нажать "Вход"
+            # Клик по строке данжа (примерно центр левой части)
+            await self.mouse.click(self.window_info, ww // 3, wh // 2)
+            await asyncio.sleep(1)
+
+            # Кнопка "Вход" (оранжевая, правый нижний угол)
+            await self.mouse.click(self.window_info, int(ww * 0.85), int(wh * 0.9))
+            await asyncio.sleep(2)
+            log("Данжи: нажал Вход", window_id)
+
+            # 5. Выбрать последний яркий уровень
+            # Окно выбора уровня — список строк. Скроллим в самый низ.
+            await self.mouse.wheel(self.window_info, [(ww // 2, wh // 2)],
+                                   direction="down", times=10)
+            await asyncio.sleep(1)
+
+            # Скроллим вверх по одному и ищем последний яркий уровень
+            level_found = False
+            for attempt in range(10):
+                try:
+                    with mss.mss() as sct:
+                        shot = np.array(sct.grab(monitor))
+                    gray = cv2.cvtColor(shot, cv2.COLOR_BGR2GRAY)
+
+                    # Яркие уровни — белый текст (значение пикселя > 180)
+                    # Тусклые — серый текст (значение < 100)
+                    # Ищем снизу вверх последний яркий
+                    h, w = gray.shape
+                    # Зона списка уровней — правая часть, примерно x=30%-50% от ширины
+                    level_zone = gray[:, int(w * 0.25):int(w * 0.5)]
+                    # Считаем яркие пиксели по строкам
+                    bright_rows = np.sum(level_zone > 180, axis=1)
+                    # Строки с достаточным количеством ярких пикселей — доступные уровни
+                    bright_lines = np.where(bright_rows > 10)[0]
+
+                    if len(bright_lines) > 0:
+                        last_bright_y = int(bright_lines[-1])
+                        # Клик по последнему яркому уровню
+                        click_x = int(w * 0.35)
+                        click_y = last_bright_y
+                        await self.mouse.click(self.window_info, click_x, click_y)
+                        await asyncio.sleep(1)
+                        level_found = True
+                        log(f"Данжи: выбран последний яркий уровень (y={click_y})", window_id)
+                        break
+                except Exception as e:
+                    log(f"Данжи: level search failed: {e}", window_id, level="WARNING")
+
+                # Скролл вверх на одну позицию
+                await self.mouse.wheel(self.window_info, [(ww // 2, wh // 2)],
+                                       direction="up", times=2)
+                await asyncio.sleep(0.5)
+
+            if not level_found:
+                log("Данжи: не нашёл доступный уровень", window_id, level="WARNING")
+                await self.wait_and_click("npc_global_quit_button", timeout=2)
+                return False
+
+            # 6. Нажать стрелку телепорта (справа от уровня)
+            await self.mouse.click(self.window_info, int(ww * 0.65), click_y)
+            await asyncio.sleep(2)
+            log("Данжи: нажал телепорт", window_id)
+
+            # 7. Включить автоохоту
+            await asyncio.sleep(2)
+            await self.combat.toggle_autohunt()
+            log("Данжи: автоохота включена, жду окончания", window_id)
+
+            # 8. Ждать пока не закончится время данжа
+            self.events_checker.start_monitoring(window_id, self, monitors=[MonitorType.DEATH])
+            while True:
+                hunt = await self.combat.is_autohunt_on()
+                if not hunt:
+                    self.events_checker.stop_monitoring(window_id)
+                    rip, btn = await self.combat.is_dead()
+                    if rip:
+                        log("Данжи: умер в Благословенной Земле", window_id)
+                        await self.combat.respawn()
+                        return False
+                    break
+                await asyncio.sleep(5)
+
+            log("Данжи: Благословенная Земля завершена", window_id)
+
+            # 9. Усыпить окно
+            if not await self.energo.is_on():
+                await self.energo.turn_on()
+                await asyncio.sleep(1)
+
+            return True
+
+        except asyncio.CancelledError:
+            log("Данжи: остановлен вручную", window_id)
+            raise
+
+    def _ocr_dungeon_list(self, gray_img):
+        """OCR списка данжей через pytesseract."""
+        try:
+            import pytesseract
+            pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+            text = pytesseract.image_to_string(gray_img, lang="rus+eng", config="--psm 6")
+            return text
+        except Exception:
+            return ""
