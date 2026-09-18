@@ -208,7 +208,7 @@ class Dungeon(EventDrivenProfile):
 
                 gray = cv2.cvtColor(shot, cv2.COLOR_BGR2GRAY)
 
-                # matchTemplate — multi-scale
+                # Способ 1: matchTemplate — multi-scale
                 best_score = 0.0
                 best_loc = None
                 for scale in [0.8, 0.9, 1.0, 1.1, 1.2]:
@@ -226,16 +226,47 @@ class Dungeon(EventDrivenProfile):
                     except cv2.error:
                         continue
 
-                log(f"Данжи: matchTemplate попытка {scroll_attempt+1} — score={best_score:.3f}",
+                # Способ 2: OCR — ищем текст "Благословенная" или "благослов"
+                ocr_found = False
+                ocr_y = 0
+                try:
+                    import pytesseract
+                    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+                    # Увеличиваем x2 для OCR
+                    big = cv2.resize(gray, (list_w * 2, list_h * 2), interpolation=cv2.INTER_CUBIC)
+                    text = pytesseract.image_to_string(big, lang="rus+eng", config="--psm 6").lower()
+                    log(f"Данжи: OCR попытка {scroll_attempt+1}: '{text[:50]}...'", window_id, level="DEBUG")
+                    if "благослов" in text:
+                        # Найти координаты через image_to_data
+                        data = pytesseract.image_to_data(big, lang="rus+eng", config="--psm 6",
+                                                         output_type=pytesseract.Output.DICT)
+                        for i, word in enumerate(data["text"]):
+                            if "благослов" in word.lower():
+                                ocr_y = data["top"][i] // 2  # координата в оригинале
+                                ocr_found = True
+                                break
+                except Exception:
+                    pass
+
+                log(f"Данжи: попытка {scroll_attempt+1} — TM score={best_score:.3f}, OCR={ocr_found}",
                     window_id, level="DEBUG")
 
-                if best_score >= 0.60:
-                    # Нашли иконку — кликаем по центру
-                    click_x = list_x + best_loc[0] + icon_gray.shape[1] // 4
-                    click_y = list_y + best_loc[1] + icon_gray.shape[0] // 2
-                    found = True
-                    log(f"Данжи: иконка найдена на попытке {scroll_attempt+1} "
-                        f"({click_x},{click_y}) score={best_score:.3f}", window_id)
+                # Нашли хоть одним способом
+                if best_score >= 0.60 or ocr_found:
+                    if best_score >= 0.60 and best_loc is not None:
+                        # matchTemplate нашёл — кликаем по иконке
+                        click_x = list_x + best_loc[0] + icon_gray.shape[1] // 4
+                        click_y = list_y + best_loc[1] + icon_gray.shape[0] // 2
+                        found = True
+                        log(f"Данжи: найден через matchTemplate ({click_x},{click_y}) score={best_score:.3f}",
+                            window_id)
+                    elif ocr_found:
+                        # OCR нашёл — кликаем по строке с текстом
+                        click_x = list_x + int(list_w * 0.1)
+                        click_y = list_y + ocr_y + 5
+                        found = True
+                        log(f"Данжи: найден через OCR ({click_x},{click_y})",
+                            window_id)
                     break
 
                 # Скролл вниз
