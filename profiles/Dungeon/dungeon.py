@@ -214,7 +214,33 @@ class Dungeon(EventDrivenProfile):
                     log(f"Данжи: OCR попытка {scroll_attempt+1}: '{text[:60]}...'", window_id, level="DEBUG")
                     if "благословен" in text.lower() or "благослов" in text.lower():
                         found = True
-                        log(f"Данжи: 'Благословенная Земля' найдена на попытке {scroll_attempt+1}", window_id)
+                        # Найти координаты текста через pytesseract image_to_data
+                        try:
+                            import pytesseract
+                            pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+                            data = pytesseract.image_to_data(big, lang="rus+eng", config="--psm 6",
+                                                             output_type=pytesseract.Output.DICT)
+                            # Найти слово "Благословенная" или "Благословен"
+                            for i, word in enumerate(data["text"]):
+                                if "благословен" in word.lower() or "благослов" in word.lower():
+                                    # Координаты в big (x2) → делим на 2 → координаты в shot
+                                    # → прибавляем смещение list_x, list_y
+                                    word_x = data["left"][i] // 2
+                                    word_y = data["top"][i] // 2
+                                    # Иконка данжа — слева от текста, примерно на 40px левее
+                                    click_x = list_x + max(word_x - 40, 10)
+                                    click_y = list_y + word_y + 10  # +10 к центру строки
+                                    self._dungeon_click_pos = (click_x, click_y)
+                                    log(f"Данжи: 'Благословенная Земля' найдена на попытке {scroll_attempt+1} "
+                                        f"в координатах ({click_x},{click_y})", window_id)
+                                    break
+                        except Exception:
+                            pass
+                        if not hasattr(self, '_dungeon_click_pos'):
+                            # Fallback — если image_to_data не сработал, кликаем по центру
+                            self._dungeon_click_pos = (list_x + list_w // 4, list_y + list_h // 2)
+                            log(f"Данжи: 'Благословенная Земля' найдена на попытке {scroll_attempt+1} "
+                                f"(fallback координаты)", window_id)
                         break
                 except Exception as e:
                     log(f"Данжи: OCR failed: {e}", window_id, level="WARNING")
@@ -266,9 +292,10 @@ class Dungeon(EventDrivenProfile):
                 await game.wait_and_click("npc_global_quit_button", timeout=2)
                 return False
 
-            # 4. Кликнуть по "Благословенная Земля" и нажать "Вход"
-            # Клик по строке данжа (примерно центр левой части)
-            await self.mouse.click(self.window_info, ww // 3, wh // 2)
+            # 4. Кликнуть по иконке "Благословенная Земля" — по координатам из OCR
+            click_x, click_y = getattr(self, '_dungeon_click_pos', (ww // 3, wh // 2))
+            log(f"Данжи: клик по иконке ({click_x},{click_y})", window_id)
+            await self.mouse.click(self.window_info, click_x, click_y)
             await asyncio.sleep(1)
 
             # Кнопка "Вход" (оранжевая, правый нижний угол)
