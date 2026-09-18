@@ -596,7 +596,7 @@ class NedoGui(QWidget):
             running[profile_name] = running.get(profile_name, 0) + 1
 
         for i in range(self.layout_main.count()):
-            item = self.layout_at(i)
+            item = self.layout_main.itemAt(i)
             w = item.widget()
             if isinstance(w, QPushButton):
                 # Профильная кнопка — у неё есть свойство profile_name
