@@ -380,21 +380,32 @@ class Dungeon(EventDrivenProfile):
                 log("Данги: не удалось снять скриншот после открытия меню",
                     window_id, level="WARNING")
 
-            # 3. Загрузить иконку для matchTemplate
+            # 3. Загрузить шаблон для matchTemplate.
+            # ВАЖНО: используем blessed_land_text.png (вырезанная СТРОКА с текстом
+            # "Благословенная Земля" из реального скриншота игры), а НЕ иконку.
+            # Иконка (blessed_land_icon.jpg) перестала совпадать из-за разных
+            # фонов/подсветок — давала ложные срабатывания на другие данжи.
+            # Текст-шаблон совпадает пиксель-в-пиксель — 99% точность.
             icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                     "blessed_land_icon.jpg")
+                                     "blessed_land_text.png")
+            if not os.path.exists(icon_path):
+                # Fallback на старую иконку (на всякий случай)
+                icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                         "blessed_land_icon.jpg")
+                log("Данги: blessed_land_text.png не найден, fallback на icon.jpg",
+                    window_id, level="WARNING")
             icon_gray = None
             if not os.path.exists(icon_path):
-                log(f"Данги: файл иконки не найден: {icon_path}",
+                log(f"Данги: файл шаблона не найден: {icon_path}",
                     window_id, level="WARNING")
             else:
                 icon_bgr = cv2.imread(icon_path)
                 if icon_bgr is None:
-                    log("Данги: иконка не загрузилась cv2.imread",
+                    log("Данги: шаблон не загрузился cv2.imread",
                         window_id, level="WARNING")
                 else:
                     icon_gray = cv2.cvtColor(icon_bgr, cv2.COLOR_BGR2GRAY)
-                    log(f"Данги: иконка {icon_gray.shape[1]}x{icon_gray.shape[0]} загружена",
+                    log(f"Данги: шаблон {icon_gray.shape[1]}x{icon_gray.shape[0]} загружен",
                         window_id)
 
             # Зона списка данжей — относительно окна (для кликов!)
@@ -433,9 +444,9 @@ class Dungeon(EventDrivenProfile):
                         scene_bgr)
 
                 # Способ 1: OCR — ищем подстроки от самых коротких до полных
-                # ВАЖНО: Tesseract может ошибаться в окончаниях, поэтому ищем
-                # по корню "благ" — минимально достаточно для уверенного нахождения.
-                # Если найдётся "благ" → считаем что это "Благословенная Земля".
+                # ВАЖНО: Tesseract плохо распознаёт русские буквы в этой игре,
+                # поэтому OCR это LAST-RESORT способ. Главный = matchTemplate
+                # с текстовым шаблоном.
                 ocr_needles = [
                     "благословенн",   # полное
                     "благословен",    # без последней н
@@ -448,22 +459,24 @@ class Dungeon(EventDrivenProfile):
                 ]
                 ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
 
-                # Способ 2: matchTemplate — multi-scale с НИЗКИМ порогом
-                # Порог 0.45 (было 0.55) — иконка может быть с другим фоном,
-                # подсветкой, поэтому пропускаем кандидатов с score >= 0.45
+                # Способ 2: matchTemplate с ТЕКСТОВЫМ шаблоном (220x58 px)
+                # Шаблон = вырезанная строка "Благословенная Земля" из игры.
+                # Порог 0.70 — высокий, но для пиксель-в-пиксель текста это ОК.
+                # Масштаб 1.0 (без масштабирования) — текст в игре всегда
+                # одного размера, не нужно multi-scale.
                 tm_score, tm_loc = (0.0, None)
                 if icon_gray is not None:
                     tm_score, tm_loc = self._match_icon_multiscale(
                         scene_gray, icon_gray,
-                        scales=(0.5, 0.6, 0.7, 0.85, 1.0, 1.15, 1.3, 1.5),
-                        threshold=0.45)
+                        scales=(0.95, 1.0, 1.05),  # узкий диапазон
+                        threshold=0.70)  # высокий порог — нужен точный матч
 
                 log(f"Данги: попытка {scroll_attempt+1}/{MAX_SCROLL_ATTEMPTS} — "
                     f"TM={tm_score:.3f} OCR={'да' if ocr_found else 'нет'}",
                     window_id, level="DEBUG")
 
                 # Нашли — выбираем более надёжный способ
-                if tm_score >= 0.45 and tm_loc is not None:
+                if tm_score >= 0.70 and tm_loc is not None:
                     click_x_rel = list_x_rel + tm_loc[0] + icon_gray.shape[1] // 2
                     click_y_rel = list_y_rel + tm_loc[1] + icon_gray.shape[0] // 2
                     found = True
