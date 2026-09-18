@@ -183,16 +183,21 @@ class Dungeon(EventDrivenProfile):
             # 3. Найти "Благословенная Земля" в списке
             # Список данжей — скроллим вниз пока не найдём или не дойдём до конца
             found = False
-            for scroll_attempt in range(5):
-                # Скриншот списка данжей
-                import mss
-                import numpy as np
-                window = self.window_info[window_id]
-                wx, wy = window["Position"]
-                ww, wh = window["Width"], window["Height"]
+            import mss
+            import numpy as np
+            import cv2
+            window = self.window_info[window_id]
+            wx, wy = window["Position"]
+            ww, wh = window["Width"], window["Height"]
 
-                # Зона списка данжей (левая часть окна)
-                monitor = {"left": wx, "top": wy, "width": ww, "height": wh}
+            # Зона ТОЛЬКО списка данжей — левая половина, ниже заголовка
+            list_x = wx
+            list_y = wy + int(wh * 0.25)  # ниже вкладок
+            list_w = int(ww * 0.55)       # только левая часть (список)
+            list_h = int(wh * 0.65)       # до низа окна
+
+            for scroll_attempt in range(10):
+                monitor = {"left": list_x, "top": list_y, "width": list_w, "height": list_h}
                 try:
                     with mss.mss() as sct:
                         shot = np.array(sct.grab(monitor))
@@ -200,11 +205,13 @@ class Dungeon(EventDrivenProfile):
                     log("Данжи: mss grab failed", window_id, level="WARNING")
                     return False
 
-                # Ищем "Благословенная Земля" через OCR
+                # Ищем "Благословенная Земля" через OCR — только зону списка
                 try:
-                    import cv2
                     gray = cv2.cvtColor(shot, cv2.COLOR_BGR2GRAY)
-                    text = self._ocr_dungeon_list(gray)
+                    # Увеличиваем x2 для лучшего OCR
+                    big = cv2.resize(gray, (list_w * 2, list_h * 2), interpolation=cv2.INTER_CUBIC)
+                    text = self._ocr_dungeon_list(big)
+                    log(f"Данжи: OCR попытка {scroll_attempt+1}: '{text[:60]}...'", window_id, level="DEBUG")
                     if "благословен" in text.lower() or "благослов" in text.lower():
                         found = True
                         log(f"Данжи: 'Благословенная Земля' найдена на попытке {scroll_attempt+1}", window_id)
