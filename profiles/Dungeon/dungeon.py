@@ -199,15 +199,35 @@ class Dungeon(EventDrivenProfile):
                 return None
 
     def _save_debug(self, name, img):
-        """Сохранить отладочный PNG рядом с dungeon.py."""
+        """
+        Сохранить отладочный PNG рядом с dungeon.py.
+
+        ВАЖНО: cv2.imwrite на Windows МОЛЧА возвращает False если путь содержит
+        кириллицу (C:\\Users\\Иван\\...). OpenCV режет путь через ASCII.
+        Поэтому используем cv2.imencode + обычный open(path,'wb') — он
+        корректно работает с любыми Unicode путями.
+        """
         try:
+            if img is None:
+                log(f"Данжи: img=None, не сохраняю {name}",
+                    self.window_id, level="WARNING")
+                return False
             out_dir = os.path.dirname(os.path.abspath(__file__))
             path = os.path.join(out_dir, name)
-            cv2.imwrite(path, img)
-            log(f"Данжи: сохранён {name}", self.window_id)
+            # imencode — возвращает байты в памяти, не трогая файловую систему
+            ok, buf = cv2.imencode(".png", img)
+            if not ok:
+                log(f"Данжи: imencode failed for {name}",
+                    self.window_id, level="WARNING")
+                return False
+            with open(path, "wb") as f:
+                f.write(buf.tobytes())
+            log(f"Данжи: сохранён {name} -> {path}", self.window_id)
+            return True
         except Exception as e:
             log(f"Данжи: не удалось сохранить {name}: {e}",
                 self.window_id, level="WARNING")
+            return False
 
     def _ocr_find_text(self, gray_img, needles):
         """
@@ -319,6 +339,16 @@ class Dungeon(EventDrivenProfile):
             await asyncio.sleep(2)
             log("Данжи: меню подземелий открыто", window_id)
 
+            # Скриншот ВСЕГО окна сразу после открытия меню (до скролла)
+            # — видно что вообще открылось. Сохраняем ВНЕ зависимости от того,
+            # что будет дальше. Это для отладки "открыл и закрылся".
+            menu_shot = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if menu_shot is not None:
+                self._save_debug("blessed_menu_opened.png", menu_shot)
+            else:
+                log("Данжи: не удалось снять скриншот после открытия меню",
+                    window_id, level="WARNING")
+
             # 3. Загрузить иконку для matchTemplate
             icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                      "blessed_land_icon.jpg")
@@ -349,6 +379,7 @@ class Dungeon(EventDrivenProfile):
 
             found = False
             click_x_rel, click_y_rel = 0, 0
+            scene_bgr = None  # инициализация — вдруг все grab-ы упадут
 
             MAX_SCROLL_ATTEMPTS = 12
             for scroll_attempt in range(MAX_SCROLL_ATTEMPTS):
@@ -422,7 +453,13 @@ class Dungeon(EventDrivenProfile):
 
             # Сохраняем финальный скриншот для отладки если не нашли
             if not found:
-                self._save_debug("blessed_not_found.png", scene_bgr)
+                if scene_bgr is not None:
+                    self._save_debug("blessed_not_found.png", scene_bgr)
+                else:
+                    # Все 12 grab-ов упали — снимем полное окно как есть
+                    last = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+                    if last is not None:
+                        self._save_debug("blessed_not_found.png", last)
                 log("Данжи: 'Благословенная Земля' не найдена после всех попыток",
                     window_id, level="WARNING")
                 await game.wait_and_click("npc_global_quit_button", timeout=2)
