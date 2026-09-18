@@ -575,11 +575,26 @@ class Dungeon(EventDrivenProfile):
             await asyncio.sleep(2)
             log("Данги: нажал Вход", window_id)
 
+            # ── СКРИНШОТ ОКНА ВЫБОРА УРОВНЯ ────────────────────────────
+            # Это самое важное для отладки — покажет где стрелка телепорта.
+            # Без этого скриншота я гадаю где кликать.
+            level_window_shot = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if level_window_shot is not None:
+                self._save_debug("blessed_level_window.png", level_window_shot)
+                log("Данги: сохранён blessed_level_window.png — окно выбора уровня",
+                    window_id)
+
             # 6. Выбрать последний яркий уровень
+            # Сначала скроллим в самый низ списка уровней
             await self.mouse.wheel(self.window_info,
                                     [(ww // 2, wh // 2)],
                                     direction="down", times=10)
             await asyncio.sleep(1)
+
+            # Скриншот ПОСЛЕ прокрутки вниз — видно последний уровень
+            after_scroll = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if after_scroll is not None:
+                self._save_debug("blessed_after_scroll.png", after_scroll)
 
             level_found = False
             level_click_y = 0
@@ -593,19 +608,35 @@ class Dungeon(EventDrivenProfile):
                     continue
                 gray = cv2.cvtColor(full_bgr, cv2.COLOR_BGR2GRAY)
                 h, w = gray.shape
-                level_zone = gray[:, int(w * 0.25):int(w * 0.5)]
+                # Зона поиска ярких строк — ЛЕВАЯ половина (там список уровней)
+                # БЫЛО: x=25%-50% — может ловить мусор в центре
+                # СТАЛО: x=10%-40% — там только список уровней
+                level_zone = gray[:, int(w * 0.10):int(w * 0.40)]
                 bright_rows = np.sum(level_zone > 180, axis=1)
                 bright_lines = np.where(bright_rows > 10)[0]
 
                 if len(bright_lines) > 0:
-                    level_click_y = int(bright_lines[-1])
-                    await self.mouse.click(self.window_info,
-                                            int(w * 0.35), level_click_y)
-                    await asyncio.sleep(1)
-                    level_found = True
-                    log(f"Данги: выбран последний яркий уровень "
-                        f"(y={level_click_y})", window_id)
-                    break
+                    # Берём ПОСЛЕДНЮЮ яркую строку = самый нижний уровень
+                    # Но не в самом низу окна — там могут быть кнопки
+                    # Ограничиваем: 20% - 85% высоты окна
+                    min_y = int(h * 0.20)
+                    max_y = int(h * 0.85)
+                    valid = [y for y in bright_lines if min_y <= y <= max_y]
+                    if valid:
+                        level_click_y = int(valid[-1])
+                        # Клик по названию уровня (ЛЕВАЯ часть, 25% ширины)
+                        await self.mouse.click(self.window_info,
+                                                int(w * 0.25), level_click_y)
+                        await asyncio.sleep(1)
+                        level_found = True
+                        log(f"Данги: выбран последний яркий уровень "
+                            f"(y={level_click_y})", window_id)
+                        # Скриншот ПОСЛЕ клика на уровень
+                        after_level = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+                        if after_level is not None:
+                            self._save_debug("blessed_after_level_click.png",
+                                              after_level)
+                        break
 
                 await self.mouse.wheel(self.window_info,
                                        [(ww // 2, wh // 2)],
@@ -618,10 +649,22 @@ class Dungeon(EventDrivenProfile):
                 await game.wait_and_click("npc_global_quit_button", timeout=2)
                 return False
 
-            # 7. Нажать стрелку телепорта (справа от уровня)
-            await self.mouse.click(self.window_info,
-                                    int(ww * 0.65), level_click_y)
+            # 7. Нажать стрелку телепорта (СПРАВА от выбранного уровня)
+            # Стрелка находится в правой части той же строки что и уровень.
+            # Координаты: x=70% ширины (стрелка в правой части строки),
+            # y = level_click_y (та же строка что и выбранный уровень).
+            arrow_x = int(ww * 0.70)
+            arrow_y = level_click_y
+            log(f"Данги: клик по стрелке ({arrow_x},{arrow_y})",
+                window_id)
+            await self.mouse.click(self.window_info, arrow_x, arrow_y)
             await asyncio.sleep(2)
+
+            # Скриншот ПОСЛЕ клика по стрелке
+            after_arrow = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if after_arrow is not None:
+                self._save_debug("blessed_after_arrow_click.png", after_arrow)
+
             log("Данги: нажал телепорт, отправляю в сон", window_id)
 
             # 8. Отправить окно в сон (персонаж сам вернётся на спот)
