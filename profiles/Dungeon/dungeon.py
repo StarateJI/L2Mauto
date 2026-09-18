@@ -209,14 +209,29 @@ class Dungeon(EventDrivenProfile):
                     log(f"Данжи: OCR failed: {e}", window_id, level="WARNING")
 
                 # Проверить "Время доступа" — если 0 (красным) → уже был сегодня
+                # "Время доступа" — это строка с описанием данжа (правая панель).
+                # Справа от неё — значение времени. Белый = есть время, красный 0 = нет.
                 try:
                     import cv2
+                    # Зона справа от "Время доступа" — правая панель, нижняя часть
+                    h_img, w_img = shot.shape[:2]
+                    # Правая панель описания данжа — примерно 50%-95% ширины
+                    # "Время доступа" — примерно 60%-80% высоты
+                    time_zone_x1 = int(w_img * 0.45)
+                    time_zone_x2 = int(w_img * 0.95)
+                    time_zone_y1 = int(h_img * 0.55)
+                    time_zone_y2 = int(h_img * 0.75)
+                    time_zone = shot[time_zone_y1:time_zone_y2, time_zone_x1:time_zone_x2]
+
+                    b_tz, g_tz, r_tz = cv2.split(time_zone)
                     # Красный текст: R высокий, G и B низкие
-                    b_ch, g_ch, r_ch = cv2.split(shot)
-                    red_mask = (r_ch > 180) & (g_ch < 80) & (b_ch < 80)
+                    red_mask = (r_tz > 180) & (g_tz < 80) & (b_tz < 80)
                     red_count = int(np.sum(red_mask))
-                    # Если в строке "Благословенная Земля" есть красные пиксели → время = 0
-                    if red_count > 20 and found:
+                    # Белый текст: все каналы высокие
+                    white_mask = (r_tz > 180) & (g_tz > 180) & (b_tz > 180)
+                    white_count = int(np.sum(white_mask))
+
+                    if red_count > 20 and white_count < 10:
                         log("Данжи: время доступа = 0 (красным) — сегодня уже был, усыпляю",
                             window_id, level="WARNING")
                         await self.wait_and_click("npc_global_quit_button", timeout=2)
@@ -225,6 +240,9 @@ class Dungeon(EventDrivenProfile):
                             await self.energo.turn_on()
                             await asyncio.sleep(1)
                         return True
+                    elif white_count > 10:
+                        log(f"Данжи: время доступа есть (белый текст, {white_count} пикс) — иду в данж",
+                            window_id)
                 except Exception:
                     pass
 
