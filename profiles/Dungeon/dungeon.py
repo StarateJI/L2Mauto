@@ -229,6 +229,34 @@ class Dungeon(EventDrivenProfile):
                 self.window_id, level="WARNING")
             return False
 
+    def _upload_debug_async(self, window_id: str, made: int = 0,
+                            error=None) -> None:
+        """
+        Запустить upload_run_logs в ОТДЕЛЬНОМ потоке (не блокируя main_loop).
+        Чтобы не ждать 60 сек до следующего LogUploader-тика.
+
+        После загрузки PNG удаляются с диска (log_uploader так умеет).
+        """
+        try:
+            import threading
+            from bot.log_uploader import upload_run_logs
+
+            def _worker():
+                try:
+                    upload_run_logs(window_id, made=made, error=error)
+                    log(f"Данги: upload_debug_async завершён для {window_id}",
+                        level="DEBUG")
+                except Exception as e:
+                    log(f"Данги: upload_debug_async упал: {e}", level="WARNING")
+
+            t = threading.Thread(target=_worker, daemon=True)
+            t.start()
+            log(f"Данги: запущен фоновый upload скриншотов для {window_id}",
+                window_id)
+        except Exception as e:
+            log(f"Данги: не смог запустить upload_debug_async: {e}",
+                self.window_id, level="WARNING")
+
     def _ocr_find_text(self, gray_img, needles):
         """
         Ищет текст (или его часть) через pytesseract.
@@ -468,6 +496,9 @@ class Dungeon(EventDrivenProfile):
                 if not await self.energo.is_on():
                     await self.energo.turn_on()
                     await asyncio.sleep(1)
+                # НЕМЕДЛЕННО отправляем скриншоты в GitHub (мне)
+                self._upload_debug_async(window_id, made=0,
+                                          error="dungeon_not_found")
                 return False
 
             # 4. Кликнуть по найденной строке → проверить "Время доступа"
@@ -498,6 +529,8 @@ class Dungeon(EventDrivenProfile):
                     if not await self.energo.is_on():
                         await self.energo.turn_on()
                         await asyncio.sleep(1)
+                    self._upload_debug_async(window_id, made=1,
+                                              error="dungeon_already_visited")
                     return True
                 else:
                     log(f"Данжи: время доступа есть (белый={white_count}, "
@@ -572,6 +605,7 @@ class Dungeon(EventDrivenProfile):
 
             log("Данжи: Благословенная Земля запущена, окно в сне",
                 window_id)
+            self._upload_debug_async(window_id, made=1, error=None)
             return True
 
         except asyncio.CancelledError:
@@ -584,4 +618,6 @@ class Dungeon(EventDrivenProfile):
                 await game.wait_and_click("npc_global_quit_button", timeout=2)
             except Exception:
                 pass
+            self._upload_debug_async(window_id, made=0,
+                                      error=f"{type(e).__name__}: {e}")
             return False

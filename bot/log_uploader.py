@@ -48,8 +48,14 @@ DEBUG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                          "methods", "game")
 DEBUG_DIR = os.path.abspath(DEBUG_DIR)
 
-# Префиксы файлов, которые считаем debug'ом аукциона
-DEBUG_PREFIXES = ("au_", "cmp_")
+# Дополнительные папки для поиска debug PNG.
+# profiles/Dungeon/ — туда dungeon.py сохраняет blessed_*.png
+DUNGEON_DEBUG_DIR = os.path.join(_PROJECT_ROOT, "profiles", "Dungeon")
+DUNGEON_DEBUG_DIR = os.path.abspath(DUNGEON_DEBUG_DIR)
+
+# Префиксы файлов, которые считаем debug'ом.
+# au_ — аукцион, cmp_ — сравнение страниц, blessed_ — данжи
+DEBUG_PREFIXES = ("au_", "cmp_", "blessed_")
 
 # Сколько строк лога тащить (последние — самые важные)
 LOG_TAIL_LINES = 500
@@ -187,28 +193,39 @@ def _tail_file(path: str, n_lines: int) -> bytes:
 
 
 def _list_debug_pngs() -> list:
-    """Список debug PNG-файлов в DEBUG_DIR с префиксом au_ или cmp_.
-    Включает фулл-скрины (au_final_fullscreen.png, au_after_tab_sell.png)."""
+    """
+    Список debug PNG-файлов во всех папках DEBUG_DIRS с нужным префиксом.
+
+    Ищет в:
+      - bot/methods/game/ (au_*, cmp_* — аукцион)
+      - profiles/Dungeon/ (blessed_* — данжи)
+
+    Возвращает список (name, full_path, size).
+    """
+    # Все папки где ищем
+    debug_dirs = [DEBUG_DIR, DUNGEON_DEBUG_DIR]
     out = []
-    try:
-        if not os.path.isdir(DEBUG_DIR):
-            return out
-        for name in sorted(os.listdir(DEBUG_DIR)):
-            if not name.lower().endswith(".png"):
+    for debug_dir in debug_dirs:
+        try:
+            if not os.path.isdir(debug_dir):
                 continue
-            if not name.startswith(DEBUG_PREFIXES):
-                continue
-            full = os.path.join(DEBUG_DIR, name)
-            try:
-                size = os.path.getsize(full)
-            except Exception:
-                continue
-            # Лимит 10 МБ — фулл-скрин 2560×1440 может быть ~3 МБ
-            if size > 10_000_000:
-                continue
-            out.append((name, full, size))
-    except Exception as e:
-        log(f"log_uploader: list PNGs exception: {e}", level="WARNING")
+            for name in sorted(os.listdir(debug_dir)):
+                if not name.lower().endswith(".png"):
+                    continue
+                if not name.startswith(DEBUG_PREFIXES):
+                    continue
+                full = os.path.join(debug_dir, name)
+                try:
+                    size = os.path.getsize(full)
+                except Exception:
+                    continue
+                # Лимит 10 МБ — фулл-скрин 2560×1440 может быть ~3 МБ
+                if size > 10_000_000:
+                    continue
+                out.append((name, full, size))
+        except Exception as e:
+            log(f"log_uploader: list PNGs exception in {debug_dir}: {e}",
+                level="WARNING")
     return out
 
 
