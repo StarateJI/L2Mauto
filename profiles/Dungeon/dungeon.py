@@ -381,18 +381,23 @@ class Dungeon(EventDrivenProfile):
                     window_id, level="WARNING")
 
             # 3. Загрузить шаблон для matchTemplate.
-            # ВАЖНО: используем blessed_land_text.png (вырезанная СТРОКА с текстом
-            # "Благословенная Земля" из реального скриншота игры), а НЕ иконку.
-            # Иконка (blessed_land_icon.jpg) перестала совпадать из-за разных
-            # фонов/подсветок — давала ложные срабатывания на другие данжи.
-            # Текст-шаблон совпадает пиксель-в-пиксель — 99% точность.
+            # ВАЖНО: используем blessed_zemlya.png — вырезанное слово "земля"
+            # (99x58 px) из реального скриншота игры.
+            # Почему не всю строку "Благословенная Земля" (220x58)?
+            #   Потому что при прокрутке строка может быть видна ЧАСТИЧНО —
+            #   только нижняя или верхняя половина. Полный шаблон не сработает.
+            #   Короткое слово "земля" сработает даже если видна часть строки.
+            #
+            # Почему не OCR? Tesseract плохо распознаёт "Благословенная" —
+            # выдаёт "блогословемыя", "клогословезьья" и т.д. А вот "земля"
+            # распознаёт стабильно. Но matchTemplate надёжнее — используем его.
             icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                     "blessed_land_text.png")
+                                     "blessed_zemlya.png")
             if not os.path.exists(icon_path):
-                # Fallback на старую иконку (на всякий случай)
+                # Fallback на полный текстовый шаблон
                 icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                         "blessed_land_icon.jpg")
-                log("Данги: blessed_land_text.png не найден, fallback на icon.jpg",
+                                         "blessed_land_text.png")
+                log("Данги: blessed_zemlya.png не найден, fallback на text.png",
                     window_id, level="WARNING")
             icon_gray = None
             if not os.path.exists(icon_path):
@@ -420,9 +425,10 @@ class Dungeon(EventDrivenProfile):
             click_x_rel, click_y_rel = 0, 0
             scene_bgr = None
 
-            # БЫСТРЫЙ режим: 0.15 сек между скроллами (было 0.6)
-            # 2 клика за раз (было 3) — но чаще проверяем
-            MAX_SCROLL_ATTEMPTS = 25
+            # БЫСТРЫЙ режим: 0.05 сек между скроллами (было 0.6)
+            # times=5 одним вызовом — в 3 раза быстрее чем times=2
+            # 15 попыток * 5 кликов = 75 строк прокручиваем — хватит на весь список
+            MAX_SCROLL_ATTEMPTS = 15
             for scroll_attempt in range(MAX_SCROLL_ATTEMPTS):
                 scene_bgr = self._grab_window_rect(wx, wy,
                                                     list_x_rel, list_y_rel,
@@ -431,8 +437,8 @@ class Dungeon(EventDrivenProfile):
                     log(f"Данги: попытка {scroll_attempt+1} — скриншот пустой",
                         window_id, level="WARNING")
                     await self.mouse.wheel(self.window_info, [scroll_center],
-                                           direction="down", times=2)
-                    await asyncio.sleep(0.15)
+                                           direction="down", times=5)
+                    await asyncio.sleep(0.05)
                     continue
 
                 scene_gray = cv2.cvtColor(scene_bgr, cv2.COLOR_BGR2GRAY)
@@ -443,40 +449,39 @@ class Dungeon(EventDrivenProfile):
                         f"blessed_scroll_{scroll_attempt:02d}.png",
                         scene_bgr)
 
-                # Способ 1: OCR — ищем подстроки от самых коротких до полных
-                # ВАЖНО: Tesseract плохо распознаёт русские буквы в этой игре,
-                # поэтому OCR это LAST-RESORT способ. Главный = matchTemplate
-                # с текстовым шаблоном.
+                # Способ 1: OCR — LAST RESORT. Tesseract плохо распознаёт
+                # русские буквы в игре, но иногда удаёт "земля" корректно.
                 ocr_needles = [
-                    "благословенн",   # полное
-                    "благословен",    # без последней н
-                    "благослове",     # без окончания
-                    "благослов",      # короче
-                    "благос",         # ещё короче
-                    "благ",           # самый короткий — для плохого OCR
-                    "blessed",        # на случай EN
-                    "bless",          # EN короткий
+                    "земля",         # самое надёжное слово — Tesseract его видит
+                    "земл",          # без окончания
+                    "благословенн",
+                    "благословен",
+                    "благослов",
+                    "благ",          # самый короткий корень
+                    "blessed",
+                    "bless",
                 ]
                 ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
 
-                # Способ 2: matchTemplate с ТЕКСТОВЫМ шаблоном (220x58 px)
-                # Шаблон = вырезанная строка "Благословенная Земля" из игры.
-                # Порог 0.70 — высокий, но для пиксель-в-пиксель текста это ОК.
+                # Способ 2: matchTemplate с шаблоном слова "земля" (99x58 px)
+                # Порог 0.65 — проверено на скриншотах: на "Благословенной
+                # Земле" даёт 0.99-1.00, на других данжах 0.47-0.51.
+                # 0.65 — безопасная граница между этими значениями.
                 # Масштаб 1.0 (без масштабирования) — текст в игре всегда
-                # одного размера, не нужно multi-scale.
+                # одного размера.
                 tm_score, tm_loc = (0.0, None)
                 if icon_gray is not None:
                     tm_score, tm_loc = self._match_icon_multiscale(
                         scene_gray, icon_gray,
                         scales=(0.95, 1.0, 1.05),  # узкий диапазон
-                        threshold=0.70)  # высокий порог — нужен точный матч
+                        threshold=0.65)
 
                 log(f"Данги: попытка {scroll_attempt+1}/{MAX_SCROLL_ATTEMPTS} — "
                     f"TM={tm_score:.3f} OCR={'да' if ocr_found else 'нет'}",
                     window_id, level="DEBUG")
 
                 # Нашли — выбираем более надёжный способ
-                if tm_score >= 0.70 and tm_loc is not None:
+                if tm_score >= 0.65 and tm_loc is not None:
                     click_x_rel = list_x_rel + tm_loc[0] + icon_gray.shape[1] // 2
                     click_y_rel = list_y_rel + tm_loc[1] + icon_gray.shape[0] // 2
                     found = True
@@ -496,10 +501,15 @@ class Dungeon(EventDrivenProfile):
                     self._save_debug("blessed_found_ocr.png", scene_bgr)
                     break
 
-                # Скролл вниз (БЫСТРО: 0.15 сек, 2 клика)
+                # Скролл вниз — БЫСТРО.
+                # ВАЖНО: один вызов wheel с times=5 это ~0.45 сек (0.05 move
+                # + 5*0.05 scroll + 0.15 finally). Если вызывать 5 раз по
+                # times=1 — это 5*0.30 = 1.5 сек. Поэтому СТАВИМ times=5
+                # ОДНИМ вызовом — в 3 раза быстрее.
+                # И паузу после вызова делаем МИНИМАЛЬНОЙ (0.05 вместо 0.15).
                 await self.mouse.wheel(self.window_info, [scroll_center],
-                                       direction="down", times=2)
-                await asyncio.sleep(0.15)
+                                       direction="down", times=5)
+                await asyncio.sleep(0.05)
 
             # Сохраняем финальный скриншот если не нашли
             if not found:
