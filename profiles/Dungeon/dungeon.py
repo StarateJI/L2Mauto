@@ -181,8 +181,9 @@ class Dungeon(EventDrivenProfile):
             log("Данжи: меню подземелий открыто", window_id)
 
             # 3. Найти "Благословенная Земля" в списке
-            # Список данжей — скроллим вниз пока не найдём или не дойдём до конца
-            found = False
+            # VLM по скрину: "Благословенная Земля" — 2-я строка в списке
+            # (1-я = "Последняя Оружейная"). Не нужен OCR — кликаем по 2-й строке.
+            # Но сначала проверяем — может нужно проскроллить.
             import mss
             import numpy as np
             import cv2
@@ -190,112 +191,63 @@ class Dungeon(EventDrivenProfile):
             wx, wy = window["Position"]
             ww, wh = window["Width"], window["Height"]
 
-            # Зона ТОЛЬКО списка данжей — левая половина, ниже заголовка
+            # Зона списка данжей
             list_x = wx
             list_y = wy + int(wh * 0.25)  # ниже вкладок
-            list_w = int(ww * 0.55)       # только левая часть (список)
-            list_h = int(wh * 0.65)       # до низа окна
+            list_w = int(ww * 0.55)
+            list_h = int(wh * 0.65)
 
-            for scroll_attempt in range(10):
-                monitor = {"left": list_x, "top": list_y, "width": list_w, "height": list_h}
-                try:
-                    with mss.mss() as sct:
-                        shot = np.array(sct.grab(monitor))
-                except Exception:
-                    log("Данжи: mss grab failed", window_id, level="WARNING")
-                    return False
+            # "Благословенная Земля" — 2-я строка в списке.
+            # Каждая строка данжа занимает примерно 30% высоты зоны списка.
+            # 1-я строка: y = list_y + 5%
+            # 2-я строка: y = list_y + 35%
+            row_height = int(list_h * 0.30)
+            click_x = list_x + int(list_w * 0.15)  # иконка (слева)
+            click_y = list_y + int(list_h * 0.40)   # 2-я строка
+            found = True
+            log(f"Данжи: клик по 2-й строке (Благословенная Земля) ({click_x},{click_y})", window_id)
+            self._dungeon_click_pos = (click_x, click_y)
 
-                # Ищем "Благословенная Земля" через OCR — только зону списка
-                try:
-                    gray = cv2.cvtColor(shot, cv2.COLOR_BGR2GRAY)
-                    # Увеличиваем x2 для лучшего OCR
-                    big = cv2.resize(gray, (list_w * 2, list_h * 2), interpolation=cv2.INTER_CUBIC)
-                    text = self._ocr_dungeon_list(big)
-                    log(f"Данжи: OCR попытка {scroll_attempt+1}: '{text[:60]}...'", window_id, level="DEBUG")
-                    if "благословен" in text.lower() or "благослов" in text.lower():
-                        found = True
-                        # Найти координаты текста через pytesseract image_to_data
-                        try:
-                            import pytesseract
-                            pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-                            data = pytesseract.image_to_data(big, lang="rus+eng", config="--psm 6",
-                                                             output_type=pytesseract.Output.DICT)
-                            # Найти слово "Благословенная" или "Благословен"
-                            for i, word in enumerate(data["text"]):
-                                if "благословен" in word.lower() or "благослов" in word.lower():
-                                    # Координаты в big (x2) → делим на 2 → координаты в shot
-                                    # → прибавляем смещение list_x, list_y
-                                    word_x = data["left"][i] // 2
-                                    word_y = data["top"][i] // 2
-                                    # Иконка данжа — слева от текста, примерно на 40px левее
-                                    click_x = list_x + max(word_x - 40, 10)
-                                    click_y = list_y + word_y + 10  # +10 к центру строки
-                                    self._dungeon_click_pos = (click_x, click_y)
-                                    log(f"Данжи: 'Благословенная Земля' найдена на попытке {scroll_attempt+1} "
-                                        f"в координатах ({click_x},{click_y})", window_id)
-                                    break
-                        except Exception:
-                            pass
-                        if not hasattr(self, '_dungeon_click_pos'):
-                            # Fallback — если image_to_data не сработал, кликаем по центру
-                            self._dungeon_click_pos = (list_x + list_w // 4, list_y + list_h // 2)
-                            log(f"Данжи: 'Благословенная Земля' найдена на попытке {scroll_attempt+1} "
-                                f"(fallback координаты)", window_id)
-                        break
-                except Exception as e:
-                    log(f"Данжи: OCR failed: {e}", window_id, level="WARNING")
-
-                # Проверить "Время доступа" — если 0 (красным) → уже был сегодня
-                # "Время доступа" — это строка с описанием данжа (правая панель).
-                # Справа от неё — значение времени. Белый = есть время, красный 0 = нет.
-                try:
-                    import cv2
-                    # Зона справа от "Время доступа" — правая панель, НО выше "Бонусное время"
-                    # "Время доступа" — 3-я строка, "Бонусное время" — 4-я строка (ниже)
-                    # Берём зону ВЫШЕ бонусного времени, чтобы не поймать красный 0 оттуда
-                    time_zone_x1 = int(w_img * 0.45)
-                    time_zone_x2 = int(w_img * 0.95)
-                    time_zone_y1 = int(h_img * 0.55)
-                    time_zone_y2 = int(h_img * 0.68)  # до 68% — выше "Бонусное время"
-                    time_zone = shot[time_zone_y1:time_zone_y2, time_zone_x1:time_zone_x2]
-
-                    b_tz, g_tz, r_tz = cv2.split(time_zone)
-                    # Красный текст: R высокий, G и B низкие
-                    red_mask = (r_tz > 180) & (g_tz < 80) & (b_tz < 80)
-                    red_count = int(np.sum(red_mask))
-                    # Белый текст: все каналы высокие
-                    white_mask = (r_tz > 180) & (g_tz > 180) & (b_tz > 180)
-                    white_count = int(np.sum(white_mask))
-
-                    if red_count > 20 and white_count < 10:
-                        log("Данжи: время доступа = 0 (красным) — сегодня уже был, усыпляю",
-                            window_id, level="WARNING")
-                        await game.wait_and_click("npc_global_quit_button", timeout=2)
-                        await asyncio.sleep(1)
-                        if not await self.energo.is_on():
-                            await self.energo.turn_on()
-                            await asyncio.sleep(1)
-                        return True
-                    elif white_count > 10:
-                        log(f"Данжи: время доступа есть (белый текст, {white_count} пикс) — иду в данж",
-                            window_id)
-                except Exception:
-                    pass
-
-                # Скролл вниз
-                await self.mouse.wheel(self.window_info, [(ww // 2, wh // 2)],
-                                       direction="down", times=5)
-                await asyncio.sleep(1)
-
-            if not found:
-                log("Данжи: 'Благословенная Земля' не найдена в списке", window_id, level="WARNING")
-                await game.wait_and_click("npc_global_quit_button", timeout=2)
-                return False
-
-            # 4. Кликнуть по иконке "Благословенная Земля" — по координатам из OCR
-            click_x, click_y = getattr(self, '_dungeon_click_pos', (ww // 3, wh // 2))
-            log(f"Данжи: клик по иконке ({click_x},{click_y})", window_id)
+            # Проверить "Время доступа" — если 0 (красным) → уже был сегодня
+            # Кликаем по строке "Благословенная Земля" чтобы открыть её описание справа
             await self.mouse.click(self.window_info, click_x, click_y)
+            await asyncio.sleep(1)
+            log("Данжи: кликнул по строке, проверяю время доступа", window_id)
+
+            try:
+                monitor = {"left": wx, "top": wy, "width": ww, "height": wh}
+                with mss.mss() as sct:
+                    shot = np.array(sct.grab(monitor))
+                h_img, w_img = shot.shape[:2]
+                # Зона справа от "Время доступа" — правая панель, выше "Бонусное время"
+                time_zone_x1 = int(w_img * 0.45)
+                time_zone_x2 = int(w_img * 0.95)
+                time_zone_y1 = int(h_img * 0.55)
+                time_zone_y2 = int(h_img * 0.68)
+                time_zone = shot[time_zone_y1:time_zone_y2, time_zone_x1:time_zone_x2]
+
+                b_tz, g_tz, r_tz = cv2.split(time_zone)
+                red_mask = (r_tz > 180) & (g_tz < 80) & (b_tz < 80)
+                red_count = int(np.sum(red_mask))
+                white_mask = (r_tz > 180) & (g_tz > 180) & (b_tz > 180)
+                white_count = int(np.sum(white_mask))
+
+                if red_count > 20 and white_count < 10:
+                    log("Данжи: время доступа = 0 (красным) — сегодня уже был, усыпляю",
+                        window_id, level="WARNING")
+                    await game.wait_and_click("npc_global_quit_button", timeout=2)
+                    await asyncio.sleep(1)
+                    if not await self.energo.is_on():
+                        await self.energo.turn_on()
+                        await asyncio.sleep(1)
+                    return True
+                else:
+                    log(f"Данжи: время доступа есть (белый={white_count}, красный={red_count}) — иду в данж",
+                        window_id)
+            except Exception as e:
+                log(f"Данжи: проверка времени не удалась: {e}", window_id, level="WARNING")
+
+            # 4. Нажать "Вход"
             await asyncio.sleep(1)
 
             # Кнопка "Вход" (оранжевая, правый нижний угол)
