@@ -584,14 +584,11 @@ class Dungeon(EventDrivenProfile):
                 log("Данги: сохранён blessed_level_window.png — окно выбора уровня",
                     window_id)
 
-            # 6. Выбрать последний яркий уровень
-            # Сначала скроллим в самый низ списка уровней
-            await self.mouse.wheel(self.window_info,
-                                    [(ww // 2, wh // 2)],
-                                    direction="down", times=10)
-            await asyncio.sleep(1)
-
-            # Скриншот ПОСЛЕ прокрутки вниз — видно последний уровень
+            # 6. Выбрать последний доступный уровень
+            # ВАЖНО: НЕ скроллим вниз! Список уровней и так полностью виден
+            # (Ур.30, 35, 40, 45, 50, 55, 60, 70, 75). Прокрутка вниз только
+            # уводит последний уровень (Ур.75) из видимой зоны.
+            # Скриншот ПОСЛЕ открытия окна (без прокрутки)
             after_scroll = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
             if after_scroll is not None:
                 self._save_debug("blessed_after_scroll.png", after_scroll)
@@ -608,29 +605,52 @@ class Dungeon(EventDrivenProfile):
                     continue
                 gray = cv2.cvtColor(full_bgr, cv2.COLOR_BGR2GRAY)
                 h, w = gray.shape
-                # Зона поиска ярких строк — ЛЕВАЯ половина (там список уровней)
-                # БЫЛО: x=25%-50% — может ловить мусор в центре
-                # СТАЛО: x=10%-40% — там только список уровней
+                # Зона поиска уровней — ЛЕВАЯ часть (там список уровней)
+                # x=10%-40% — там только текст уровней "Ур.30", "Ур.35" и т.д.
                 level_zone = gray[:, int(w * 0.10):int(w * 0.40)]
-                bright_rows = np.sum(level_zone > 180, axis=1)
-                bright_lines = np.where(bright_rows > 10)[0]
+
+                # ВАЖНО: текст уровней в окне выбора ТЁМНЫЙ (яркость ~30-45),
+                # а НЕ яркий. Порог >180 ничего не находил.
+                # Понизил до 100 — теперь видит все строки.
+                # bright_count > 3 — минимальный порог (текст узкий, 3-5 пикселей).
+                bright_rows = np.sum(level_zone > 100, axis=1)
+                bright_lines = np.where(bright_rows > 3)[0]
 
                 if len(bright_lines) > 0:
-                    # Берём ПОСЛЕДНЮЮ яркую строку = самый нижний уровень
-                    # Но не в самом низу окна — там могут быть кнопки
-                    # Ограничиваем: 20% - 85% высоты окна
-                    min_y = int(h * 0.20)
-                    max_y = int(h * 0.85)
+                    # Ограничиваем Y: 15%-90% высоты — не брать заголовок/кнопки
+                    min_y = int(h * 0.15)
+                    max_y = int(h * 0.90)
                     valid = [y for y in bright_lines if min_y <= y <= max_y]
                     if valid:
-                        level_click_y = int(valid[-1])
+                        # Берём ПОСЛЕДНЮЮ валидную яркую строку = последний уровень
+                        # Но последняя может быть частично обрезана (Ур.75 в самом низу)
+                        # Поэтому берём ПРЕДпоследнюю группу, если есть несколько
+                        # Группируем: строки с разницей >5px = разные уровни
+                        groups = []
+                        current_group = [valid[0]]
+                        for y in valid[1:]:
+                            if y - current_group[-1] <= 5:
+                                current_group.append(y)
+                            else:
+                                groups.append(current_group)
+                                current_group = [y]
+                        groups.append(current_group)
+
+                        # Берём ПРЕДпоследнюю группу (последняя может быть обрезана)
+                        if len(groups) >= 2:
+                            chosen_group = groups[-2]
+                        else:
+                            chosen_group = groups[0]
+                        level_click_y = int(np.mean(chosen_group))
+
                         # Клик по названию уровня (ЛЕВАЯ часть, 25% ширины)
                         await self.mouse.click(self.window_info,
                                                 int(w * 0.25), level_click_y)
                         await asyncio.sleep(1)
                         level_found = True
-                        log(f"Данги: выбран последний яркий уровень "
-                            f"(y={level_click_y})", window_id)
+                        log(f"Данги: выбран уровень y={level_click_y} "
+                            f"(групп: {len(groups)}, всего строк: {len(valid)})",
+                            window_id)
                         # Скриншот ПОСЛЕ клика на уровень
                         after_level = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
                         if after_level is not None:
@@ -650,10 +670,8 @@ class Dungeon(EventDrivenProfile):
                 return False
 
             # 7. Нажать стрелку телепорта (СПРАВА от выбранного уровня)
-            # Стрелка находится в правой части той же строки что и уровень.
-            # Координаты: x=70% ширины (стрелка в правой части строки),
-            # y = level_click_y (та же строка что и выбранный уровень).
-            arrow_x = int(ww * 0.70)
+            # VLM подтвердил: стрелка на x=68% ширины, на той же Y что и уровень.
+            arrow_x = int(ww * 0.68)
             arrow_y = level_click_y
             log(f"Данги: клик по стрелке ({arrow_x},{arrow_y})",
                 window_id)
