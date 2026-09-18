@@ -1,0 +1,201 @@
+=== Log tail 2026-09-18T14:14:49.346104 | last 200 lines ===
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 1088, in stream
+    yield from self.read_chunked(amt, decode_content=decode_content)
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 1231, in read_chunked
+    with self._error_catcher():
+  File "C:\Program Files\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 784, in _error_catcher
+    raise ReadTimeoutError(self._pool, None, "Read timed out.") from e  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\Desktop\L2Mauto\bot\updater.py", line 326, in update
+    r = requests.get(REPO_ZIP, timeout=30)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 724, in send
+    history = [resp for resp in gen]
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 724, in <listcomp>
+    history = [resp for resp in gen]
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 265, in resolve_redirects
+    resp = self.send(
+           ^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 746, in send
+    r.content
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 902, in content
+    self._content = b"".join(self.iter_content(CONTENT_CHUNK_SIZE)) or b""
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 826, in generate
+    raise ConnectionError(e)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+
+2026-09-18 14:00:36,913 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-18 14:00:42,356 - INFO - [global] Запустил чекер обнов
+2026-09-18 14:00:42,356 - INFO - [global] Проверяю обновы...
+2026-09-18 14:00:42,357 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-18 14:00:43,403 - DEBUG - [global] needs_update: raw → 5.10.6
+2026-09-18 14:00:44,433 - DEBUG - [global] needs_update: raw → 5.10.6
+2026-09-18 14:00:45,006 - DEBUG - [global] needs_update: API GitHub → 5.10.6
+2026-09-18 14:00:45,893 - DEBUG - [global] needs_update: API GitHub → 5.10.6
+2026-09-18 14:00:46,413 - DEBUG - [global] needs_update: jsdelivr → 5.9.1
+2026-09-18 14:00:46,413 - DEBUG - [global] needs_update: лучший источник raw → 5.10.6 (из 3)
+2026-09-18 14:00:46,441 - INFO - [global] needs_update: local=(5, 10, 5) remote=(5, 10, 6) -> has_update=True
+2026-09-18 14:00:46,441 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-18 14:00:47,331 - DEBUG - [global] needs_update: jsdelivr → 5.9.1
+2026-09-18 14:00:47,331 - DEBUG - [global] needs_update: лучший источник raw → 5.10.6 (из 3)
+2026-09-18 14:00:47,345 - INFO - [global] needs_update: local=(5, 10, 5) remote=(5, 10, 6) -> has_update=True
+2026-09-18 14:01:02,249 - INFO - [global] Сделан бэкап текущей версии в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.10.5.zip
+2026-09-18 14:01:12,497 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-18 14:01:12,502 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-18 14:01:12,503 - DEBUG - [global] log_uploader: STEP 1 SKIP (no C:\Users\PC\Desktop\L2Mauto\logs\periodic.log)
+2026-09-18 14:01:12,504 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-18 14:01:16,543 - INFO - [global] Проверяю обновы...
+2026-09-18 14:01:22,689 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20260918_140112_fail_global.log?ref=bot-logs (Caused by ConnectTimeoutError(<urllib3.connection.HTTPSConnection object at 0x00000222BC461250>, 'Connection to api.github.com timed out. (connect timeout=10)'))
+2026-09-18 14:01:35,857 - INFO - [global] Обнова бахнула: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+2026-09-18 14:01:35,871 - ERROR - [global] Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 779, in _error_catcher
+    yield
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 1251, in read_chunked
+    chunk = self._handle_chunk(amt)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 1188, in _handle_chunk
+    value = self._fp._safe_read(amt)  # type: ignore[union-attr]
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\http\client.py", line 631, in _safe_read
+    data = self.fp.read(amt)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\socket.py", line 706, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\ssl.py", line 1311, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\ssl.py", line 1167, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 820, in generate
+    yield from self.raw.stream(chunk_size, decode_content=True)
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 1088, in stream
+    yield from self.read_chunked(amt, decode_content=decode_content)
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 1231, in read_chunked
+    with self._error_catcher():
+  File "C:\Program Files\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 784, in _error_catcher
+    raise ReadTimeoutError(self._pool, None, "Read timed out.") from e  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\Desktop\L2Mauto\bot\updater.py", line 326, in update
+    r = requests.get(REPO_ZIP, timeout=30)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 724, in send
+    history = [resp for resp in gen]
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 724, in <listcomp>
+    history = [resp for resp in gen]
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 265, in resolve_redirects
+    resp = self.send(
+           ^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 746, in send
+    r.content
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 902, in content
+    self._content = b"".join(self.iter_content(CONTENT_CHUNK_SIZE)) or b""
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 826, in generate
+    raise ConnectionError(e)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+
+2026-09-18 14:12:36,761 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-18 14:12:43,063 - INFO - [global] Запустил чекер обнов
+2026-09-18 14:12:43,063 - INFO - [global] Проверяю обновы...
+2026-09-18 14:12:44,352 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-18 14:12:45,607 - DEBUG - [global] needs_update: raw → 5.10.6
+2026-09-18 14:12:45,990 - DEBUG - [global] needs_update: raw → 5.10.6
+2026-09-18 14:12:47,009 - DEBUG - [global] needs_update: API GitHub → 5.10.6
+2026-09-18 14:12:47,636 - DEBUG - [global] needs_update: API GitHub → 5.10.6
+2026-09-18 14:12:48,450 - DEBUG - [global] needs_update: jsdelivr → 5.9.1
+2026-09-18 14:12:48,450 - DEBUG - [global] needs_update: лучший источник raw → 5.10.6 (из 3)
+2026-09-18 14:12:48,466 - INFO - [global] needs_update: local=(5, 10, 5) remote=(5, 10, 6) -> has_update=True
+2026-09-18 14:12:48,466 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-18 14:12:49,125 - DEBUG - [global] needs_update: jsdelivr → 5.9.1
+2026-09-18 14:12:49,125 - DEBUG - [global] needs_update: лучший источник raw → 5.10.6 (из 3)
+2026-09-18 14:12:49,139 - INFO - [global] needs_update: local=(5, 10, 5) remote=(5, 10, 6) -> has_update=True
+2026-09-18 14:12:59,765 - INFO - [global] Сделан бэкап текущей версии в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.10.5.zip
+2026-09-18 14:13:04,877 - INFO - [global] Создан apply_update.bat: C:\Users\PC\Desktop\L2Mauto\apply_update.bat
+2026-09-18 14:13:04,877 - INFO - [global] Накатил обнпату через apply_update.bat, закрываюсь для рестарта...
+2026-09-18 14:13:11,449 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-18 14:13:15,747 - INFO - [global] Запустил чекер обнов
+2026-09-18 14:13:15,747 - INFO - [global] Проверяю обновы...
+2026-09-18 14:13:15,748 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-18 14:13:16,869 - DEBUG - [global] needs_update: raw → 5.10.6
+2026-09-18 14:13:17,072 - DEBUG - [global] needs_update: raw → 5.10.6
+2026-09-18 14:13:18,267 - DEBUG - [global] needs_update: API GitHub → 5.10.6
+2026-09-18 14:13:18,468 - DEBUG - [global] needs_update: API GitHub → 5.10.6
+2026-09-18 14:13:19,806 - DEBUG - [global] needs_update: jsdelivr → 5.9.1
+2026-09-18 14:13:19,807 - DEBUG - [global] needs_update: лучший источник raw → 5.10.6 (из 3)
+2026-09-18 14:13:19,820 - INFO - [global] needs_update: local=(5, 10, 6) remote=(5, 10, 6) -> has_update=False
+2026-09-18 14:13:19,972 - INFO - [global] Установлена последняя версия бота | 5.10.6
+2026-09-18 14:13:20,036 - DEBUG - [global] needs_update: jsdelivr → 5.9.1
+2026-09-18 14:13:20,036 - DEBUG - [global] needs_update: лучший источник raw → 5.10.6 (из 3)
+2026-09-18 14:13:20,052 - INFO - [global] needs_update: local=(5, 10, 6) remote=(5, 10, 6) -> has_update=False
+2026-09-18 14:13:45,979 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-18 14:13:45,985 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-18 14:13:45,987 - DEBUG - [global] log_uploader: STEP 1 SKIP (no C:\Users\PC\Desktop\L2Mauto\logs\periodic.log)
+2026-09-18 14:13:45,987 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-18 14:13:47,387 - DEBUG - [global] _api_put: GET runs/20260918_141345_fail_global.log -> 404
+2026-09-18 14:13:49,150 - DEBUG - [global] _api_put: PUT runs/20260918_141345_fail_global.log -> 409 (14691 bytes)
+2026-09-18 14:13:49,150 - WARNING - [global] _api_put: PUT failed body: {"message":"is at c9f1f38915f4b09dc1f4fc76416c29aef08ac40b but expected 33223739d21694a8cfa79938dbcad0c1f5295c58","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-18 14:13:49,154 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-09-18 14:13:49,155 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-18 14:13:49,155 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-18 14:13:50,008 - INFO - [global] Проверяю обновы...
+2026-09-18 14:13:51,044 - DEBUG - [global] needs_update: raw → 5.10.6
+2026-09-18 14:13:52,036 - DEBUG - [global] needs_update: API GitHub → 5.10.6
+2026-09-18 14:13:53,001 - DEBUG - [global] needs_update: jsdelivr → 5.9.1
+2026-09-18 14:13:53,001 - DEBUG - [global] needs_update: лучший источник raw → 5.10.6 (из 3)
+2026-09-18 14:13:53,006 - INFO - [global] needs_update: local=(5, 10, 6) remote=(5, 10, 6) -> has_update=False
+2026-09-18 14:13:53,008 - INFO - [global] Установлена последняя версия бота | 5.10.6
+2026-09-18 14:14:23,027 - INFO - [global] Проверяю обновы...
+2026-09-18 14:14:24,016 - DEBUG - [global] needs_update: raw → 5.10.6
+2026-09-18 14:14:25,031 - DEBUG - [global] needs_update: API GitHub → 5.10.6
+2026-09-18 14:14:25,993 - DEBUG - [global] needs_update: jsdelivr → 5.9.1
+2026-09-18 14:14:25,993 - DEBUG - [global] needs_update: лучший источник raw → 5.10.6 (из 3)
+2026-09-18 14:14:25,998 - INFO - [global] needs_update: local=(5, 10, 6) remote=(5, 10, 6) -> has_update=False
+2026-09-18 14:14:26,000 - INFO - [global] Установлена последняя версия бота | 5.10.6
+2026-09-18 14:14:49,196 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-18 14:14:49,199 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-18 14:14:49,200 - DEBUG - [global] log_uploader: STEP 1 SKIP (no C:\Users\PC\Desktop\L2Mauto\logs\periodic.log)
+2026-09-18 14:14:49,200 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
