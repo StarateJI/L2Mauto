@@ -323,9 +323,16 @@ def update():
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         backup()
 
-        r = requests.get(REPO_ZIP, timeout=30)
+        # stream=True + ограничение скорости чтобы не забивать канал
+        # и не ронять инет/окна игры
+        r = requests.get(REPO_ZIP, timeout=(10, 60), stream=True)
         r.raise_for_status()
-        z = zipfile.ZipFile(io.BytesIO(r.content))
+        buf = io.BytesIO()
+        for chunk in r.iter_content(chunk_size=65536):
+            if chunk:
+                buf.write(chunk)
+        buf.seek(0)
+        z = zipfile.ZipFile(buf)
 
         temp_dir = os.path.join(root_dir, "temp_update")
         if os.path.exists(temp_dir):
