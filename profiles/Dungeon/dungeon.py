@@ -30,11 +30,11 @@ def _get_pytesseract():
         _pytesseract = _pt
         return _pytesseract
     except ImportError:
-        log("Данжи: pytesseract не установлен — OCR текста недоступен",
+        log("Данги: pytesseract не установлен — OCR текста недоступен",
             level="WARNING")
         return None
     except Exception as e:
-        log(f"Данжи: pytesseract init failed: {e}", level="WARNING")
+        log(f"Данги: pytesseract init failed: {e}", level="WARNING")
         return None
 
 
@@ -188,14 +188,14 @@ class Dungeon(EventDrivenProfile):
             arr = np.array(shot)  # BGRA
             return cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
         except Exception as e:
-            log(f"Данжи: _sct.grab упал: {e} — пробую local mss", level="WARNING")
+            log(f"Данги: _sct.grab упал: {e} — пробую local mss", level="WARNING")
             try:
                 local_sct = mss.mss()
                 shot = local_sct.grab(monitor)
                 arr = np.array(shot)
                 return cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
             except Exception as e2:
-                log(f"Данжи: и local mss не смог: {e2}", level="ERROR")
+                log(f"Данги: и local mss не смог: {e2}", level="ERROR")
                 return None
 
     def _save_debug(self, name, img):
@@ -209,7 +209,7 @@ class Dungeon(EventDrivenProfile):
         """
         try:
             if img is None:
-                log(f"Данжи: img=None, не сохраняю {name}",
+                log(f"Данги: img=None, не сохраняю {name}",
                     self.window_id, level="WARNING")
                 return False
             out_dir = os.path.dirname(os.path.abspath(__file__))
@@ -217,15 +217,15 @@ class Dungeon(EventDrivenProfile):
             # imencode — возвращает байты в памяти, не трогая файловую систему
             ok, buf = cv2.imencode(".png", img)
             if not ok:
-                log(f"Данжи: imencode failed for {name}",
+                log(f"Данги: imencode failed for {name}",
                     self.window_id, level="WARNING")
                 return False
             with open(path, "wb") as f:
                 f.write(buf.tobytes())
-            log(f"Данжи: сохранён {name} -> {path}", self.window_id)
+            log(f"Данги: сохранён {name} -> {path}", self.window_id)
             return True
         except Exception as e:
-            log(f"Данжи: не удалось сохранить {name}: {e}",
+            log(f"Данги: не удалось сохранить {name}: {e}",
                 self.window_id, level="WARNING")
             return False
 
@@ -275,6 +275,7 @@ class Dungeon(EventDrivenProfile):
                                       cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             text = pt.image_to_string(thresh, lang="rus+eng",
                                       config="--psm 6").lower()
+            log(f"Данги OCR text: '{text[:80]}'", self.window_id, level="DEBUG")
             for n in needles:
                 if n in text:
                     # Нашли — ищем координату слова через image_to_data
@@ -289,7 +290,7 @@ class Dungeon(EventDrivenProfile):
                     # Если слово найдено в тексте, но не в data — берём центр
                     return True, gray_img.shape[0] // 2
         except Exception as e:
-            log(f"Данжи: OCR ошибка: {e}", level="DEBUG")
+            log(f"Данги: OCR ошибка: {e}", level="DEBUG")
         return False, 0
 
     def _match_icon_multiscale(self, gray_scene, icon_gray,
@@ -329,15 +330,16 @@ class Dungeon(EventDrivenProfile):
         Алгоритм:
         1. Выйти из сна (БЕЗ телепорта в город!)
         2. Открыть меню → Подземелья
-        3. ДВОЙНОЙ поиск по списку данжей (с прокруткой):
+        3. Сначала ПРОКРУТИТЬ В НАЧАЛО списка (8 раз вверх)
+        4. ДВОЙНОЙ поиск по списку данжей (с прокруткой вниз):
            а) OCR — ищем текст "благословен" (русский)
            б) matchTemplate — ищем иконку blessed_land_icon.jpg (мульти-скейл)
            Сработал любой → клик по строке
-        4. Проверить "Время доступа": красный 0 → усыпить окно
-        5. Нажать "Вход"
-        6. Выбрать последний яркий уровень
-        7. Нажать стрелку телепорта
-        8. Отправить окно в сон
+        5. Проверить "Время доступа": красный 0 → усыпить окно
+        6. Нажать "Вход"
+        7. Выбрать последний яркий уровень
+        8. Нажать стрелку телепорта
+        9. Отправить окно в сон
         """
         window_id = self.window_id
         try:
@@ -347,7 +349,7 @@ class Dungeon(EventDrivenProfile):
             wx, wy = window["Position"]
             ww, wh = window["Width"], window["Height"]
 
-            log(f"Данжи: окно wx={wx} wy={wy} {ww}x{wh}", window_id)
+            log(f"Данги: окно wx={wx} wy={wy} {ww}x{wh}", window_id)
 
             # 1. Выйти из сна (БЕЗ телепорта в город!)
             if await self.energo.is_on():
@@ -356,25 +358,23 @@ class Dungeon(EventDrivenProfile):
 
             # 2. Открыть меню → Подземелья
             if not await game.wait_and_click("main_menu_gui", timeout=7):
-                log("Данжи: не открыл главное меню", window_id)
+                log("Данги: не открыл главное меню", window_id)
                 return False
             await asyncio.sleep(1)
 
             if not await game.wait_and_click("dungeon_button_menu", timeout=5):
-                log("Данжи: не нашёл кнопку подземелий", window_id)
+                log("Данги: не нашёл кнопку подземелий", window_id)
                 await game.wait_and_click("main_menu_gui", timeout=2)
                 return False
             await asyncio.sleep(2)
-            log("Данжи: меню подземелий открыто", window_id)
+            log("Данги: меню подземелий открыто", window_id)
 
             # Скриншот ВСЕГО окна сразу после открытия меню (до скролла)
-            # — видно что вообще открылось. Сохраняем ВНЕ зависимости от того,
-            # что будет дальше. Это для отладки "открыл и закрылся".
             menu_shot = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
             if menu_shot is not None:
                 self._save_debug("blessed_menu_opened.png", menu_shot)
             else:
-                log("Данжи: не удалось снять скриншот после открытия меню",
+                log("Данги: не удалось снять скриншот после открытия меню",
                     window_id, level="WARNING")
 
             # 3. Загрузить иконку для matchTemplate
@@ -382,58 +382,73 @@ class Dungeon(EventDrivenProfile):
                                      "blessed_land_icon.jpg")
             icon_gray = None
             if not os.path.exists(icon_path):
-                log(f"Данжи: файл иконки не найден: {icon_path}",
+                log(f"Данги: файл иконки не найден: {icon_path}",
                     window_id, level="WARNING")
             else:
                 icon_bgr = cv2.imread(icon_path)
                 if icon_bgr is None:
-                    log("Данжи: иконка не загрузилась cv2.imread",
+                    log("Данги: иконка не загрузилась cv2.imread",
                         window_id, level="WARNING")
                 else:
                     icon_gray = cv2.cvtColor(icon_bgr, cv2.COLOR_BGR2GRAY)
-                    log(f"Данжи: иконка {icon_gray.shape[1]}x{icon_gray.shape[0]} загружена",
+                    log(f"Данги: иконка {icon_gray.shape[1]}x{icon_gray.shape[0]} загружена",
                         window_id)
 
             # Зона списка данжей — относительно окна (для кликов!)
-            # list_x_rel, list_y_rel — offset внутри окна
             list_x_rel = 0
             list_y_rel = int(wh * 0.20)
             list_w = int(ww * 0.55)
             list_h = int(wh * 0.65)
+            scroll_center = (list_x_rel + list_w // 2,
+                              list_y_rel + list_h // 2)
 
-            # Абсолютные координаты для mss.grab (нужны для скриншота)
-            abs_x = wx + list_x_rel
-            abs_y = wy + list_y_rel
+            # ── ПРОКРУТКА В НАЧАЛО СПИСКА ────────────────────────────────
+            # Проблема: бот открывает меню и может оказаться в СЕРЕДИНЕ
+            # списка, тогда 'Благословенная Земля' ВЫШЕ текущей позиции и
+            # бот не найдёт её при скролле ВНИЗ.
+            # Решение: 8 раз скроллим ВВЕРХ по 5 кликов — в самое начало.
+            log("Данги: скроллю в начало списка", window_id)
+            for _ in range(8):
+                await self.mouse.wheel(self.window_info, [scroll_center],
+                                       direction="up", times=5)
+                await asyncio.sleep(0.05)
+            await asyncio.sleep(0.5)
+
+            # Скриншот в начале списка — для отладки
+            start_shot = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if start_shot is not None:
+                self._save_debug("blessed_list_start.png", start_shot)
 
             found = False
             click_x_rel, click_y_rel = 0, 0
-            scene_bgr = None  # инициализация — вдруг все grab-ы упадут
+            scene_bgr = None
 
-            MAX_SCROLL_ATTEMPTS = 12
+            # БЫСТРЫЙ режим: 0.15 сек между скроллами (было 0.6)
+            # 2 клика за раз (было 3) — но чаще проверяем
+            MAX_SCROLL_ATTEMPTS = 25
             for scroll_attempt in range(MAX_SCROLL_ATTEMPTS):
-                # Скриншот зоны списка (mss.grab использует абсолютные!)
                 scene_bgr = self._grab_window_rect(wx, wy,
                                                     list_x_rel, list_y_rel,
                                                     list_w, list_h)
                 if scene_bgr is None:
-                    log(f"Данжи: попытка {scroll_attempt+1} — скриншот пустой, скроллю дальше",
+                    log(f"Данги: попытка {scroll_attempt+1} — скриншот пустой",
                         window_id, level="WARNING")
-                    # НЕ выходим — пробуем скроллить и снова
-                    await self.mouse.wheel(self.window_info,
-                                            [(list_x_rel + list_w // 2,
-                                              list_y_rel + list_h // 2)],
-                                            direction="down", times=3)
-                    await asyncio.sleep(0.6)
+                    await self.mouse.wheel(self.window_info, [scroll_center],
+                                           direction="down", times=2)
+                    await asyncio.sleep(0.15)
                     continue
 
                 scene_gray = cv2.cvtColor(scene_bgr, cv2.COLOR_BGR2GRAY)
 
-                # Сохраняем первый скриншот — пользователь увидит что бот видел
-                if scroll_attempt == 0:
-                    self._save_debug("blessed_search_start.png", scene_bgr)
+                # Сохраняем промежуточные скриншоты каждые 3 попытки
+                if scroll_attempt % 3 == 0:
+                    self._save_debug(
+                        f"blessed_scroll_{scroll_attempt:02d}.png",
+                        scene_bgr)
 
                 # Способ 1: OCR — ищем "благословен" (русский, lowercase)
-                ocr_needles = ["благословен", "благослов", "благос"]
+                ocr_needles = ["благословен", "благослов", "благос",
+                                "blessed", "благословенн"]
                 ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
 
                 # Способ 2: matchTemplate — multi-scale
@@ -444,69 +459,61 @@ class Dungeon(EventDrivenProfile):
                         scales=(0.7, 0.85, 1.0, 1.15, 1.3),
                         threshold=0.55)
 
-                log(f"Данжи: попытка {scroll_attempt+1}/{MAX_SCROLL_ATTEMPTS} — "
+                log(f"Данги: попытка {scroll_attempt+1}/{MAX_SCROLL_ATTEMPTS} — "
                     f"TM={tm_score:.3f} OCR={'да' if ocr_found else 'нет'}",
                     window_id, level="DEBUG")
 
                 # Нашли — выбираем более надёжный способ
                 if tm_score >= 0.55 and tm_loc is not None:
-                    # matchTemplate нашёл — кликаем по центру иконки
                     click_x_rel = list_x_rel + tm_loc[0] + icon_gray.shape[1] // 2
                     click_y_rel = list_y_rel + tm_loc[1] + icon_gray.shape[0] // 2
                     found = True
-                    log(f"Данжи: найден через matchTemplate "
+                    log(f"Данги: найден через matchTemplate "
                         f"({click_x_rel},{click_y_rel}) score={tm_score:.3f}",
                         window_id)
-                    # Сохраняем найденный кадр
                     self._save_debug("blessed_found_tm.png", scene_bgr)
                     break
 
                 if ocr_found:
-                    # OCR нашёл — кликаем чуть правее текста (по строке)
                     click_x_rel = list_x_rel + int(list_w * 0.15)
                     click_y_rel = list_y_rel + min(max(ocr_y, 10), list_h - 10)
                     found = True
-                    log(f"Данжи: найден через OCR "
+                    log(f"Данги: найден через OCR "
                         f"({click_x_rel},{click_y_rel})",
                         window_id)
                     self._save_debug("blessed_found_ocr.png", scene_bgr)
                     break
 
-                # Скролл вниз (relative coords — mouse.wheel добавит Position)
-                await self.mouse.wheel(self.window_info,
-                                       [(list_x_rel + list_w // 2,
-                                         list_y_rel + list_h // 2)],
-                                       direction="down", times=3)
-                await asyncio.sleep(0.6)
+                # Скролл вниз (БЫСТРО: 0.15 сек, 2 клика)
+                await self.mouse.wheel(self.window_info, [scroll_center],
+                                       direction="down", times=2)
+                await asyncio.sleep(0.15)
 
-            # Сохраняем финальный скриншот для отладки если не нашли
+            # Сохраняем финальный скриншот если не нашли
             if not found:
                 if scene_bgr is not None:
                     self._save_debug("blessed_not_found.png", scene_bgr)
                 else:
-                    # Все 12 grab-ов упали — снимем полное окно как есть
                     last = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
                     if last is not None:
                         self._save_debug("blessed_not_found.png", last)
-                log("Данжи: 'Благословенная Земля' не найдена после всех попыток",
+                log("Данги: 'Благословенная Земля' не найдена после всех попыток",
                     window_id, level="WARNING")
                 await game.wait_and_click("npc_global_quit_button", timeout=2)
                 await asyncio.sleep(1)
-                # Возвращаем окно в сон
                 if not await self.energo.is_on():
                     await self.energo.turn_on()
                     await asyncio.sleep(1)
-                # НЕМЕДЛЕННО отправляем скриншоты в GitHub (мне)
                 self._upload_debug_async(window_id, made=0,
                                           error="dungeon_not_found")
                 return False
 
             # 4. Кликнуть по найденной строке → проверить "Время доступа"
-            log(f"Данжи: клик по строке ({click_x_rel},{click_y_rel})",
+            log(f"Данги: клик по строке ({click_x_rel},{click_y_rel})",
                 window_id)
             await self.mouse.click(self.window_info, click_x_rel, click_y_rel)
             await asyncio.sleep(1.5)
-            log("Данжи: кликнул, проверяю время доступа", window_id)
+            log("Данги: кликнул, проверяю время доступа", window_id)
 
             # Проверка "Время доступа" — красный 0 = уже был сегодня
             time_zone_bgr = self._grab_window_rect(
@@ -522,7 +529,7 @@ class Dungeon(EventDrivenProfile):
                 white_count = int(np.sum(white_mask))
 
                 if red_count > 20 and white_count < 10:
-                    log(f"Данжи: время доступа = 0 (красный={red_count}) — "
+                    log(f"Данги: время доступа = 0 (красный={red_count}) — "
                         f"сегодня уже был, усыпляю", window_id, level="WARNING")
                     await game.wait_and_click("npc_global_quit_button", timeout=2)
                     await asyncio.sleep(1)
@@ -533,10 +540,10 @@ class Dungeon(EventDrivenProfile):
                                               error="dungeon_already_visited")
                     return True
                 else:
-                    log(f"Данжи: время доступа есть (белый={white_count}, "
+                    log(f"Данги: время доступа есть (белый={white_count}, "
                         f"красный={red_count}) — иду в данж", window_id)
             else:
-                log("Данжи: не удалось снять зону времени доступа — "
+                log("Данги: не удалось снять зону времени доступа — "
                     "продолжаю на свой страх и риск", window_id, level="WARNING")
 
             # 5. Нажать "Вход" (оранжевая кнопка, правый нижний угол)
@@ -544,16 +551,14 @@ class Dungeon(EventDrivenProfile):
             await self.mouse.click(self.window_info,
                                     int(ww * 0.85), int(wh * 0.90))
             await asyncio.sleep(2)
-            log("Данжи: нажал Вход", window_id)
+            log("Данги: нажал Вход", window_id)
 
             # 6. Выбрать последний яркий уровень
-            # Скроллим в самый низ
             await self.mouse.wheel(self.window_info,
                                     [(ww // 2, wh // 2)],
                                     direction="down", times=10)
             await asyncio.sleep(1)
 
-            # Скроллим вверх и ищем последний яркий
             level_found = False
             level_click_y = 0
             for attempt in range(10):
@@ -576,7 +581,7 @@ class Dungeon(EventDrivenProfile):
                                             int(w * 0.35), level_click_y)
                     await asyncio.sleep(1)
                     level_found = True
-                    log(f"Данжи: выбран последний яркий уровень "
+                    log(f"Данги: выбран последний яркий уровень "
                         f"(y={level_click_y})", window_id)
                     break
 
@@ -586,7 +591,7 @@ class Dungeon(EventDrivenProfile):
                 await asyncio.sleep(0.5)
 
             if not level_found:
-                log("Данжи: не нашёл доступный уровень",
+                log("Данги: не нашёл доступный уровень",
                     window_id, level="WARNING")
                 await game.wait_and_click("npc_global_quit_button", timeout=2)
                 return False
@@ -595,7 +600,7 @@ class Dungeon(EventDrivenProfile):
             await self.mouse.click(self.window_info,
                                     int(ww * 0.65), level_click_y)
             await asyncio.sleep(2)
-            log("Данжи: нажал телепорт, отправляю в сон", window_id)
+            log("Данги: нажал телепорт, отправляю в сон", window_id)
 
             # 8. Отправить окно в сон (персонаж сам вернётся на спот)
             await asyncio.sleep(2)
@@ -603,16 +608,16 @@ class Dungeon(EventDrivenProfile):
                 await self.energo.turn_on()
                 await asyncio.sleep(1)
 
-            log("Данжи: Благословенная Земля запущена, окно в сне",
+            log("Данги: Благословенная Земля запущена, окно в сне",
                 window_id)
             self._upload_debug_async(window_id, made=1, error=None)
             return True
 
         except asyncio.CancelledError:
-            log("Данжи: остановлен вручную", window_id)
+            log("Данги: остановлен вручную", window_id)
             raise
         except Exception as e:
-            log(f"Данжи: непредвиденная ошибка: {e}",
+            log(f"Данги: непредвиденная ошибка: {e}",
                 window_id, level="ERROR")
             try:
                 await game.wait_and_click("npc_global_quit_button", timeout=2)
