@@ -275,7 +275,10 @@ class Dungeon(EventDrivenProfile):
                                       cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             text = pt.image_to_string(thresh, lang="rus+eng",
                                       config="--psm 6").lower()
-            log(f"Данги OCR text: '{text[:80]}'", self.window_id, level="DEBUG")
+            # Логируем ПОЛНЫЙ распознанный текст (без переносов) —
+            # чтобы видеть всё что Tesseract распознал на этом кадре
+            text_oneline = " | ".join(text.split())
+            log(f"Данги OCR text: '{text_oneline}'", self.window_id, level="DEBUG")
             for n in needles:
                 if n in text:
                     # Нашли — ищем координату слова через image_to_data
@@ -402,23 +405,6 @@ class Dungeon(EventDrivenProfile):
             scroll_center = (list_x_rel + list_w // 2,
                               list_y_rel + list_h // 2)
 
-            # ── ПРОКРУТКА В НАЧАЛО СПИСКА ────────────────────────────────
-            # Проблема: бот открывает меню и может оказаться в СЕРЕДИНЕ
-            # списка, тогда 'Благословенная Земля' ВЫШЕ текущей позиции и
-            # бот не найдёт её при скролле ВНИЗ.
-            # Решение: 8 раз скроллим ВВЕРХ по 5 кликов — в самое начало.
-            log("Данги: скроллю в начало списка", window_id)
-            for _ in range(8):
-                await self.mouse.wheel(self.window_info, [scroll_center],
-                                       direction="up", times=5)
-                await asyncio.sleep(0.05)
-            await asyncio.sleep(0.5)
-
-            # Скриншот в начале списка — для отладки
-            start_shot = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-            if start_shot is not None:
-                self._save_debug("blessed_list_start.png", start_shot)
-
             found = False
             click_x_rel, click_y_rel = 0, 0
             scene_bgr = None
@@ -446,25 +432,38 @@ class Dungeon(EventDrivenProfile):
                         f"blessed_scroll_{scroll_attempt:02d}.png",
                         scene_bgr)
 
-                # Способ 1: OCR — ищем "благословен" (русский, lowercase)
-                ocr_needles = ["благословен", "благослов", "благос",
-                                "blessed", "благословенн"]
+                # Способ 1: OCR — ищем подстроки от самых коротких до полных
+                # ВАЖНО: Tesseract может ошибаться в окончаниях, поэтому ищем
+                # по корню "благ" — минимально достаточно для уверенного нахождения.
+                # Если найдётся "благ" → считаем что это "Благословенная Земля".
+                ocr_needles = [
+                    "благословенн",   # полное
+                    "благословен",    # без последней н
+                    "благослове",     # без окончания
+                    "благослов",      # короче
+                    "благос",         # ещё короче
+                    "благ",           # самый короткий — для плохого OCR
+                    "blessed",        # на случай EN
+                    "bless",          # EN короткий
+                ]
                 ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
 
-                # Способ 2: matchTemplate — multi-scale
+                # Способ 2: matchTemplate — multi-scale с НИЗКИМ порогом
+                # Порог 0.45 (было 0.55) — иконка может быть с другим фоном,
+                # подсветкой, поэтому пропускаем кандидатов с score >= 0.45
                 tm_score, tm_loc = (0.0, None)
                 if icon_gray is not None:
                     tm_score, tm_loc = self._match_icon_multiscale(
                         scene_gray, icon_gray,
-                        scales=(0.7, 0.85, 1.0, 1.15, 1.3),
-                        threshold=0.55)
+                        scales=(0.5, 0.6, 0.7, 0.85, 1.0, 1.15, 1.3, 1.5),
+                        threshold=0.45)
 
                 log(f"Данги: попытка {scroll_attempt+1}/{MAX_SCROLL_ATTEMPTS} — "
                     f"TM={tm_score:.3f} OCR={'да' if ocr_found else 'нет'}",
                     window_id, level="DEBUG")
 
                 # Нашли — выбираем более надёжный способ
-                if tm_score >= 0.55 and tm_loc is not None:
+                if tm_score >= 0.45 and tm_loc is not None:
                     click_x_rel = list_x_rel + tm_loc[0] + icon_gray.shape[1] // 2
                     click_y_rel = list_y_rel + tm_loc[1] + icon_gray.shape[0] // 2
                     found = True
