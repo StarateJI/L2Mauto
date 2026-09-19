@@ -1,0 +1,201 @@
+=== Log tail 2026-09-19T20:37:34.899084 | last 200 lines ===
+    raise err
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\util\connection.py", line 73, in create_connection
+    sock.connect(sa)
+TimeoutError: timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connectionpool.py", line 788, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connectionpool.py", line 488, in _make_request
+    raise new_e
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connectionpool.py", line 464, in _make_request
+    self._validate_conn(conn)
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connectionpool.py", line 1106, in _validate_conn
+    conn.connect()
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connection.py", line 759, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connection.py", line 213, in _new_conn
+    raise ConnectTimeoutError(
+urllib3.exceptions.ConnectTimeoutError: (<HTTPSConnection(host='github.com', port=443) at 0x2002cc62250>, 'Connection to github.com timed out. (connect timeout=5)')
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Program Files\Python311\Lib\site-packages\requests\adapters.py", line 696, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connectionpool.py", line 842, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\util\retry.py", line 543, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='github.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/archive/refs/heads/main.zip (Caused by ConnectTimeoutError(<HTTPSConnection(host='github.com', port=443) at 0x2002cc62250>, 'Connection to github.com timed out. (connect timeout=5)'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\Desktop\L2Mauto\bot\updater.py", line 341, in update
+    r = requests.get(REPO_ZIP, timeout=(5, 30), stream=True)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\requests\api.py", line 87, in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\requests\api.py", line 71, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\requests\sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\requests\sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\requests\adapters.py", line 717, in send
+    raise ConnectTimeout(e, request=request)
+requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='github.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/archive/refs/heads/main.zip (Caused by ConnectTimeoutError(<HTTPSConnection(host='github.com', port=443) at 0x2002cc62250>, 'Connection to github.com timed out. (connect timeout=5)'))
+
+2026-09-19 20:13:39,324 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-19 20:13:39,983 - INFO - [global] Запустил чекер обнов
+2026-09-19 20:13:39,984 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-19 20:13:40,836 - DEBUG - [global] needs_update: raw → 5.11.37
+2026-09-19 20:13:41,848 - DEBUG - [global] needs_update: API GitHub → 5.11.37
+2026-09-19 20:13:42,891 - DEBUG - [global] needs_update: jsdelivr → 5.11.29
+2026-09-19 20:13:42,891 - DEBUG - [global] needs_update: лучший источник raw → 5.11.37 (из 3)
+2026-09-19 20:13:42,907 - INFO - [global] needs_update: local=(5, 11, 35) remote=(5, 11, 37) -> has_update=True
+2026-09-19 20:13:52,844 - INFO - [global] Сделан бэкап текущей версии в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.11.35.zip
+2026-09-19 20:14:25,431 - INFO - [global] Обнова бахнула: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+2026-09-19 20:14:25,444 - ERROR - [global] Traceback (most recent call last):
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\response.py", line 905, in _error_catcher
+    yield
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\response.py", line 1434, in read_chunked
+    chunk = self._handle_chunk(amt)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\response.py", line 1364, in _handle_chunk
+    value = self._fp._safe_read(amt)  # type: ignore[union-attr]
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\http\client.py", line 631, in _safe_read
+    data = self.fp.read(amt)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\socket.py", line 706, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\ssl.py", line 1311, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\ssl.py", line 1167, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Program Files\Python311\Lib\site-packages\requests\models.py", line 937, in generate
+    yield from self.raw.stream(chunk_size, decode_content=True)
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\response.py", line 1260, in stream
+    yield from self.read_chunked(amt, decode_content=decode_content)
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\response.py", line 1407, in read_chunked
+    with self._error_catcher():
+  File "C:\Program Files\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\response.py", line 910, in _error_catcher
+    raise ReadTimeoutError(self._pool, None, "Read timed out.") from e  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\Desktop\L2Mauto\bot\updater.py", line 345, in update
+    for chunk in r.iter_content(chunk_size=8192):
+  File "C:\Program Files\Python311\Lib\site-packages\requests\models.py", line 943, in generate
+    raise ConnectionError(e)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+
+2026-09-19 20:29:16,807 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-19 20:29:17,108 - INFO - [global] Запустил чекер обнов
+2026-09-19 20:29:17,444 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-19 20:29:18,363 - DEBUG - [global] needs_update: raw → 5.11.38
+2026-09-19 20:29:19,419 - DEBUG - [global] needs_update: API GitHub → 5.11.38
+2026-09-19 20:29:20,477 - DEBUG - [global] needs_update: jsdelivr → 5.11.19
+2026-09-19 20:29:20,477 - DEBUG - [global] needs_update: лучший источник raw → 5.11.38 (из 3)
+2026-09-19 20:29:20,492 - INFO - [global] needs_update: local=(5, 11, 35) remote=(5, 11, 38) -> has_update=True
+2026-09-19 20:29:27,852 - INFO - [global] Сделан бэкап текущей версии в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.11.35.zip
+2026-09-19 20:29:34,475 - INFO - [global] Создан apply_update.bat: C:\Users\PC\Desktop\L2Mauto\apply_update.bat
+2026-09-19 20:29:34,475 - INFO - [global] Накатил обнпату через apply_update.bat, закрываюсь для рестарта...
+2026-09-19 20:29:39,470 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-19 20:29:40,135 - INFO - [global] Запустил чекер обнов
+2026-09-19 20:29:40,447 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-19 20:29:41,122 - DEBUG - [global] needs_update: raw → 5.11.38
+2026-09-19 20:29:42,163 - DEBUG - [global] needs_update: API GitHub → 5.11.38
+2026-09-19 20:29:43,218 - DEBUG - [global] needs_update: jsdelivr → 5.11.19
+2026-09-19 20:29:43,218 - DEBUG - [global] needs_update: лучший источник raw → 5.11.38 (из 3)
+2026-09-19 20:29:43,235 - INFO - [global] needs_update: local=(5, 11, 38) remote=(5, 11, 38) -> has_update=False
+2026-09-19 20:30:21,299 - INFO - [global] Запуск через 3 сек. | ['Glo']
+2026-09-19 20:30:24,411 - INFO - [global] Создал мышь
+2026-09-19 20:30:24,412 - INFO - [global] Инициализировал созданную мышь!
+2026-09-19 20:30:40,341 - INFO - [global] Проверяю обновы...
+2026-09-19 20:30:40,996 - DEBUG - [global] needs_update: raw → 5.11.38
+2026-09-19 20:30:41,861 - DEBUG - [global] needs_update: API GitHub → 5.11.38
+2026-09-19 20:30:42,536 - DEBUG - [global] needs_update: jsdelivr → 5.11.19
+2026-09-19 20:30:42,536 - DEBUG - [global] needs_update: лучший источник raw → 5.11.38 (из 3)
+2026-09-19 20:30:42,538 - INFO - [global] needs_update: local=(5, 11, 38) remote=(5, 11, 38) -> has_update=False
+2026-09-19 20:30:42,539 - INFO - [global] Установлена последняя версия бота | 5.11.38
+2026-09-19 20:31:08,249 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-19 20:31:19,690 - INFO - [global] Запуск через 3 сек. | ['Glo']
+2026-09-19 20:31:40,593 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-19 20:31:40,594 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-19 20:31:41,478 - DEBUG - [global] _api_put: GET runs/20260919_203140_fail_periodic.log -> 404
+2026-09-19 20:31:43,158 - DEBUG - [global] _api_put: PUT runs/20260919_203140_fail_periodic.log -> 201 (10855 bytes)
+2026-09-19 20:31:43,160 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260919_203140_fail_periodic.log
+2026-09-19 20:31:44,290 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_30.png -> 200
+2026-09-19 20:31:45,845 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_30.png -> 409 (45948 bytes)
+2026-09-19 20:31:45,845 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 9b786331ecf140bd125d1a607a5dea3e1cc92205 but expected 6c3ec5bcb1df4db7aa492ba83a1dc796e4a3bbdd","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-19 20:31:47,130 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_40.png -> 200
+2026-09-19 20:31:48,825 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_40.png -> 200 (117363 bytes)
+2026-09-19 20:31:50,012 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_50.png -> 200
+2026-09-19 20:31:51,616 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_50.png -> 200 (116949 bytes)
+2026-09-19 20:31:52,751 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_55.png -> 200
+2026-09-19 20:31:54,041 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-19 20:31:54,571 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_55.png -> 200 (116976 bytes)
+2026-09-19 20:31:55,700 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_60.png -> 200
+2026-09-19 20:31:57,566 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_60.png -> 200 (115735 bytes)
+2026-09-19 20:31:58,697 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_70.png -> 200
+2026-09-19 20:32:00,342 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_70.png -> 200 (117949 bytes)
+2026-09-19 20:32:01,460 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_75.png -> 200
+2026-09-19 20:32:03,205 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_75.png -> 200 (115668 bytes)
+2026-09-19 20:32:04,245 - DEBUG - [global] _api_put: GET debug/periodic/blessed_found_ocr.png -> 200
+2026-09-19 20:32:05,899 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_found_ocr.png -> 200 (49645 bytes)
+2026-09-19 20:32:06,804 - DEBUG - [global] _api_put: GET debug/periodic/blessed_land_text.png -> 200
+2026-09-19 20:32:08,245 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_land_text.png -> 200 (17369 bytes)
+2026-09-19 20:32:09,267 - DEBUG - [global] _api_put: GET debug/periodic/blessed_level_window.png -> 200
+2026-09-19 20:32:11,034 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_level_window.png -> 200 (117865 bytes)
+2026-09-19 20:32:12,218 - DEBUG - [global] _api_put: GET debug/periodic/blessed_menu_opened.png -> 200
+2026-09-19 20:32:13,956 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_menu_opened.png -> 200 (109301 bytes)
+2026-09-19 20:32:15,862 - DEBUG - [global] _api_put: GET debug/periodic/blessed_scroll_00.png -> 200
+2026-09-19 20:32:19,668 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_scroll_00.png -> 200 (44249 bytes)
+2026-09-19 20:32:20,677 - DEBUG - [global] _api_put: GET debug/periodic/blessed_scroll_03.png -> 200
+2026-09-19 20:32:22,332 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_scroll_03.png -> 200 (51700 bytes)
+2026-09-19 20:32:23,277 - DEBUG - [global] _api_put: GET debug/periodic/blessed_time_check.png -> 200
+2026-09-19 20:32:24,669 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_time_check.png -> 200 (10352 bytes)
+2026-09-19 20:32:25,482 - DEBUG - [global] _api_put: GET debug/periodic/blessed_zemlya.png -> 200
+2026-09-19 20:32:26,776 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_zemlya.png -> 200 (1808 bytes)
+2026-09-19 20:32:26,778 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 14/15 (удалено с диска: 14)
+2026-09-19 20:32:27,639 - DEBUG - [global] _api_put: GET runs/20260919_203140_fail_global.log -> 404
+2026-09-19 20:32:29,242 - DEBUG - [global] _api_put: PUT runs/20260919_203140_fail_global.log -> 201 (16510 bytes)
+2026-09-19 20:32:29,243 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260919_203140_fail_global.log
+2026-09-19 20:32:29,243 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-19 20:32:29,243 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-19 20:37:29,671 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-19 20:37:29,673 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-19 20:37:30,533 - DEBUG - [global] _api_put: GET runs/20260919_203729_fail_periodic.log -> 404
+2026-09-19 20:37:31,998 - DEBUG - [global] _api_put: PUT runs/20260919_203729_fail_periodic.log -> 201 (10855 bytes)
+2026-09-19 20:37:31,999 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260919_203729_fail_periodic.log
+2026-09-19 20:37:33,125 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_30.png -> 200
+2026-09-19 20:37:34,809 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_30.png -> 200 (45948 bytes)
+2026-09-19 20:37:34,811 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 1/1 (удалено с диска: 1)
