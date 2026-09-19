@@ -526,9 +526,18 @@ class Dungeon(EventDrivenProfile):
             # 4. Кликнуть по найденной строке → проверить "Время доступа"
             log(f"Данги: клик по строке ({click_x_rel},{click_y_rel})",
                 window_id)
+            await self._activate()
+            await asyncio.sleep(0.3)
             await self.mouse.click(self.window_info, click_x_rel, click_y_rel)
             await asyncio.sleep(1.5)
             log("Данги: кликнул, проверяю время доступа", window_id)
+
+            # ПОЛНЫЙ скриншот окна после клика на данж — для отладки
+            # Показывает открылась ли панель описания и где кнопка Вход
+            after_dungeon_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if after_dungeon_click is not None:
+                self._save_debug("blessed_after_dungeon_click.png",
+                                  after_dungeon_click)
 
             # Проверка "Время доступа" — красный 0 = уже был сегодня
             time_zone_bgr = self._grab_window_rect(
@@ -566,10 +575,17 @@ class Dungeon(EventDrivenProfile):
             # АКТИВИРУЕМ окно перед кликом — иначе клик игнорируется игрой
             await self._activate()
             await asyncio.sleep(0.3)
+            log(f"Данги: клик Вход ({int(ww * 0.85)},{int(wh * 0.90)})",
+                window_id)
             await self.mouse.click(self.window_info,
                                     int(ww * 0.85), int(wh * 0.90))
             await asyncio.sleep(2)
             log("Данги: нажал Вход", window_id)
+
+            # Скриншот после клика Вход — для отладки
+            after_vhod = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if after_vhod is not None:
+                self._save_debug("blessed_after_vhod.png", after_vhod)
 
             # 6. Кликнуть по стрелке телепорта нужного уровня
             #
