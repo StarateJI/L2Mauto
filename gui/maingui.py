@@ -640,15 +640,11 @@ class NedoGui(QWidget):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.setModal(False)
             msg.show()
-            # Запускаем update в ОТДЕЛЬНОМ потоке — НЕ блокируем GUI и сеть.
-            # Раньше QTimer.singleShot(10, update) запускал в главном потоке,
-            # что блокировало всё на 2+ минуты и ложило инет.
-            import threading
-            from bot.updater import update
-            def _bg_update():
-                try:
-                    update()
-                except Exception as e:
-                    log(f"update() упал в фоне: {e}", level="ERROR")
-            t = threading.Thread(target=_bg_update, daemon=True)
-            t.start()
+            # update() вызывает sys.exit(0) в конце — это ЗАКРЫВАЕТ ПРОЦЕСС.
+            # Поэтому НЕ запускаем его в отдельном потоке (threading.Thread) —
+            # иначе sys.exit(0) убьёт процесс из потока и бот упадёт.
+            # QTimer.singleShot(10, update) запускает в главном потоке —
+            # это правильно, т.к. update() в конце сам делает sys.exit(0)
+            # и запускает apply_update.bat.
+            # С короткими timeout'ами в updater.py это НЕ ложит инет.
+            QTimer.singleShot(10, update)
