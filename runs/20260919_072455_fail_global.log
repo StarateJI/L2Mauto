@@ -1,0 +1,201 @@
+=== Log tail 2026-09-19T07:24:55.708840 | last 200 lines ===
+2026-09-19 07:21:37,487 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 07:21:37,487 - DEBUG - [global] needs_update: лучший источник raw → 5.11.18 (из 2)
+2026-09-19 07:21:37,491 - INFO - [global] needs_update: local=(5, 10, 9) remote=(5, 11, 18) -> has_update=True
+2026-09-19 07:21:37,491 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-19 07:22:01,882 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-19 07:22:03,113 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-19 07:22:03,118 - INFO - [global] Пачка 1/6: завершена за 262с
+2026-09-19 07:22:04,122 - INFO - [global] Пачка 2/6: старт (2 окон: ['Solitude', 'Rezor'])
+2026-09-19 07:22:04,123 - INFO - [global] Запуск через 3 сек. | ['Solitude', 'Rezor']
+2026-09-19 07:22:07,510 - INFO - [global] Проверяю обновы...
+2026-09-19 07:22:08,483 - DEBUG - [global] needs_update: raw → 5.11.18
+2026-09-19 07:22:09,487 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-19 07:22:10,405 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 07:22:10,405 - DEBUG - [global] needs_update: лучший источник raw → 5.11.18 (из 2)
+2026-09-19 07:22:10,409 - INFO - [global] needs_update: local=(5, 10, 9) remote=(5, 11, 18) -> has_update=True
+2026-09-19 07:22:10,409 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-19 07:22:11,666 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-19 07:22:11,668 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-19 07:22:11,668 - DEBUG - [global] log_uploader: STEP 1 SKIP (no C:\Users\PC\Desktop\L2Mauto\logs\periodic.log)
+2026-09-19 07:22:11,669 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-19 07:22:12,869 - DEBUG - [global] _api_put: GET runs/20260919_072211_fail_global.log -> 404
+2026-09-19 07:22:14,841 - DEBUG - [global] _api_put: PUT runs/20260919_072211_fail_global.log -> 201 (21137 bytes)
+2026-09-19 07:22:14,845 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260919_072211_fail_global.log
+2026-09-19 07:22:14,845 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-19 07:22:14,845 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-19 07:22:40,431 - INFO - [global] Проверяю обновы...
+2026-09-19 07:22:41,456 - DEBUG - [global] needs_update: raw → 5.11.18
+2026-09-19 07:22:42,413 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-19 07:22:43,383 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 07:22:43,384 - DEBUG - [global] needs_update: лучший источник raw → 5.11.18 (из 2)
+2026-09-19 07:22:43,388 - INFO - [global] needs_update: local=(5, 10, 9) remote=(5, 11, 18) -> has_update=True
+2026-09-19 07:22:43,389 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-19 07:22:50,851 - INFO - [global] Сделан бэкап текущей версии в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.10.9.zip
+2026-09-19 07:23:13,413 - INFO - [global] Проверяю обновы...
+2026-09-19 07:23:14,898 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-19 07:23:14,900 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-19 07:23:14,900 - DEBUG - [global] log_uploader: STEP 1 SKIP (no C:\Users\PC\Desktop\L2Mauto\logs\periodic.log)
+2026-09-19 07:23:14,901 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-19 07:23:24,333 - INFO - [global] Обнова бахнула: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+2026-09-19 07:23:24,350 - ERROR - [global] Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 779, in _error_catcher
+    yield
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 1251, in read_chunked
+    chunk = self._handle_chunk(amt)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 1188, in _handle_chunk
+    value = self._fp._safe_read(amt)  # type: ignore[union-attr]
+            ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\http\client.py", line 631, in _safe_read
+    data = self.fp.read(amt)
+           ^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\socket.py", line 706, in readinto
+    return self._sock.recv_into(b)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\ssl.py", line 1311, in recv_into
+    return self.read(nbytes, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\ssl.py", line 1167, in read
+    return self._sslobj.read(len, buffer)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TimeoutError: The read operation timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 820, in generate
+    yield from self.raw.stream(chunk_size, decode_content=True)
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 1088, in stream
+    yield from self.read_chunked(amt, decode_content=decode_content)
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 1231, in read_chunked
+    with self._error_catcher():
+  File "C:\Program Files\Python311\Lib\contextlib.py", line 155, in __exit__
+    self.gen.throw(typ, value, traceback)
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\urllib3\response.py", line 784, in _error_catcher
+    raise ReadTimeoutError(self._pool, None, "Read timed out.") from e  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.ReadTimeoutError: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\Desktop\L2Mauto\bot\updater.py", line 326, in update
+    r = requests.get(REPO_ZIP, timeout=30)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\api.py", line 73, in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\api.py", line 59, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 589, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 724, in send
+    history = [resp for resp in gen]
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 724, in <listcomp>
+    history = [resp for resp in gen]
+              ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 265, in resolve_redirects
+    resp = self.send(
+           ^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\sessions.py", line 746, in send
+    r.content
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 902, in content
+    self._content = b"".join(self.iter_content(CONTENT_CHUNK_SIZE)) or b""
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\AppData\Roaming\Python\Python311\site-packages\requests\models.py", line 826, in generate
+    raise ConnectionError(e)
+requests.exceptions.ConnectionError: HTTPSConnectionPool(host='codeload.github.com', port=443): Read timed out.
+
+2026-09-19 07:23:26,002 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20260919_072314_fail_global.log?ref=bot-logs (Caused by NameResolutionError("<urllib3.connection.HTTPSConnection object at 0x000001D0AFBA2A90>: Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-09-19 07:23:27,967 - DEBUG - [global] _api_put: PUT runs/20260919_072314_fail_global.log -> 201 (21340 bytes)
+2026-09-19 07:23:27,967 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260919_072314_fail_global.log
+2026-09-19 07:23:27,967 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-19 07:23:27,967 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-19 07:23:28,080 - INFO - [global] [MouseEvents] Ошибка клика: cannot schedule new futures after shutdown
+2026-09-19 07:23:28,080 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-19 07:23:28,150 - ERROR - [global] Бот Solitude умер: cannot schedule new futures after shutdown
+Traceback (most recent call last):
+  File "C:\Users\PC\Desktop\L2Mauto\bot\manager.py", line 41, in _run_bot
+    await bot.on_start()  # await main_loop
+    ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Desktop\L2Mauto\profiles\base.py", line 161, in on_start
+    await self.main_loop()
+  File "C:\Users\PC\Desktop\L2Mauto\profiles\RewardsProfile\rewards.py", line 41, in main_loop
+    if not await self.energo.is_on():
+           ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Desktop\L2Mauto\bot\methods\game\energo.py", line 21, in is_on
+    if not await self.profile.check_pixel(xy, rgb, timeout=DELAY_CHECK_ENERGO):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Desktop\L2Mauto\profiles\base.py", line 350, in check_pixel
+    return await capture.wait_for_pixel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Desktop\L2Mauto\bot\capture\__init__.py", line 70, in wait_for_pixel
+    return await active().wait_for_pixel(nick, x, y, w, h, rgb, thr, timeout, poll)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Desktop\L2Mauto\bot\capture\mss_backend.py", line 75, in wait_for_pixel
+    return await loop.run_in_executor(self._pool, _run)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\asyncio\base_events.py", line 829, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\concurrent\futures\thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+
+2026-09-19 07:23:28,372 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-19 07:23:28,377 - ERROR - [global] Бот Rezor умер: cannot schedule new futures after shutdown
+Traceback (most recent call last):
+  File "C:\Users\PC\Desktop\L2Mauto\bot\manager.py", line 41, in _run_bot
+    await bot.on_start()  # await main_loop
+    ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Desktop\L2Mauto\profiles\base.py", line 161, in on_start
+    await self.main_loop()
+  File "C:\Users\PC\Desktop\L2Mauto\profiles\RewardsProfile\rewards.py", line 35, in main_loop
+    if await func():
+       ^^^^^^^^^^^^
+  File "C:\Users\PC\Desktop\L2Mauto\bot\methods\game\claims.py", line 326, in clan
+    if await self.profile.energo.is_on():
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Desktop\L2Mauto\bot\methods\game\energo.py", line 21, in is_on
+    if not await self.profile.check_pixel(xy, rgb, timeout=DELAY_CHECK_ENERGO):
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Desktop\L2Mauto\profiles\base.py", line 350, in check_pixel
+    return await capture.wait_for_pixel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Desktop\L2Mauto\bot\capture\__init__.py", line 70, in wait_for_pixel
+    return await active().wait_for_pixel(nick, x, y, w, h, rgb, thr, timeout, poll)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\PC\Desktop\L2Mauto\bot\capture\mss_backend.py", line 75, in wait_for_pixel
+    return await loop.run_in_executor(self._pool, _run)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\asyncio\base_events.py", line 829, in run_in_executor
+    executor.submit(func, *args), loop=self)
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\concurrent\futures\thread.py", line 167, in submit
+    raise RuntimeError('cannot schedule new futures after shutdown')
+RuntimeError: cannot schedule new futures after shutdown
+
+2026-09-19 07:24:20,171 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-19 07:24:25,563 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-19 07:24:25,564 - INFO - [global] Запустил чекер обнов
+2026-09-19 07:24:25,564 - INFO - [global] Проверяю обновы...
+2026-09-19 07:24:26,659 - DEBUG - [global] needs_update: raw → 5.11.19
+2026-09-19 07:24:26,859 - DEBUG - [global] needs_update: raw → 5.11.19
+2026-09-19 07:24:27,922 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-19 07:24:28,228 - DEBUG - [global] needs_update: API failed: HTTPError: 403 Client Error: rate limit exceeded for url: https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main
+2026-09-19 07:24:29,360 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 07:24:29,361 - DEBUG - [global] needs_update: лучший источник raw → 5.11.19 (из 2)
+2026-09-19 07:24:29,422 - INFO - [global] needs_update: local=(5, 10, 9) remote=(5, 11, 19) -> has_update=True
+2026-09-19 07:24:29,423 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-19 07:24:29,684 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 07:24:29,685 - DEBUG - [global] needs_update: лучший источник raw → 5.11.19 (из 2)
+2026-09-19 07:24:29,699 - INFO - [global] needs_update: local=(5, 10, 9) remote=(5, 11, 19) -> has_update=True
+2026-09-19 07:24:42,210 - INFO - [global] Сделан бэкап текущей версии в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.10.9.zip
+2026-09-19 07:24:55,675 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-19 07:24:55,682 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-19 07:24:55,682 - DEBUG - [global] log_uploader: STEP 1 SKIP (no C:\Users\PC\Desktop\L2Mauto\logs\periodic.log)
+2026-09-19 07:24:55,683 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
