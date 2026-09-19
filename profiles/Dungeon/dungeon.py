@@ -355,26 +355,19 @@ class Dungeon(EventDrivenProfile):
             log(f"Данги: окно wx={wx} wy={wy} {ww}x{wh}", window_id)
 
             # 1. Выйти из сна — КАК В _party_dungeon_loop (стандартный метод)
-            # Бот уже умеет это делать во всех режимах.
-            # РЕТРАЙ: при запуске пачкой (2 окна) turn_off может не сработать
-            # с первого раза — swipe уходит в другое окно. Пробуем до 3 раз.
+            # ВАЖНО: проверяем результат turn_off и ждём полного выключения.
+            # Если открыть меню ПОВЕРХ энерго — OCR будет видеть фоновую надпись
+            # 'идет автоох' вместо списка данжей → поиск не найдёт БЗ.
             if await self.energo.is_on():
-                for attempt in range(3):
-                    log(f"Данги: выключаю энерго, попытка {attempt+1}/3",
-                        window_id)
-                    await self.energo.turn_off()
-                    await asyncio.sleep(2)
+                await self.energo.turn_off()
+                await asyncio.sleep(2)
+                # Ждём пока энерго реально выключится (до 15 сек)
+                for _ in range(10):
                     if not await self.energo.is_on():
-                        log(f"Данги: энерго выключено с попытки {attempt+1}",
-                            window_id)
                         break
-                    log(f"Данги: энерго всё ещё ВКЛ — повторяю",
-                        window_id, level="WARNING")
-                    await asyncio.sleep(2)
-                else:
-                    log("Данги: не смог выключить энерго за 3 попытки — "
-                        "продолжаю на свой страх и риск",
-                        window_id, level="WARNING")
+                    log("Данги: энерго ещё включено, жду...",
+                        window_id, level="DEBUG")
+                    await asyncio.sleep(1.5)
 
             # 2. Открыть меню → Подземелья
             if not await game.wait_and_click("main_menu_gui", timeout=7):
