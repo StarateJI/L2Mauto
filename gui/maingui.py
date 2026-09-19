@@ -48,11 +48,6 @@ class UpdateChecker(QThread):
 
     def run(self):
         log("Запустил чекер обнов")
-        # Первая проверка через 60 сек (даём боту стартовать, инету подняться)
-        for _ in range(60):
-            if not self._running:
-                return
-            time.sleep(1)
         while self._running:
             try:
                 log("Проверяю обновы...")
@@ -87,11 +82,6 @@ class LogUploader(QThread):
     def run(self):
         import traceback
         log("Запустил периодический загрузчик логов")
-        # Первая загрузка через 2 мин (даём боту стартовать, инету подняться)
-        for _ in range(120):
-            if not self._running:
-                return
-            time.sleep(1)
         while self._running:
             try:
                 from bot.log_uploader import upload_run_logs
