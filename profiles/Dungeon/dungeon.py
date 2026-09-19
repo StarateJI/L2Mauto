@@ -637,7 +637,7 @@ class Dungeon(EventDrivenProfile):
                 await self.mouse.click(self.window_info, arrow_x, arrow_y)
                 await asyncio.sleep(2)
 
-                # Скриншот после клика
+                # Скриншот сразу после клика (для отладки — видно что было ДО)
                 after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
                 if after_click is not None:
                     self._save_debug(f"blessed_after_{level_name.replace('.', '_')}.png",
@@ -649,7 +649,7 @@ class Dungeon(EventDrivenProfile):
                     bright_lines_count = np.where(bright_rows > 3)[0]
                     if len(bright_lines_count) < 3:
                         log(f"Данги: окно выбора уровня закрылось после клика "
-                            f"по {level_name}", window_id)
+                            f"по {level_name} — данж запущен", window_id)
                         arrow_clicked = True
                         break
                     else:
@@ -663,86 +663,29 @@ class Dungeon(EventDrivenProfile):
                 await game.wait_and_click("npc_global_quit_button", timeout=2)
                 return False
 
-            # ── ПОСЛЕ клика по стрелке — нужно подтвердить вход ─────────
-            # По скринам VLM: после клика по стрелке бот вернулся в окно
-            # списка подземелий (видна 'Вход' кнопка). Видимо игра требует
-            # либо:
-            #   а) Двойной клик по стрелке (первый = выбор, второй = вход)
-            #   б) Подтверждение во всплывающем окне 'Подтвердить/Отмена'
+            # ── ДАНЖ ЗАПУЩЕН — просто ждём и усыпляем ─────────────────
+            # User объяснил:
+            #   'Он нажал на стрелочку 75 уровня и бот сразу полетел в данж.
+            #    Была анимация секунды 3-4. Перед уходом в сон нужно 3-4
+            #    секунды после нажатия на стрелочку подождать. А потом
+            #    бот начал прокликивать другие стрелочки, но он уже был
+            #    в данже и интерфейс закрылся. Персонаж бегает и фармит,
+            #    а бот тыкал по локации где находится.'
             #
-            # Решение: кликаем ЕЩЁ РАЗ по той же стрелке (двойной клик).
-            # Если не помогло — нажимаем 'Вход' (оранжевая, 85% ширины,
-            # 90% высоты — координата из предыдущего кода).
+            # ПОЭТОМУ: после успешного клика по стрелке
+            #   1. Ждём 4 сек (экран загрузки данжа + появление персонажа)
+            #   2. Включаем энергорежим (сон)
+            #   3. ВЫХОДИМ из цикла и функции — НЕ кликаем больше ничего!
 
-            await self._activate()
-            await asyncio.sleep(0.5)
+            log("Данги: данж запущен, жду 4 сек на загрузку", window_id)
+            await asyncio.sleep(4)
 
-            # Повторный клик по той же стрелке (двойной клик)
-            log(f"Данги: повторный клик по стрелке для подтверждения",
-                window_id)
-            await self.mouse.click(self.window_info, arrow_x, arrow_y)
-            await asyncio.sleep(3)
+            # Скриншот после загрузки (для проверки)
+            after_load = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if after_load is not None:
+                self._save_debug("blessed_after_load.png", after_load)
 
-            # Скриншот после повторного клика
-            confirm_shot = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-            if confirm_shot is not None:
-                self._save_debug("blessed_after_confirm.png", confirm_shot)
-
-            # Проверяем — запустился ли данж?
-            # В данже интерфейс игры меняется: нет списка подземелий,
-            # видна игровая сцена (тёмный фон, мини-карта и т.д.)
-            # Простой способ: проверяем что пикселей уровней НЕТ
-            # в зоне x=10-40% И нет кнопки 'Вход' в правом нижнем углу.
-            if confirm_shot is not None:
-                gray = cv2.cvtColor(confirm_shot, cv2.COLOR_BGR2GRAY)
-                level_zone = gray[:, int(ww * 0.10):int(ww * 0.40)]
-                bright_rows = np.sum(level_zone > 100, axis=1)
-                bright_lines_count = np.where(bright_rows > 3)[0]
-                # Кнопка 'Вход' оранжевая — проверяем цвет в правом нижнем углу
-                corner_zone = confirm_shot[int(wh * 0.85):,
-                                             int(ww * 0.75):int(ww * 0.95)]
-                # Оранжевый = R>180, G<150, B<100
-                b_c, g_c, r_c = cv2.split(corner_zone)
-                orange_mask = (r_c > 180) & (g_c > 100) & (g_c < 200) & (b_c < 100)
-                orange_count = int(np.sum(orange_mask))
-
-                if len(bright_lines_count) < 3 and orange_count < 50:
-                    log(f"Данги: данж запущен (нет списка уровней, "
-                        f"нет кнопки Вход)", window_id)
-                else:
-                    # Данж НЕ запустился — пробуем нажать 'Вход' ещё раз
-                    log(f"Данги: данж НЕ запустился (строк={len(bright_lines_count)}, "
-                        f"оранжевых пикселей={orange_count}) — нажимаю 'Вход'",
-                        window_id, level="WARNING")
-                    await self._activate()
-                    await asyncio.sleep(0.3)
-                    await self.mouse.click(self.window_info,
-                                            int(ww * 0.85), int(wh * 0.90))
-                    await asyncio.sleep(5)  # ждём загрузку
-
-                    # Финальная проверка
-                    final_shot = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-                    if final_shot is not None:
-                        self._save_debug("blessed_after_final_input.png", final_shot)
-
-            log("Данги: нажал телепорт, отправляю в сон", window_id)
-
-            # ── УСЫПЛЯЕМ ОКНО ─────────────────────────────────────────
-            # ВАЖНО: проверяем что Really в данже или хотя бы меню закрылось
-            # Ждём дополнительно 5 сек на случай экрана загрузки
-            await asyncio.sleep(5)
-
-            # Закрываем все меню кнопкой ESC (на всякий случай)
-            # Если данж запущен — ESC ничего не сломает
-            # Если вернулись в игру — ESC закроет меню подземелий
-            log("Данги: закрываю меню (ESC)", window_id)
-            try:
-                await self.mouse.click(self.window_info, 200, 100)
-                await asyncio.sleep(1)
-            except Exception:
-                pass
-
-            # Теперь усыпляем окно (включаем энергорежим)
+            # Усыпляем окно (включаем энергорежим)
             if not await self.energo.is_on():
                 log("Данги: включаю энергорежим (сон)", window_id)
                 await self.energo.turn_on()
