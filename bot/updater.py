@@ -335,18 +335,19 @@ def update():
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         backup()
 
-        # stream=True + МАЛЕНЬКИЙ chunk (8KB вместо 64KB) чтобы НЕ ложить инет.
-        # timeout=(connect, read) — 5 сек на коннект, 30 сек на чтение.
-        # Если инет медленный — лучше упасть чем висеть минутами.
-        r = requests.get(REPO_ZIP, timeout=(5, 30), stream=True)
+        # Скачиваем ZIP. timeout=(connect, read) — 10 сек на коннект,
+        # 120 сек на чтение (ZIP ~5MB, на медленном инете может занять время).
+        # chunk 64KB — нормальный размер, не забивает канал.
+        log("Скачиваю обнову...", )
+        r = requests.get(REPO_ZIP, timeout=(10, 120), stream=True)
         r.raise_for_status()
         buf = io.BytesIO()
-        # chunk_size=8192 (8KB) — плавная загрузка, не забивает канал
-        for chunk in r.iter_content(chunk_size=8192):
+        for chunk in r.iter_content(chunk_size=65536):
             if chunk:
                 buf.write(chunk)
         buf.seek(0)
         z = zipfile.ZipFile(buf)
+        log(f"Скачал {len(buf.getvalue())} байт")
 
         temp_dir = os.path.join(root_dir, "temp_update")
         if os.path.exists(temp_dir):
@@ -404,7 +405,8 @@ def update():
         sys.exit(0)
 
     except Exception as e:
-        log(f"Обнова бахнула: {e}")
         import traceback
-        log(traceback.format_exc(), level="ERROR")
+        tb = traceback.format_exc()
+        log(f"Обнова бахнула: {e}")
+        log(f"Traceback:\n{tb}", level="ERROR")
         sys.exit(1)
