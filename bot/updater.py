@@ -12,17 +12,24 @@ from bot.clogger import log
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
 
 # Список URL для проверки версии (пробуем по очереди):
-# 1. raw.githubusercontent.com с cache-buster — оригинал, свежая версия
-# 2. GitHub API — JSON, no cache, всегда свежая (rate limit 60/час анонимно)
-# 3. cdn.jsdelivr.net — ОСТОРОЖНО: кеширует 7 дней (max-age=604800),
-#    используем только как последний fallback
-#    (для РФ где raw может быть недоступен)
+# 1. raw.githubusercontent.com — оригинал, свежая версия
+# 2. cdn.jsdelivr.net — CDN (кеш 7 дней, но не лимитируется)
+# ВАЖНО: api.github.com УБРАН — он давал 403 rate limit exceeded каждые
+# 30 сек и ложил инет. raw и jsdelivr не имеют таких лимитов.
 REPO_VERSION_URLS = [
     "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt",
-    "https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main",
     "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/bot/version.txt",
 ]
 REPO_ZIP = "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip"
+
+# Список зеркал ZIP — если github.com не отвечает, пробуем другие.
+# jsdelivr — CDN, не требует авторизации, не лимитируется.
+# codeload — официальное зеркало github.
+REPO_ZIP_MIRRORS = [
+    "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip",
+    "https://codeload.github.com/StarateJI/L2Mauto/zip/refs/heads/main",
+    "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main",
+]
 
 def get_my_version():
     try:
@@ -70,29 +77,17 @@ def _fetch_remote_version() -> str | None:
 
     for url in REPO_VERSION_URLS:
         try:
-            # Для API GitHub — другой формат ответа (JSON с base64)
-            if "api.github.com" in url:
-                r = requests.get(url, timeout=8, headers=headers)
-                r.raise_for_status()
-                import base64
-                data = r.json()
-                content = base64.b64decode(data["content"]).decode().strip()
-                if content and content[0].isdigit():
-                    versions_found.append((len(versions_found), "API", content))
-                    log(f"needs_update: API GitHub → {content}", level="DEBUG")
-            else:
-                # raw / jsdelivr — простой текст
-                full_url = url + cache_buster
-                r = requests.get(full_url, timeout=8, headers=headers)
-                r.raise_for_status()
-                content = r.text.strip()
-                if content and content[0].isdigit():
-                    src = "jsdelivr" if "jsdelivr" in url else "raw"
-                    versions_found.append((len(versions_found), src, content))
-                    log(f"needs_update: {src} → {content}", level="DEBUG")
+            # raw / jsdelivr — простой текст (api.github.com убран из списка)
+            full_url = url + cache_buster
+            r = requests.get(full_url, timeout=5, headers=headers)
+            r.raise_for_status()
+            content = r.text.strip()
+            if content and content[0].isdigit():
+                src = "jsdelivr" if "jsdelivr" in url else "raw"
+                versions_found.append((len(versions_found), src, content))
+                log(f"needs_update: {src} → {content}", level="DEBUG")
         except Exception as e:
-            src = "API" if "api.github.com" in url else (
-                "jsdelivr" if "jsdelivr" in url else "raw")
+            src = "jsdelivr" if "jsdelivr" in url else "raw"
             log(f"needs_update: {src} failed: {type(e).__name__}: {e}",
                 level="DEBUG")
             continue
@@ -346,25 +341,44 @@ def update():
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         backup()
 
-        # Скачиваем ZIP с ОГРАНИЧЕНИЕМ скорости — не ложим инет/игру.
-        # timeout=(connect, read) — 10 сек на коннект, 120 сек на чтение.
-        # chunk 64KB + sleep 0.05 сек между чанками = ~1.2 MB/сек max
-        # (не забивает канал, оставляет инет для игры)
+        # Скачиваем ZIP с зеркал — пробуем по очереди с КОРОТКИМ timeout.
+        # Если github.com лежит (часто бывает) — переходим на codeload/jsdelivr.
+        # timeout=(connect, read) — 8 сек на коннект, 60 сек на чтение.
+        # НЕ ложим инет: short timeout = быстро отваливаемся, не висим.
         import time as _time
-        log("Скачиваю обнову (с ограничением скорости)...")
-        r = requests.get(REPO_ZIP, timeout=(10, 120), stream=True)
-        r.raise_for_status()
-        buf = io.BytesIO()
+        log("Скачиваю обнову...")
+
+        buf = None
         total = 0
-        for chunk in r.iter_content(chunk_size=65536):
-            if chunk:
-                buf.write(chunk)
-                total += len(chunk)
-                # Пауза 50ms между чанками — не забиваем канал
-                _time.sleep(0.05)
-        buf.seek(0)
+        used_url = None
+        for url in REPO_ZIP_MIRRORS:
+            try:
+                log(f"Пробую зеркало: {url}", level="DEBUG")
+                r = requests.get(url, timeout=(8, 60), stream=True)
+                r.raise_for_status()
+                buf = io.BytesIO()
+                total = 0
+                for chunk in r.iter_content(chunk_size=65536):
+                    if chunk:
+                        buf.write(chunk)
+                        total += len(chunk)
+                        # Пауза 50ms между чанками — не забиваем канал
+                        _time.sleep(0.05)
+                buf.seek(0)
+                used_url = url
+                log(f"Скачал {total} байт ({total//1024} KB) с {url}")
+                break
+            except Exception as e:
+                log(f"Зеркало {url} упало: {type(e).__name__}: {e}",
+                    level="WARNING")
+                continue
+
+        if buf is None or total < 1000:
+            log("Все зеркала упали — обнову поставить не удалось",
+                level="ERROR")
+            return False
+
         z = zipfile.ZipFile(buf)
-        log(f"Скачал {total} байт ({total//1024} KB)")
 
         temp_dir = os.path.join(root_dir, "temp_update")
         if os.path.exists(temp_dir):
