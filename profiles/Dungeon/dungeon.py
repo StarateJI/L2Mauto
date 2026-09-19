@@ -642,20 +642,30 @@ class Dungeon(EventDrivenProfile):
                 if after_click is not None:
                     self._save_debug(f"blessed_after_{level_name.replace('.', '_')}.png",
                                       after_click)
-                    # Проверяем — закрылось ли окно выбора уровня?
+                    # ПРОВЕРКА: запустился ли данж?
+                    # После клика по ДОСТУПНОМУ уровню:
+                    #   - Экран становится БЕЛЫМ (mean > 200) = загрузка данжа
+                    # После клика по НЕдоступному уровню:
+                    #   - Окно выбора уровня остаётся открытым (mean < 100, есть bright_lines)
                     gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
-                    level_zone = gray[:, int(ww * 0.10):int(ww * 0.40)]
-                    bright_rows = np.sum(level_zone > 100, axis=1)
-                    bright_lines_count = np.where(bright_rows > 3)[0]
-                    if len(bright_lines_count) < 3:
-                        log(f"Данги: окно выбора уровня закрылось после клика "
-                            f"по {level_name} — данж запущен", window_id)
+                    mean_brightness = float(gray.mean())
+
+                    # БЫЛА ОШИБКА: проверка bright_lines < 3 не работает на
+                    # белом экране (там ВСЕ пиксели >100, bright_lines=225).
+                    # Поэтому бот думал "окно ещё открыто" и переходил к Ур.70,
+                    # но данж уже загружался → клики уходили в игровую зону.
+
+                    if mean_brightness > 200:
+                        # БЕЛЫЙ ЭКРАН = ЗАГРУЗКА ДАНЖА → успех!
+                        log(f"Данги: белый экран (mean={mean_brightness:.0f}) — "
+                            f"данж запущен через {level_name}", window_id)
                         arrow_clicked = True
                         break
                     else:
-                        log(f"Данги: окно ещё открыто после клика по {level_name} "
-                            f"(видно {len(bright_lines_count)} строк) — "
-                            f"уровень недоступен, пробую следующий", window_id)
+                        # Окно выбора уровня ещё открыто → уровень недоступен
+                        log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) "
+                            f"после клика по {level_name} — уровень недоступен, "
+                            f"пробую следующий", window_id)
 
             if not arrow_clicked:
                 log("Данги: не смог кликнуть ни по одной стрелке",
