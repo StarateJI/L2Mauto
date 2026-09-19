@@ -259,42 +259,49 @@ class Dungeon(EventDrivenProfile):
 
     def _ocr_find_text(self, gray_img, needles):
         """
-        Ищет текст (или его часть) через pytesseract.
-        needles — список строк (lowercase), ищем любое вхождение.
-        Возвращает (found: bool, y_pixel: int) — y пиксель в исходном gray_img.
+        Ищет текст через новый движок bot.ocr_engine.find_text().
+        Иерархия: RapidOCR → VLM (z-ai) → Tesseract fallback.
         """
-        pt = _get_pytesseract()
-        if pt is None or gray_img is None:
+        if gray_img is None:
             return False, 0
         try:
-            # x3 для OCR (мелкий шрифт лучше читается, было x2)
-            big = cv2.resize(gray_img, (gray_img.shape[1] * 3, gray_img.shape[0] * 3),
-                             interpolation=cv2.INTER_CUBIC)
-            # Бинаризация — повышает точность OCR
-            _, thresh = cv2.threshold(big, 0, 255,
-                                      cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            # Пробуем psm 6 (block of text) — для списка данжей
-            text = pt.image_to_string(thresh, lang="rus+eng",
-                                      config="--psm 6").lower()
-            # Логируем ПОЛНЫЙ распознанный текст (без переносов)
-            text_oneline = " | ".join(text.split())
-            log(f"Данги OCR psm6: '{text_oneline}'", self.window_id, level="DEBUG")
-            for n in needles:
-                if n in text:
-                    # Нашли — ищем координату слова через image_to_data
-                    data = pt.image_to_data(thresh, lang="rus+eng",
-                                            config="--psm 6",
-                                            output_type=pt.Output.DICT)
-                    for i, word in enumerate(data["text"]):
-                        if n in word.lower():
-                            # координаты в big (x3) → делим на 3 для оригинала
-                            y_orig = data["top"][i] // 3 + data["height"][i] // 6
-                            return True, y_orig
-                    # Если слово найдено в тексте, но не в data — берём центр
-                    return True, gray_img.shape[0] // 2
+            from bot.ocr_engine import find_text
+            # find_text принимает BGR, у нас gray — конвертируем
+            bgr = cv2.cvtColor(gray_img, cv2.COLOR_GRAY2BGR)
+            found, y = find_text(bgr, needles, use_vlm=True)
+            if found:
+                log(f"Данги OCR: найдено через ocr_engine, y={y}",
+                    self.window_id, level="DEBUG")
+            return found, y
         except Exception as e:
-            log(f"Данги: OCR ошибка: {e}", level="DEBUG")
-        return False, 0
+            log(f"Данги: ocr_engine error: {e}", level="WARNING")
+            # Fallback на старый Tesseract
+            pt = _get_pytesseract()
+            if pt is None:
+                return False, 0
+            try:
+                big = cv2.resize(gray_img, (gray_img.shape[1] * 2, gray_img.shape[0] * 2),
+                                 interpolation=cv2.INTER_CUBIC)
+                _, thresh = cv2.threshold(big, 0, 255,
+                                          cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                text = pt.image_to_string(thresh, lang="rus+eng",
+                                          config="--psm 6").lower()
+                text_oneline = " | ".join(text.split())
+                log(f"Данги OCR fallback Tesseract: '{text_oneline[:80]}'",
+                    self.window_id, level="DEBUG")
+                for n in needles:
+                    if n in text:
+                        data = pt.image_to_data(thresh, lang="rus+eng",
+                                                config="--psm 6",
+                                                output_type=pt.Output.DICT)
+                        for i, word in enumerate(data["text"]):
+                            if n in word.lower():
+                                y_orig = data["top"][i] // 2 + data["height"][i] // 4
+                                return True, y_orig
+                        return True, gray_img.shape[0] // 2
+            except Exception as e2:
+                log(f"Данги: Tesseract fallback error: {e2}", level="DEBUG")
+            return False, 0
 
     def _match_icon_multiscale(self, gray_scene, icon_gray,
                               scales=(0.7, 0.85, 1.0, 1.15, 1.3),
