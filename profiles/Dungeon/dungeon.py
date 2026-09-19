@@ -267,18 +267,18 @@ class Dungeon(EventDrivenProfile):
         if pt is None or gray_img is None:
             return False, 0
         try:
-            # x2 для OCR (мелкий шрифт лучше читается)
-            big = cv2.resize(gray_img, (gray_img.shape[1] * 2, gray_img.shape[0] * 2),
+            # x3 для OCR (мелкий шрифт лучше читается, было x2)
+            big = cv2.resize(gray_img, (gray_img.shape[1] * 3, gray_img.shape[0] * 3),
                              interpolation=cv2.INTER_CUBIC)
             # Бинаризация — повышает точность OCR
             _, thresh = cv2.threshold(big, 0, 255,
                                       cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            # Пробуем psm 6 (block of text) — для списка данжей
             text = pt.image_to_string(thresh, lang="rus+eng",
                                       config="--psm 6").lower()
-            # Логируем ПОЛНЫЙ распознанный текст (без переносов) —
-            # чтобы видеть всё что Tesseract распознал на этом кадре
+            # Логируем ПОЛНЫЙ распознанный текст (без переносов)
             text_oneline = " | ".join(text.split())
-            log(f"Данги OCR text: '{text_oneline}'", self.window_id, level="DEBUG")
+            log(f"Данги OCR psm6: '{text_oneline}'", self.window_id, level="DEBUG")
             for n in needles:
                 if n in text:
                     # Нашли — ищем координату слова через image_to_data
@@ -287,8 +287,8 @@ class Dungeon(EventDrivenProfile):
                                             output_type=pt.Output.DICT)
                     for i, word in enumerate(data["text"]):
                         if n in word.lower():
-                            # координаты в big (x2) → делим на 2 для оригинала
-                            y_orig = data["top"][i] // 2 + data["height"][i] // 4
+                            # координаты в big (x3) → делим на 3 для оригинала
+                            y_orig = data["top"][i] // 3 + data["height"][i] // 6
                             return True, y_orig
                     # Если слово найдено в тексте, но не в data — берём центр
                     return True, gray_img.shape[0] // 2
@@ -463,33 +463,26 @@ class Dungeon(EventDrivenProfile):
                 ]
                 ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
 
-                # Способ 2: matchTemplate с шаблоном слова "земля" (99x58 px)
-                # Порог 0.65 — проверено на скриншотах: на "Благословенной
-                # Земле" даёт 0.99-1.00, на других данжах 0.47-0.51.
-                # 0.65 — безопасная граница между этими значениями.
-                # Масштаб 1.0 (без масштабирования) — текст в игре всегда
-                # одного размера.
+                # Способ 2: matchTemplate — ОТКЛЮЧЕН
+                # БАГ: шаблон blessed_zemlya.png (99x58, mean=32) даёт
+                # score=1.000 на ЛЮБОМ скриншоте из-за маленького тёмного шаблона
+                # и нестабильности TM_CCOEFF_NORMED для изображений с малой дисперсией.
+                # Бот сразу кликал на первый данж в списке (false positive).
+                # Полностью убираем matchTemplate, оставляем только OCR.
                 tm_score, tm_loc = (0.0, None)
-                if icon_gray is not None:
-                    tm_score, tm_loc = self._match_icon_multiscale(
-                        scene_gray, icon_gray,
-                        scales=(0.95, 1.0, 1.05),  # узкий диапазон
-                        threshold=0.65)
+                # if icon_gray is not None:
+                #     tm_score, tm_loc = self._match_icon_multiscale(
+                #         scene_gray, icon_gray,
+                #         scales=(0.95, 1.0, 1.05),
+                #         threshold=0.65)
 
                 log(f"Данги: попытка {scroll_attempt+1}/{MAX_SCROLL_ATTEMPTS} — "
                     f"TM={tm_score:.3f} OCR={'да' if ocr_found else 'нет'}",
                     window_id, level="DEBUG")
 
-                # Нашли — выбираем более надёжный способ
-                if tm_score >= 0.65 and tm_loc is not None:
-                    click_x_rel = list_x_rel + tm_loc[0] + icon_gray.shape[1] // 2
-                    click_y_rel = list_y_rel + tm_loc[1] + icon_gray.shape[0] // 2
-                    found = True
-                    log(f"Данги: найден через matchTemplate "
-                        f"({click_x_rel},{click_y_rel}) score={tm_score:.3f}",
-                        window_id)
-                    self._save_debug("blessed_found_tm.png", scene_bgr)
-                    break
+                # Нашли через matchTemplate — ОТКЛЮЧЕНО (false positive)
+                # if tm_score >= 0.65 and tm_loc is not None:
+                #     ...
 
                 if ocr_found:
                     click_x_rel = list_x_rel + int(list_w * 0.15)
