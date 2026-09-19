@@ -292,18 +292,6 @@ REM ---- Шаг 3: остальные файлы (overwrite) ----
 echo Step 3: xcopy other files... >> "{root_dir}\\apply_update.log"
 xcopy "{temp_dir}\\*" "{root_dir}\\" /e /y /i >> "{root_dir}\\apply_update.log" 2>&1
 
-REM ---- Шаг 3b: ПРИНУДИТЕЛЬНО копируем PNG шаблоны ----
-echo Step 3b: force-copy PNG templates... >> "{root_dir}\\apply_update.log"
-if exist "{temp_dir}\\profiles\\Dungeon\\blessed_zemlya.png" (
-    copy /y "{temp_dir}\\profiles\\Dungeon\\blessed_zemlya.png" "{root_dir}\\profiles\\Dungeon\\blessed_zemlya.png" >> "{root_dir}\\apply_update.log" 2>&1
-)
-if exist "{temp_dir}\\profiles\\Dungeon\\blessed_land_text.png" (
-    copy /y "{temp_dir}\\profiles\\Dungeon\\blessed_land_text.png" "{root_dir}\\profiles\\Dungeon\\blessed_land_text.png" >> "{root_dir}\\apply_update.log" 2>&1
-)
-if exist "{temp_dir}\\profiles\\Dungeon\\blessed_land_icon.jpg" (
-    copy /y "{temp_dir}\\profiles\\Dungeon\\blessed_land_icon.jpg" "{root_dir}\\profiles\\Dungeon\\blessed_land_icon.jpg" >> "{root_dir}\\apply_update.log" 2>&1
-)
-
 REM ---- Шаг 4: cleanup ----
 echo Step 4: cleanup temp_dir... >> "{root_dir}\\apply_update.log"
 rd /s /q "{temp_dir}" 2>nul
@@ -335,14 +323,12 @@ def update():
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         backup()
 
-        # stream=True + МАЛЕНЬКИЙ chunk (8KB вместо 64KB) чтобы НЕ ложить инет.
-        # timeout=(connect, read) — 5 сек на коннект, 30 сек на чтение.
-        # Если инет медленный — лучше упасть чем висеть минутами.
-        r = requests.get(REPO_ZIP, timeout=(5, 30), stream=True)
+        # stream=True + ограничение скорости чтобы не забивать канал
+        # и не ронять инет/окна игры
+        r = requests.get(REPO_ZIP, timeout=(10, 60), stream=True)
         r.raise_for_status()
         buf = io.BytesIO()
-        # chunk_size=8192 (8KB) — плавная загрузка, не забивает канал
-        for chunk in r.iter_content(chunk_size=8192):
+        for chunk in r.iter_content(chunk_size=65536):
             if chunk:
                 buf.write(chunk)
         buf.seek(0)
