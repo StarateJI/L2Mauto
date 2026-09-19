@@ -570,6 +570,9 @@ class Dungeon(EventDrivenProfile):
 
             # 5. Нажать "Вход" (оранжевая кнопка, правый нижний угол)
             await asyncio.sleep(1)
+            # АКТИВИРУЕМ окно перед кликом — иначе клик игнорируется игрой
+            await self._activate()
+            await asyncio.sleep(0.3)
             await self.mouse.click(self.window_info,
                                     int(ww * 0.85), int(wh * 0.90))
             await asyncio.sleep(2)
@@ -643,6 +646,9 @@ class Dungeon(EventDrivenProfile):
                         chosen_group = groups[-1]
                         level_click_y = int(np.mean(chosen_group))
 
+                        # АКТИВИРУЕМ окно перед кликом — иначе клик игнорируется
+                        await self._activate()
+                        await asyncio.sleep(0.3)
                         # Клик по названию уровня (ЛЕВАЯ часть, 25% ширины)
                         await self.mouse.click(self.window_info,
                                                 int(w * 0.25), level_click_y)
@@ -676,8 +682,14 @@ class Dungeon(EventDrivenProfile):
             #   - Размер стрелки 24x36 px, белая иконка
             #   - Бот кликал на x=356 (89%) — попадал в пустую рамку справа!
             # Возвращаю x=65% — это точное попадание в стрелку.
+            #
+            # ВАЖНО: перед кликом АКТИВИРУЕМ окно (_activate) — иначе клик
+            # уходит в неактивное окно и игра его игнорирует, окно закрывается.
             arrow_x = int(ww * 0.65)
             arrow_y = level_click_y
+            log(f"Данги: активирую окно перед кликом по стрелке", window_id)
+            await self._activate()
+            await asyncio.sleep(0.3)
             log(f"Данги: клик по стрелке ({arrow_x},{arrow_y}) "
                 f"(окно {ww}x{wh})",
                 window_id)
