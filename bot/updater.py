@@ -310,6 +310,27 @@ if exist "{temp_dir}\\profiles\\Dungeon\\blessed_land_icon.jpg" (
     copy /y "{temp_dir}\\profiles\\Dungeon\\blessed_land_icon.jpg" "{root_dir}\\profiles\\Dungeon\\blessed_land_icon.jpg" >> "{root_dir}\\apply_update.log" 2>&1
 )
 
+REM ---- Шаг 3c: ПРИНУДИТЕЛЬНО копируем version.txt ----
+echo Step 3c: force-copy version.txt... >> "{root_dir}\\apply_update.log"
+if exist "{temp_dir}\\bot\\version.txt" (
+    copy /y "{temp_dir}\\bot\\version.txt" "{root_dir}\\bot\\version.txt" >> "{root_dir}\\apply_update.log" 2>&1
+)
+
+REM ---- Шаг 3d: ПРИНУДИТЕЛЬНО копируем .py файлы (если xcopy пропустил) ----
+echo Step 3d: force-copy .py files... >> "{root_dir}\\apply_update.log"
+if exist "{temp_dir}\\bot\\ocr_engine.py" (
+    copy /y "{temp_dir}\\bot\\ocr_engine.py" "{root_dir}\\bot\\ocr_engine.py" >> "{root_dir}\\apply_update.log" 2>&1
+)
+if exist "{temp_dir}\\bot\\updater.py" (
+    copy /y "{temp_dir}\\bot\\updater.py" "{root_dir}\\bot\\updater.py" >> "{root_dir}\\apply_update.log" 2>&1
+)
+if exist "{temp_dir}\\gui\\maingui.py" (
+    copy /y "{temp_dir}\\gui\\maingui.py" "{root_dir}\\gui\\maingui.py" >> "{root_dir}\\apply_update.log" 2>&1
+)
+if exist "{temp_dir}\\profiles\\Dungeon\\dungeon.py" (
+    copy /y "{temp_dir}\\profiles\\Dungeon\\dungeon.py" "{root_dir}\\profiles\\Dungeon\\dungeon.py" >> "{root_dir}\\apply_update.log" 2>&1
+)
+
 REM ---- Шаг 4: cleanup ----
 echo Step 4: cleanup temp_dir... >> "{root_dir}\\apply_update.log"
 rd /s /q "{temp_dir}" 2>nul
