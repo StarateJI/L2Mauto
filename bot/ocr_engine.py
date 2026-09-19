@@ -89,7 +89,10 @@ def vlm_find_text(img_bgr: np.ndarray, needle: str) -> Optional[Tuple[int, int]]
     Если не видит — None.
 
     Использует: z-ai vision -p "..." -i image.png
+    На Windows z-ai CLI может быть не установлен — в этом случае
+    возвращаем None (fallback на Tesseract).
     """
+    tmp_path = None
     try:
         # Сохраняем изображение во временный файл
         with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
@@ -105,16 +108,18 @@ def vlm_find_text(img_bgr: np.ndarray, needle: str) -> Optional[Tuple[int, int]]
                   f"Если не видишь — ответь 'NO'.")
 
         # Запускаем z-ai vision CLI
+        # ВАЖНО: проверяем что z-ai есть в PATH через shutil.which
+        import shutil
+        zai_path = shutil.which("z-ai")
+        if zai_path is None:
+            log("VLM: z-ai CLI не найден в PATH — пропускаю VLM",
+                level="DEBUG")
+            return None
+
         result = subprocess.run(
-            ["z-ai", "vision", "-p", prompt, "-i", tmp_path],
+            [zai_path, "vision", "-p", prompt, "-i", tmp_path],
             capture_output=True, text=True, timeout=30
         )
-
-        # Удаляем временный файл
-        try:
-            os.unlink(tmp_path)
-        except Exception:
-            pass
 
         if result.returncode != 0:
             log(f"VLM: CLI упал: {result.stderr[:200]}", level="DEBUG")
@@ -140,9 +145,19 @@ def vlm_find_text(img_bgr: np.ndarray, needle: str) -> Optional[Tuple[int, int]]
     except subprocess.TimeoutExpired:
         log("VLM: timeout 30 сек", level="WARNING")
         return None
+    except FileNotFoundError:
+        log("VLM: z-ai CLI не найден — пропускаю", level="DEBUG")
+        return None
     except Exception as e:
         log(f"VLM: ошибка: {e}", level="WARNING")
         return None
+    finally:
+        # Удаляем временный файл
+        if tmp_path is not None:
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
 
 
 # ── ОСНОВНОЙ МЕТОД: find_text ──────────────────────────────────────────────
