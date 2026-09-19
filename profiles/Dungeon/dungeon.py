@@ -684,18 +684,30 @@ class Dungeon(EventDrivenProfile):
                 return False
 
             # ── ДАНЖ ЗАПУЩЕН — ждём загрузки и усыпляем КАК В _party_dungeon_loop
-            log("Данги: данж запущен, жду 4 сек на загрузку", window_id)
-            await asyncio.sleep(4)
+            # Ждём 8 сек (было 4) — иногда через 4 сек интерфейс ещё не загрузился,
+            # energo.turn_on() кликал в пустоту. 8 сек = интерфейс точно загружен.
+            log("Данги: данж запущен, жду 8 сек на загрузку", window_id)
+            await asyncio.sleep(8)
 
             # Скриншот после загрузки (для проверки)
             after_load = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
             if after_load is not None:
                 self._save_debug("blessed_after_load.png", after_load)
 
-            # Усыпляем окно — стандартный метод как во всех профилях
+            # Усыпляем окно — стандартный метод как во всех профилях.
+            # РЕТРАЙ: пробуем до 3 раз — иногда turn_on() не срабатывает
+            # с первого раза (кнопка может быть перекрыта анимацией).
             if not await self.energo.is_on():
-                await self.energo.turn_on()
-                await asyncio.sleep(1)
+                for attempt in range(3):
+                    log(f"Данги: попытка усыпления {attempt+1}/3", window_id)
+                    await self.energo.turn_on()
+                    await asyncio.sleep(2)
+                    if await self.energo.is_on():
+                        log(f"Данги: уснул с попытки {attempt+1}", window_id)
+                        break
+                    await asyncio.sleep(2)
+            else:
+                log("Данги: уже в энергорежиме — пропускаю turn_on", window_id)
 
             log("Данги: Благословенная Земля запущена, окно в сне",
                 window_id)
