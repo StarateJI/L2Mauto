@@ -355,9 +355,28 @@ class Dungeon(EventDrivenProfile):
             log(f"Данги: окно wx={wx} wy={wy} {ww}x{wh}", window_id)
 
             # 1. Выйти из сна (БЕЗ телепорта в город!)
+            # ВАЖНО: НЕ используем energo.turn_off() — он делает swipe в центре
+            # и проверяет zalupka_gui. Если персонаж только вышел из данжа и
+            # вернулся на спот, zalupka_gui может не найтись → turn_off сделает
+            # повторный swipe → собьёт камеру → main_menu_gui не откроется →
+            # поиск ломается.
+            # Вместо этого: ПРОСТО кликаем по кнопке энерго (13, 132) — это
+            # выключит энерго без swipe'а. Ждём 2 сек.
             if await self.energo.is_on():
-                await self.energo.turn_off()
-                await asyncio.sleep(2)
+                log("Данги: выхожу из энерго простым кликом (без swipe)",
+                    window_id)
+                from bot.methods.base import parseCBT
+                button_xy, _ = parseCBT("energo_mode_gui", profile=self.profile)
+                if button_xy is not None:
+                    await self._activate()
+                    await asyncio.sleep(0.3)
+                    await self.mouse.click(self.window_info,
+                                            button_xy[0], button_xy[1])
+                    await asyncio.sleep(2)
+                else:
+                    # fallback на старый метод если нет координат
+                    await self.energo.turn_off()
+                    await asyncio.sleep(2)
 
             # 2. Открыть меню → Подземелья
             if not await game.wait_and_click("main_menu_gui", timeout=7):
@@ -682,33 +701,38 @@ class Dungeon(EventDrivenProfile):
                 await game.wait_and_click("npc_global_quit_button", timeout=2)
                 return False
 
-            # ── ДАНЖ ЗАПУЩЕН — ждём и выходим ────────────────────────
-            # ВАЖНО: НЕ вызываем energo.turn_on() — он ломает следующий запуск!
+            # ── ДАНЖ ЗАПУЩЕН — ждём загрузки и усыпляем ────────────────
+            # ЛОГИКА:
+            #   1. Клик по стрелке → БЕЛЫЙ ЭКРАН (загрузка данжа 3-4 сек)
+            #   2. Ждём 10 сек — данж полностью загружается, персонаж
+            #      встаёт на точку фарма
+            #   3. energo.turn_on() — кнопка энерго доступна (как и все
+            #      остальные кнопки интерфейса)
+            #   4. Окно уходит в сон
             #
-            # ЦЕПЬ ПРОБЛЕМЫ:
-            #   1. energo.turn_on() в конце → окно спит В ДАНЖЕ
-            #   2. Данж заканчивается → персонаж возвращается на спот
-            #   3. Следующий запуск: energo.is_on() → True
-            #   4. energo.turn_off() → swipe в центре + проверка zalupka_gui
-            #   5. Но персонаж ТОЛЬКО вернулся из данжа, zalupka_gui не находится
-            #   6. turn_off делает ПОВТОРНЫЙ swipe → сбивает камеру
-            #   7. game.wait_and_click("main_menu_gui") не находит меню
-            #   8. Поиск ломается!
-            #
-            # Поэтому: просто ждём 4 сек и выходим БЕЗ energo.turn_on().
-            # Окно остаётся активным, персонаж фармит в автоохоте.
-            # Когда данж закончится — персонаж сам вернётся на спот.
+            # СЛЕДУЮЩИЙ ЗАПУСК:
+            #   В начале _blessed_land_loop energo.is_on() = True.
+            #   Мы кликаем по кнопке энерго (ПРОСТО клик, БЕЗ swipe) —
+            #   это выключит энерго без побочных эффектов.
+            #   energo.turn_off() с swipe НЕ вызываем — он ломал поиск.
 
-            log("Данги: данж запущен, жду 4 сек на загрузку", window_id)
-            await asyncio.sleep(4)
+            log("Данги: данж запущен, жду 10 сек на загрузку", window_id)
+            await asyncio.sleep(10)
 
             # Скриншот после загрузки (для проверки)
             after_load = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
             if after_load is not None:
                 self._save_debug("blessed_after_load.png", after_load)
 
-            # ВЫХОДИМ — никаких больше кликов!
-            log("Данги: Благословенная Земля запущена, окно в данже",
+            # Усыпляем окно — интерфейс данжа загружен, кнопка энерго доступна
+            if not await self.energo.is_on():
+                log("Данги: включаю энергорежим (сон)", window_id)
+                await self.energo.turn_on()
+                await asyncio.sleep(2)
+            else:
+                log("Данги: уже в энергорежиме — пропускаю turn_on", window_id)
+
+            log("Данги: Благословенная Земля запущена, окно в сне",
                 window_id)
             self._upload_debug_async(window_id, made=1, error=None)
             return True
