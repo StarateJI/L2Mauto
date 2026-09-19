@@ -366,7 +366,9 @@ class Dungeon(EventDrivenProfile):
                 log("Данги: выхожу из энерго простым кликом (без swipe)",
                     window_id)
                 from bot.methods.base import parseCBT
-                button_xy, _ = parseCBT("energo_mode_gui", profile=self.profile)
+                # ВАЖНО: profile=self (Dungeon сам является профилем),
+                # а НЕ self.profile (этого атрибута нет, был AttributeError)
+                button_xy, _ = parseCBT("energo_mode_gui", profile=self)
                 if button_xy is not None:
                     await self._activate()
                     await asyncio.sleep(0.3)
