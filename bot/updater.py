@@ -143,16 +143,27 @@ def backup():
     os.makedirs(backups_dir, exist_ok=True)
     archive_path = os.path.join(backups_dir, f"update_backup_{version}.zip")
 
+    # ЛЁГКИЙ backup — только .py файлы (без скринов, temp_update, .git, debug)
+    # Раньше зиповал ВСЁ включая debug/ (сотни скриншотов) — это ложило I/O.
     with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(root_dir):
-            if any(skip in root for skip in ("backups", "logs")):
-                continue
+            # Пропускаем тяжёлые папки
+            dirs[:] = [d for d in dirs if d not in
+                       ("backups", "logs", "temp_update", ".git",
+                        "debug", "__pycache__", "screenshots")]
             for file in files:
+                # Только .py, .txt, .ini, .bat — конфиги и код
+                if not file.endswith((".py", ".txt", ".ini", ".bat",
+                                       ".json", ".toml", ".md")):
+                    continue
                 path = os.path.join(root, file)
                 rel_path = os.path.relpath(path, root_dir)
-                zipf.write(path, rel_path)
+                try:
+                    zipf.write(path, rel_path)
+                except Exception:
+                    pass  # файл может быть залочен — пропускаем
 
-    log(f"Сделан бэкап текущей версии в {archive_path}")
+    log(f"Сделан лёгкий бэкап .py в {archive_path}")
     return archive_path
 
 def _cleanup(root_dir: str) -> None:
@@ -335,19 +346,25 @@ def update():
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         backup()
 
-        # Скачиваем ZIP. timeout=(connect, read) — 10 сек на коннект,
-        # 120 сек на чтение (ZIP ~5MB, на медленном инете может занять время).
-        # chunk 64KB — нормальный размер, не забивает канал.
-        log("Скачиваю обнову...", )
+        # Скачиваем ZIP с ОГРАНИЧЕНИЕМ скорости — не ложим инет/игру.
+        # timeout=(connect, read) — 10 сек на коннект, 120 сек на чтение.
+        # chunk 64KB + sleep 0.05 сек между чанками = ~1.2 MB/сек max
+        # (не забивает канал, оставляет инет для игры)
+        import time as _time
+        log("Скачиваю обнову (с ограничением скорости)...")
         r = requests.get(REPO_ZIP, timeout=(10, 120), stream=True)
         r.raise_for_status()
         buf = io.BytesIO()
+        total = 0
         for chunk in r.iter_content(chunk_size=65536):
             if chunk:
                 buf.write(chunk)
+                total += len(chunk)
+                # Пауза 50ms между чанками — не забиваем канал
+                _time.sleep(0.05)
         buf.seek(0)
         z = zipfile.ZipFile(buf)
-        log(f"Скачал {len(buf.getvalue())} байт")
+        log(f"Скачал {total} байт ({total//1024} KB)")
 
         temp_dir = os.path.join(root_dir, "temp_update")
         if os.path.exists(temp_dir):

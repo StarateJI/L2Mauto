@@ -640,4 +640,15 @@ class NedoGui(QWidget):
             msg.setStandardButtons(QMessageBox.Ok)
             msg.setModal(False)
             msg.show()
-            QTimer.singleShot(10, update)
+            # Запускаем update в ОТДЕЛЬНОМ потоке — НЕ блокируем GUI и сеть.
+            # Раньше QTimer.singleShot(10, update) запускал в главном потоке,
+            # что блокировало всё на 2+ минуты и ложило инет.
+            import threading
+            from bot.updater import update
+            def _bg_update():
+                try:
+                    update()
+                except Exception as e:
+                    log(f"update() упал в фоне: {e}", level="ERROR")
+            t = threading.Thread(target=_bg_update, daemon=True)
+            t.start()
