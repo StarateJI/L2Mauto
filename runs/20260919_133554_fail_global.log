@@ -1,0 +1,201 @@
+=== Log tail 2026-09-19T13:35:56.982767 | last 200 lines ===
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\util\connection.py", line 85, in create_connection
+    raise err
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\util\connection.py", line 73, in create_connection
+    sock.connect(sa)
+TimeoutError: timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connectionpool.py", line 788, in urlopen
+    response = self._make_request(
+               ^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connectionpool.py", line 488, in _make_request
+    raise new_e
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connectionpool.py", line 464, in _make_request
+    self._validate_conn(conn)
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connectionpool.py", line 1106, in _validate_conn
+    conn.connect()
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connection.py", line 759, in connect
+    self.sock = sock = self._new_conn()
+                       ^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connection.py", line 213, in _new_conn
+    raise ConnectTimeoutError(
+urllib3.exceptions.ConnectTimeoutError: (<HTTPSConnection(host='github.com', port=443) at 0x15138e5bf90>, 'Connection to github.com timed out. (connect timeout=10)')
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Program Files\Python311\Lib\site-packages\requests\adapters.py", line 696, in send
+    resp = conn.urlopen(
+           ^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\connectionpool.py", line 842, in urlopen
+    retries = retries.increment(
+              ^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\urllib3\util\retry.py", line 543, in increment
+    raise MaxRetryError(_pool, url, reason) from reason  # type: ignore[arg-type]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+urllib3.exceptions.MaxRetryError: HTTPSConnectionPool(host='github.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/archive/refs/heads/main.zip (Caused by ConnectTimeoutError(<HTTPSConnection(host='github.com', port=443) at 0x15138e5bf90>, 'Connection to github.com timed out. (connect timeout=10)'))
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\PC\Desktop\L2Mauto\bot\updater.py", line 328, in update
+    r = requests.get(REPO_ZIP, timeout=(10, 60), stream=True)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\requests\api.py", line 87, in get
+    return request("get", url, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\requests\api.py", line 71, in request
+    return session.request(method=method, url=url, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\requests\sessions.py", line 651, in request
+    resp = self.send(prep, **send_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\requests\sessions.py", line 784, in send
+    r = adapter.send(request, **kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\Python311\Lib\site-packages\requests\adapters.py", line 717, in send
+    raise ConnectTimeout(e, request=request)
+requests.exceptions.ConnectTimeout: HTTPSConnectionPool(host='github.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/archive/refs/heads/main.zip (Caused by ConnectTimeoutError(<HTTPSConnection(host='github.com', port=443) at 0x15138e5bf90>, 'Connection to github.com timed out. (connect timeout=10)'))
+
+2026-09-19 13:32:02,002 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-19 13:32:02,341 - INFO - [global] Запустил чекер обнов
+2026-09-19 13:32:02,341 - INFO - [global] Проверяю обновы...
+2026-09-19 13:32:02,703 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-19 13:32:03,611 - DEBUG - [global] needs_update: raw → 5.11.21
+2026-09-19 13:32:03,616 - DEBUG - [global] needs_update: raw → 5.11.21
+2026-09-19 13:32:04,679 - DEBUG - [global] needs_update: API GitHub → 5.11.21
+2026-09-19 13:32:04,786 - DEBUG - [global] needs_update: API GitHub → 5.11.21
+2026-09-19 13:32:05,768 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 13:32:05,768 - DEBUG - [global] needs_update: лучший источник raw → 5.11.21 (из 3)
+2026-09-19 13:32:05,783 - INFO - [global] needs_update: local=(5, 11, 20) remote=(5, 11, 21) -> has_update=True
+2026-09-19 13:32:05,860 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 13:32:05,860 - DEBUG - [global] needs_update: лучший источник raw → 5.11.21 (из 3)
+2026-09-19 13:32:05,875 - INFO - [global] needs_update: local=(5, 11, 20) remote=(5, 11, 21) -> has_update=True
+2026-09-19 13:32:05,876 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-19 13:32:20,744 - INFO - [global] Сделан бэкап текущей версии в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.11.20.zip
+2026-09-19 13:32:25,358 - INFO - [global] Создан apply_update.bat: C:\Users\PC\Desktop\L2Mauto\apply_update.bat
+2026-09-19 13:32:25,358 - INFO - [global] Накатил обнпату через apply_update.bat, закрываюсь для рестарта...
+2026-09-19 13:32:30,771 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-19 13:32:31,558 - INFO - [global] Запустил чекер обнов
+2026-09-19 13:32:31,559 - INFO - [global] Проверяю обновы...
+2026-09-19 13:32:31,925 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-19 13:32:32,717 - DEBUG - [global] needs_update: raw → 5.11.21
+2026-09-19 13:32:32,774 - DEBUG - [global] needs_update: raw → 5.11.21
+2026-09-19 13:32:33,817 - DEBUG - [global] needs_update: API GitHub → 5.11.21
+2026-09-19 13:32:33,942 - DEBUG - [global] needs_update: API GitHub → 5.11.21
+2026-09-19 13:32:34,905 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 13:32:34,905 - DEBUG - [global] needs_update: лучший источник raw → 5.11.21 (из 3)
+2026-09-19 13:32:34,920 - INFO - [global] needs_update: local=(5, 11, 21) remote=(5, 11, 21) -> has_update=False
+2026-09-19 13:32:35,013 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 13:32:35,013 - DEBUG - [global] needs_update: лучший источник raw → 5.11.21 (из 3)
+2026-09-19 13:32:35,015 - INFO - [global] needs_update: local=(5, 11, 21) remote=(5, 11, 21) -> has_update=False
+2026-09-19 13:32:35,043 - INFO - [global] Установлена последняя версия бота | 5.11.21
+2026-09-19 13:33:02,194 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-19 13:33:02,196 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-19 13:33:03,030 - DEBUG - [global] _api_put: GET runs/20260919_133302_fail_periodic.log -> 404
+2026-09-19 13:33:04,603 - DEBUG - [global] _api_put: PUT runs/20260919_133302_fail_periodic.log -> 201 (10855 bytes)
+2026-09-19 13:33:04,605 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260919_133302_fail_periodic.log
+2026-09-19 13:33:05,174 - INFO - [global] Проверяю обновы...
+2026-09-19 13:33:05,516 - DEBUG - [global] _api_put: GET debug/periodic/blessed_land_text.png -> 200
+2026-09-19 13:33:05,777 - DEBUG - [global] needs_update: raw → 5.11.21
+2026-09-19 13:33:06,643 - DEBUG - [global] needs_update: API GitHub → 5.11.21
+2026-09-19 13:33:07,137 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_land_text.png -> 200 (17369 bytes)
+2026-09-19 13:33:07,200 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 13:33:07,201 - DEBUG - [global] needs_update: лучший источник raw → 5.11.21 (из 3)
+2026-09-19 13:33:07,203 - INFO - [global] needs_update: local=(5, 11, 21) remote=(5, 11, 21) -> has_update=False
+2026-09-19 13:33:07,203 - INFO - [global] Установлена последняя версия бота | 5.11.21
+2026-09-19 13:33:07,954 - DEBUG - [global] _api_put: GET debug/periodic/blessed_zemlya.png -> 200
+2026-09-19 13:33:09,246 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_zemlya.png -> 200 (1808 bytes)
+2026-09-19 13:33:09,248 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 2/2 (удалено с диска: 2)
+2026-09-19 13:33:10,162 - DEBUG - [global] _api_put: GET runs/20260919_133302_fail_global.log -> 404
+2026-09-19 13:33:11,883 - DEBUG - [global] _api_put: PUT runs/20260919_133302_fail_global.log -> 201 (17874 bytes)
+2026-09-19 13:33:11,886 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260919_133302_fail_global.log
+2026-09-19 13:33:11,886 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-19 13:33:11,886 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-19 13:33:24,507 - INFO - [global] Запуск через 3 сек. | ['Submariner']
+2026-09-19 13:33:27,566 - INFO - [global] Создал мышь
+2026-09-19 13:33:27,566 - INFO - [global] Инициализировал созданную мышь!
+2026-09-19 13:33:37,223 - INFO - [global] Проверяю обновы...
+2026-09-19 13:33:37,873 - DEBUG - [global] needs_update: raw → 5.11.21
+2026-09-19 13:33:38,727 - DEBUG - [global] needs_update: API GitHub → 5.11.21
+2026-09-19 13:33:39,376 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 13:33:39,377 - DEBUG - [global] needs_update: лучший источник raw → 5.11.21 (из 3)
+2026-09-19 13:33:39,380 - INFO - [global] needs_update: local=(5, 11, 21) remote=(5, 11, 21) -> has_update=False
+2026-09-19 13:33:39,381 - INFO - [global] Установлена последняя версия бота | 5.11.21
+2026-09-19 13:34:08,718 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-19 13:34:09,400 - INFO - [global] Проверяю обновы...
+2026-09-19 13:34:10,046 - DEBUG - [global] needs_update: raw → 5.11.21
+2026-09-19 13:34:10,943 - DEBUG - [global] needs_update: API GitHub → 5.11.21
+2026-09-19 13:34:11,531 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 13:34:11,532 - DEBUG - [global] needs_update: лучший источник raw → 5.11.21 (из 3)
+2026-09-19 13:34:11,534 - INFO - [global] needs_update: local=(5, 11, 21) remote=(5, 11, 21) -> has_update=False
+2026-09-19 13:34:11,535 - INFO - [global] Установлена последняя версия бота | 5.11.21
+2026-09-19 13:34:11,919 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-19 13:34:11,920 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-19 13:34:12,776 - DEBUG - [global] _api_put: GET runs/20260919_133411_fail_periodic.log -> 404
+2026-09-19 13:34:14,176 - DEBUG - [global] _api_put: PUT runs/20260919_133411_fail_periodic.log -> 409 (10855 bytes)
+2026-09-19 13:34:14,176 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 1f61dec8c627a2eb8d8c69b3c8ad0bb722a65aa3 but expected 115275a468f3b5507b58460866d47d2e8a0f51c7","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-19 13:34:14,178 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-09-19 13:34:15,010 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_30.png -> 404
+2026-09-19 13:34:16,882 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_30.png -> 201 (117788 bytes)
+2026-09-19 13:34:17,734 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_40.png -> 404
+2026-09-19 13:34:19,585 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_40.png -> 201 (116432 bytes)
+2026-09-19 13:34:20,424 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_50.png -> 404
+2026-09-19 13:34:22,268 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_50.png -> 201 (116431 bytes)
+2026-09-19 13:34:23,128 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_55.png -> 404
+2026-09-19 13:34:24,982 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_55.png -> 201 (117917 bytes)
+2026-09-19 13:34:25,780 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_60.png -> 404
+2026-09-19 13:34:27,907 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_60.png -> 201 (115990 bytes)
+2026-09-19 13:34:28,758 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_70.png -> 404
+2026-09-19 13:34:30,581 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_70.png -> 201 (116627 bytes)
+2026-09-19 13:34:31,419 - DEBUG - [global] _api_put: GET debug/periodic/blessed_after_Ур_75.png -> 404
+2026-09-19 13:34:33,249 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_after_Ур_75.png -> 201 (115891 bytes)
+2026-09-19 13:34:34,242 - DEBUG - [global] _api_put: GET debug/periodic/blessed_found_ocr.png -> 200
+2026-09-19 13:34:36,063 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_found_ocr.png -> 200 (49586 bytes)
+2026-09-19 13:34:37,086 - DEBUG - [global] _api_put: GET debug/periodic/blessed_level_window.png -> 200
+2026-09-19 13:34:38,876 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_level_window.png -> 200 (56023 bytes)
+2026-09-19 13:34:41,554 - INFO - [global] Проверяю обновы...
+2026-09-19 13:34:41,860 - DEBUG - [global] _api_put: GET debug/periodic/blessed_menu_opened.png -> 200
+2026-09-19 13:34:42,215 - DEBUG - [global] needs_update: raw → 5.11.21
+2026-09-19 13:34:43,081 - DEBUG - [global] needs_update: API GitHub → 5.11.21
+2026-09-19 13:34:43,663 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 13:34:43,663 - DEBUG - [global] needs_update: лучший источник raw → 5.11.21 (из 3)
+2026-09-19 13:34:43,665 - INFO - [global] needs_update: local=(5, 11, 21) remote=(5, 11, 21) -> has_update=False
+2026-09-19 13:34:43,665 - INFO - [global] Установлена последняя версия бота | 5.11.21
+2026-09-19 13:34:43,750 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_menu_opened.png -> 200 (108795 bytes)
+2026-09-19 13:34:44,748 - DEBUG - [global] _api_put: GET debug/periodic/blessed_scroll_00.png -> 200
+2026-09-19 13:34:46,458 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_scroll_00.png -> 200 (44112 bytes)
+2026-09-19 13:34:47,503 - DEBUG - [global] _api_put: GET debug/periodic/blessed_scroll_03.png -> 200
+2026-09-19 13:34:49,160 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_scroll_03.png -> 200 (50676 bytes)
+2026-09-19 13:34:50,318 - DEBUG - [global] _api_put: GET debug/periodic/blessed_time_check.png -> 200
+2026-09-19 13:34:51,774 - DEBUG - [global] _api_put: PUT debug/periodic/blessed_time_check.png -> 200 (10353 bytes)
+2026-09-19 13:34:51,778 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 13/13 (удалено с диска: 13)
+2026-09-19 13:34:52,722 - DEBUG - [global] _api_put: GET runs/20260919_133411_fail_global.log -> 404
+2026-09-19 13:34:54,331 - DEBUG - [global] _api_put: PUT runs/20260919_133411_fail_global.log -> 201 (18416 bytes)
+2026-09-19 13:34:54,334 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260919_133411_fail_global.log
+2026-09-19 13:34:54,334 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-19 13:34:54,334 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-19 13:35:13,681 - INFO - [global] Проверяю обновы...
+2026-09-19 13:35:14,333 - DEBUG - [global] needs_update: raw → 5.11.21
+2026-09-19 13:35:15,175 - DEBUG - [global] needs_update: API GitHub → 5.11.21
+2026-09-19 13:35:15,802 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 13:35:15,802 - DEBUG - [global] needs_update: лучший источник raw → 5.11.21 (из 3)
+2026-09-19 13:35:15,804 - INFO - [global] needs_update: local=(5, 11, 21) remote=(5, 11, 21) -> has_update=False
+2026-09-19 13:35:15,804 - INFO - [global] Установлена последняя версия бота | 5.11.21
+2026-09-19 13:35:45,822 - INFO - [global] Проверяю обновы...
+2026-09-19 13:35:46,454 - DEBUG - [global] needs_update: raw → 5.11.21
+2026-09-19 13:35:47,335 - DEBUG - [global] needs_update: API GitHub → 5.11.21
+2026-09-19 13:35:47,962 - DEBUG - [global] needs_update: jsdelivr → 5.11.18
+2026-09-19 13:35:47,962 - DEBUG - [global] needs_update: лучший источник raw → 5.11.21 (из 3)
+2026-09-19 13:35:47,964 - INFO - [global] needs_update: local=(5, 11, 21) remote=(5, 11, 21) -> has_update=False
+2026-09-19 13:35:47,965 - INFO - [global] Установлена последняя версия бота | 5.11.21
+2026-09-19 13:35:54,372 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-19 13:35:54,373 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-19 13:35:55,267 - DEBUG - [global] _api_put: GET runs/20260919_133554_fail_periodic.log -> 404
+2026-09-19 13:35:56,907 - DEBUG - [global] _api_put: PUT runs/20260919_133554_fail_periodic.log -> 201 (10855 bytes)
+2026-09-19 13:35:56,909 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260919_133554_fail_periodic.log
+2026-09-19 13:35:56,910 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
