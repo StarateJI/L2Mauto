@@ -292,6 +292,18 @@ REM ---- Шаг 3: остальные файлы (overwrite) ----
 echo Step 3: xcopy other files... >> "{root_dir}\\apply_update.log"
 xcopy "{temp_dir}\\*" "{root_dir}\\" /e /y /i >> "{root_dir}\\apply_update.log" 2>&1
 
+REM ---- Шаг 3b: ПРИНУДИТЕЛЬНО копируем PNG шаблоны ----
+echo Step 3b: force-copy PNG templates... >> "{root_dir}\\apply_update.log"
+if exist "{temp_dir}\\profiles\\Dungeon\\blessed_zemlya.png" (
+    copy /y "{temp_dir}\\profiles\\Dungeon\\blessed_zemlya.png" "{root_dir}\\profiles\\Dungeon\\blessed_zemlya.png" >> "{root_dir}\\apply_update.log" 2>&1
+)
+if exist "{temp_dir}\\profiles\\Dungeon\\blessed_land_text.png" (
+    copy /y "{temp_dir}\\profiles\\Dungeon\\blessed_land_text.png" "{root_dir}\\profiles\\Dungeon\\blessed_land_text.png" >> "{root_dir}\\apply_update.log" 2>&1
+)
+if exist "{temp_dir}\\profiles\\Dungeon\\blessed_land_icon.jpg" (
+    copy /y "{temp_dir}\\profiles\\Dungeon\\blessed_land_icon.jpg" "{root_dir}\\profiles\\Dungeon\\blessed_land_icon.jpg" >> "{root_dir}\\apply_update.log" 2>&1
+)
+
 REM ---- Шаг 4: cleanup ----
 echo Step 4: cleanup temp_dir... >> "{root_dir}\\apply_update.log"
 rd /s /q "{temp_dir}" 2>nul
