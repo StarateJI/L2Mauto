@@ -578,128 +578,95 @@ class Dungeon(EventDrivenProfile):
             await asyncio.sleep(2)
             log("Данги: нажал Вход", window_id)
 
-            # ── СКРИНШОТ ОКНА ВЫБОРА УРОВНЯ ────────────────────────────
-            # Это самое важное для отладки — покажет где стрелка телепорта.
-            # Без этого скриншота я гадаю где кликать.
+            # 6. Кликнуть по стрелке телепорта нужного уровня
+            #
+            # НОВАЯ ЛОГИКА (полностью переписана):
+            # Раньше: клик по уровню → потом клик по стрелке
+            # Теперь: кликаем СРАЗУ по стрелке нужного уровня
+            #
+            # В игре стрелка = кнопка "Войти в этот уровень".
+            # Клик по стрелке автоматически открывает окно загрузки.
+            # НЕ нужно предварительно выбирать уровень!
+            #
+            # КООРДИНАТЫ ОТ USER'a (разрешение 2560x1440, окно данжей 890x1151):
+            # Окно данжей: top-left (839, 146), bottom-right (1729, 1297)
+            # Стрелки (в процентах от размера окна):
+            #   Ур.30: x=91.5%, y=14.1%
+            #   Ур.40: x=90.8%, y=23.9%
+            #   Ур.50: x=91.7%, y=34.5%
+            #   Ур.55: x=90.2%, y=45.7%
+            #   Ур.60: x=91.4%, y=57.0%
+            #   Ур.70: x=90.8%, y=66.2%
+            #   Ур.75: x=89.1%, y=77.3%  ← нужный (последний доступный)
+            #   Ур.78: x=87.9%, y=87.5%  (серый, недоступный)
+            #
+            # Средняя позиция стрелок: x≈90% ширины
+            # БОТА КЛИКАЛ НА 65% — ПРОМАХИВАЛСЯ НА 100 ПИКСЕЛЕЙ ВЛЕВО!
+            # Это и было причиной того что окно закрывалось — клик шёл в пустую зону.
+
+            # Список уровней от нижнего к верхнему (с их Y-координатами)
+            # Если Ур.75 не сработает — пробуем Ур.70, Ур.60 и т.д.
+            LEVELS_Y = [
+                ("Ур.75", 0.773),  # последний доступный
+                ("Ур.70", 0.662),
+                ("Ур.60", 0.570),
+                ("Ур.55", 0.457),
+                ("Ур.50", 0.345),
+                ("Ур.40", 0.239),
+                ("Ур.30", 0.141),
+            ]
+            ARROW_X_PCT = 0.90  # стрелки на 90% ширины
+
+            # Скриншот окна выбора уровня (для отладки)
             level_window_shot = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
             if level_window_shot is not None:
                 self._save_debug("blessed_level_window.png", level_window_shot)
-                log("Данги: сохранён blessed_level_window.png — окно выбора уровня",
+
+            arrow_clicked = False
+            for level_name, level_y_pct in LEVELS_Y:
+                arrow_x = int(ww * ARROW_X_PCT)
+                arrow_y = int(wh * level_y_pct)
+
+                # АКТИВИРУЕМ окно перед каждым кликом
+                await self._activate()
+                await asyncio.sleep(0.3)
+
+                log(f"Данги: пробую {level_name} — клик по стрелке "
+                    f"({arrow_x},{arrow_y}) окно {ww}x{wh}",
                     window_id)
+                await self.mouse.click(self.window_info, arrow_x, arrow_y)
+                await asyncio.sleep(2)
 
-            # 6. Выбрать последний доступный уровень
-            # ВАЖНО: НЕ скроллим вниз! Список уровней и так полностью виден
-            # (Ур.30, 35, 40, 45, 50, 55, 60, 70, 75). Прокрутка вниз только
-            # уводит последний уровень (Ур.75) из видимой зоны.
-            # Скриншот ПОСЛЕ открытия окна (без прокрутки)
-            after_scroll = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-            if after_scroll is not None:
-                self._save_debug("blessed_after_scroll.png", after_scroll)
-
-            level_found = False
-            level_click_y = 0
-            for attempt in range(10):
-                full_bgr = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-                if full_bgr is None:
-                    await self.mouse.wheel(self.window_info,
-                                           [(ww // 2, wh // 2)],
-                                           direction="up", times=2)
-                    await asyncio.sleep(0.5)
-                    continue
-                gray = cv2.cvtColor(full_bgr, cv2.COLOR_BGR2GRAY)
-                h, w = gray.shape
-                # Зона поиска уровней — ЛЕВАЯ часть (там список уровней)
-                # x=10%-40% — там только текст уровней "Ур.30", "Ур.35" и т.д.
-                level_zone = gray[:, int(w * 0.10):int(w * 0.40)]
-
-                # ВАЖНО: текст уровней в окне выбора ТЁМНЫЙ (яркость ~30-45),
-                # а НЕ яркий. Порог >180 ничего не находил.
-                # Понизил до 100 — теперь видит все строки.
-                # bright_count > 3 — минимальный порог (текст узкий, 3-5 пикселей).
-                bright_rows = np.sum(level_zone > 100, axis=1)
-                bright_lines = np.where(bright_rows > 3)[0]
-
-                if len(bright_lines) > 0:
-                    # Ограничиваем Y: 18%-90% высоты — НЕ брать заголовок
-                    # "Список телепортов" (y=25 на окне 225px) и кнопки внизу
-                    min_y = int(h * 0.18)
-                    max_y = int(h * 0.90)
-                    valid = [y for y in bright_lines if min_y <= y <= max_y]
-                    if valid:
-                        # Группируем: строки с разницей >5px = разные уровни
-                        # Проверил пиксели напрямую: на скрине видны 7 уровней
-                        # (Ур.30, 40, 50, 55, 60, 70, 75). Ур.78 НЕ виден.
-                        # groups[-1] = последний = Ур.75 (последний доступный).
-                        groups = []
-                        current_group = [valid[0]]
-                        for y in valid[1:]:
-                            if y - current_group[-1] <= 5:
-                                current_group.append(y)
-                            else:
-                                groups.append(current_group)
-                                current_group = [y]
-                        groups.append(current_group)
-
-                        # Берём ПОСЛЕДНЮЮ группу = последний ДОСТУПНЫЙ уровень (Ур.75)
-                        # Раньше думал что последняя группа = Ур.78 серый,
-                        # но по факту Ур.78 НЕ виден на скриншоте!
-                        chosen_group = groups[-1]
-                        level_click_y = int(np.mean(chosen_group))
-
-                        # АКТИВИРУЕМ окно перед кликом — иначе клик игнорируется
-                        await self._activate()
-                        await asyncio.sleep(0.3)
-                        # Клик по названию уровня (ЛЕВАЯ часть, 25% ширины)
-                        await self.mouse.click(self.window_info,
-                                                int(w * 0.25), level_click_y)
-                        await asyncio.sleep(1)
-                        level_found = True
-                        log(f"Данги: выбран уровень y={level_click_y} "
-                            f"(групп: {len(groups)}, всего строк: {len(valid)})",
-                            window_id)
-                        # Скриншот ПОСЛЕ клика на уровень
-                        after_level = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-                        if after_level is not None:
-                            self._save_debug("blessed_after_level_click.png",
-                                              after_level)
+                # Скриншот после клика
+                after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+                if after_click is not None:
+                    self._save_debug(f"blessed_after_{level_name.replace('.', '_')}.png",
+                                      after_click)
+                    # Проверяем — закрылось ли окно выбора уровня?
+                    # Если окно закрылось — значит данж запущен
+                    # (game показала экран загрузки или вернулась в игру)
+                    gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
+                    # Если средняя яркость сильно изменилась — что-то произошло
+                    # Простой способ: если пикселей уровней (тёмный текст) больше нет
+                    # в зоне x=10-40%, значит окно закрылось
+                    level_zone = gray[:, int(ww * 0.10):int(ww * 0.40)]
+                    bright_rows = np.sum(level_zone > 100, axis=1)
+                    bright_lines_count = np.where(bright_rows > 3)[0]
+                    if len(bright_lines_count) < 3:
+                        log(f"Данги: окно выбора уровня закрылось после клика "
+                            f"по {level_name} — данж запущен", window_id)
+                        arrow_clicked = True
                         break
+                    else:
+                        log(f"Данги: окно ещё открыто после клика по {level_name} "
+                            f"(видно {len(bright_lines_count)} строк) — "
+                            f"уровень недоступен, пробую следующий", window_id)
 
-                await self.mouse.wheel(self.window_info,
-                                       [(ww // 2, wh // 2)],
-                                       direction="up", times=2)
-                await asyncio.sleep(0.5)
-
-            if not level_found:
-                log("Данги: не нашёл доступный уровень",
+            if not arrow_clicked:
+                log("Данги: не смог кликнуть ни по одной стрелке",
                     window_id, level="WARNING")
                 await game.wait_and_click("npc_global_quit_button", timeout=2)
                 return False
-
-            # 7. Нажать стрелку телепорта (СПРАВА от выбранного уровня)
-            # ГЛАВНЫЙ ФИКС: VLM наврал про 89% ширины.
-            # Проверил пиксели напрямую через cv2 на blessed_level_window.png:
-            #   - Белые яркие полосы (стрелки) на x=261 (=65% от 400px ширины)
-            #   - Размер стрелки 24x36 px, белая иконка
-            #   - Бот кликал на x=356 (89%) — попадал в пустую рамку справа!
-            # Возвращаю x=65% — это точное попадание в стрелку.
-            #
-            # ВАЖНО: перед кликом АКТИВИРУЕМ окно (_activate) — иначе клик
-            # уходит в неактивное окно и игра его игнорирует, окно закрывается.
-            arrow_x = int(ww * 0.65)
-            arrow_y = level_click_y
-            log(f"Данги: активирую окно перед кликом по стрелке", window_id)
-            await self._activate()
-            await asyncio.sleep(0.3)
-            log(f"Данги: клик по стрелке ({arrow_x},{arrow_y}) "
-                f"(окно {ww}x{wh})",
-                window_id)
-            await self.mouse.click(self.window_info, arrow_x, arrow_y)
-            await asyncio.sleep(2)
-
-            # Скриншот ПОСЛЕ клика по стрелке
-            after_arrow = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-            if after_arrow is not None:
-                self._save_debug("blessed_after_arrow_click.png", after_arrow)
 
             log("Данги: нажал телепорт, отправляю в сон", window_id)
 
