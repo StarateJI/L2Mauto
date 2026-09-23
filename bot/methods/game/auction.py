@@ -1382,8 +1382,12 @@ class Auction(GameAction):
             # (самый нижний-правый слот = свежедобавленный)
             red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
             chosen_dot = red_dots_sorted[-1]  # последний
-            chosen_cx = chosen_dot[0] - 25
-            chosen_cy = chosen_dot[1] + 25
+            # Кликаем чуть ЛЕВЕЕ и НИЖЕ красной точки — это центр слота.
+            # Красная точка в правом верхнем углу слота (~50×50).
+            # Раньше было -25,+25, но это давало мимо.
+            # Берём -20, +20 — ближе к центру иконки.
+            chosen_cx = chosen_dot[0] - 20
+            chosen_cy = chosen_dot[1] + 20
 
             log(f"Аук: стр {page} — красных точек: {len(red_dots)}, "
                 f"берём ПОСЛЕДНЮЮ ({chosen_dot[0]},{chosen_dot[1]}) → "
