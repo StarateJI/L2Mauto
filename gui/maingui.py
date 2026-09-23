@@ -648,6 +648,7 @@ class NedoGui(QWidget):
             QMessageBox.Yes | QMessageBox.No
         )
         if reply == QMessageBox.Yes:
+            log("show_update: юзер нажал Yes — запускаю update()")
             msg = QMessageBox(self)
             msg.setWindowTitle("Обнове быть!")
             msg.setText("Все гуд, бот сам перезапустится через несколько секунд\nТекущее окно зависнет, НЕ ТРОГАЙ ЕГО")
@@ -661,6 +662,7 @@ class NedoGui(QWidget):
             class _UpdaterThread(QThread):
                 def run(self):
                     try:
+                        log("show_update: _UpdaterThread.run() стартовал")
                         from bot.updater import update
                         update()
                     except Exception as e:
