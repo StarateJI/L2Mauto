@@ -1,0 +1,201 @@
+=== Log tail 2026-09-24T00:20:06.818986 | last 200 lines ===
+2026-09-23 23:59:15,459 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-24 00:02:25,433 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-24 00:02:25,437 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-24 00:02:27,223 - DEBUG - [global] _api_put: GET runs/20260924_000225_fail_periodic.log -> 404
+2026-09-24 00:02:29,548 - DEBUG - [global] _api_put: PUT runs/20260924_000225_fail_periodic.log -> 201 (1339 bytes)
+2026-09-24 00:02:29,553 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_000225_fail_periodic.log
+2026-09-24 00:02:29,556 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-24 00:02:31,614 - DEBUG - [global] _api_put: GET runs/20260924_000225_fail_global.log -> 404
+2026-09-24 00:02:34,276 - DEBUG - [global] _api_put: PUT runs/20260924_000225_fail_global.log -> 201 (22865 bytes)
+2026-09-24 00:02:34,284 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_000225_fail_global.log
+2026-09-24 00:02:34,284 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-24 00:02:34,285 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-24 00:07:35,195 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-24 00:07:35,204 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-24 00:07:37,056 - DEBUG - [global] _api_put: GET runs/20260924_000735_fail_periodic.log -> 404
+2026-09-24 00:07:39,563 - DEBUG - [global] _api_put: PUT runs/20260924_000735_fail_periodic.log -> 201 (1339 bytes)
+2026-09-24 00:07:39,570 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_000735_fail_periodic.log
+2026-09-24 00:07:39,572 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-24 00:07:41,712 - DEBUG - [global] _api_put: GET runs/20260924_000735_fail_global.log -> 404
+2026-09-24 00:07:44,156 - DEBUG - [global] _api_put: PUT runs/20260924_000735_fail_global.log -> 201 (22901 bytes)
+2026-09-24 00:07:44,168 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_000735_fail_global.log
+2026-09-24 00:07:44,168 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-24 00:07:44,169 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-24 00:09:17,667 - INFO - [global] Проверяю обновы...
+2026-09-24 00:09:19,327 - DEBUG - [global] needs_update: raw → 5.11.91
+2026-09-24 00:09:19,341 - DEBUG - [global] needs_update: API → 5.11.91
+2026-09-24 00:09:19,343 - DEBUG - [global] needs_update: лучший источник raw → 5.11.91 (из 2)
+2026-09-24 00:09:19,344 - INFO - [global] needs_update: local=(5, 11, 90) remote=(5, 11, 91) -> has_update=True
+2026-09-24 00:09:19,344 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-24 00:10:13,773 - INFO - [global] Сделан лёгкий бэкап .py в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.11.90.zip
+2026-09-24 00:10:13,774 - INFO - [global] Обнова: бэкап сделан, качаю файлы ПАРАЛЛЕЛЬНО (8 потоков)...
+2026-09-24 00:10:16,251 - DEBUG - [global] Обнова: скачано 20/71 (ok=20, fail=0)
+2026-09-24 00:10:17,061 - DEBUG - [global] Обнова: скачано 40/71 (ok=40, fail=0)
+2026-09-24 00:10:17,696 - DEBUG - [global] Обнова: скачано 60/71 (ok=56, fail=4)
+2026-09-24 00:10:18,194 - DEBUG - [global] Обнова: скачано 71/71 (ok=67, fail=4)
+2026-09-24 00:10:18,197 - INFO - [global] Обнова: скачано 67/71 файлов за 4.4с, ошибок: 4
+2026-09-24 00:10:18,197 - WARNING - [global] Обнова: НЕ скачаны (4): ['profiles/PvPDodge/pvp.py', 'profiles/Rewards/rewards.py', 'profiles/Buyer/buyer.py', 'profiles/MainAlchemy/main_alch.py']
+2026-09-24 00:10:18,197 - DEBUG - [global] Обнова: повтор неудачных (4)...
+2026-09-24 00:10:18,562 - WARNING - [global] Обнова: окончательно НЕ скачаны: ['profiles/PvPDodge/pvp.py', 'profiles/Rewards/rewards.py', 'profiles/Buyer/buyer.py', 'profiles/MainAlchemy/main_alch.py']
+2026-09-24 00:10:18,629 - INFO - [global] Создан apply_update.bat: C:\Users\PC\Desktop\L2Mauto\apply_update.bat
+2026-09-24 00:10:18,630 - INFO - [global] Накатил обнпату через apply_update.bat, закрываюсь для рестарта...
+2026-09-24 00:10:33,291 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-24 00:10:37,215 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-24 00:10:37,216 - INFO - [global] Запустил чекер обнов
+2026-09-24 00:10:37,216 - INFO - [global] Проверяю обновы...
+2026-09-24 00:10:39,204 - DEBUG - [global] needs_update: raw → 5.11.91
+2026-09-24 00:10:39,339 - DEBUG - [global] needs_update: API → 5.11.91
+2026-09-24 00:10:39,346 - DEBUG - [global] needs_update: лучший источник raw → 5.11.91 (из 2)
+2026-09-24 00:10:39,346 - INFO - [global] needs_update: local=(5, 11, 91) remote=(5, 11, 91) -> has_update=False
+2026-09-24 00:10:39,348 - INFO - [global] Установлена последняя версия бота | 5.11.91
+2026-09-24 00:10:39,543 - DEBUG - [global] needs_update: raw → 5.11.91
+2026-09-24 00:10:39,707 - DEBUG - [global] needs_update: API → 5.11.91
+2026-09-24 00:10:39,723 - DEBUG - [global] needs_update: лучший источник raw → 5.11.91 (из 2)
+2026-09-24 00:10:39,724 - INFO - [global] needs_update: local=(5, 11, 91) remote=(5, 11, 91) -> has_update=False
+2026-09-24 00:12:37,585 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-24 00:12:37,594 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-24 00:12:39,140 - DEBUG - [global] _api_put: GET runs/20260924_001237_fail_periodic.log -> 404
+2026-09-24 00:12:41,564 - DEBUG - [global] _api_put: PUT runs/20260924_001237_fail_periodic.log -> 201 (1339 bytes)
+2026-09-24 00:12:41,573 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_001237_fail_periodic.log
+2026-09-24 00:12:41,575 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-24 00:12:43,306 - DEBUG - [global] _api_put: GET runs/20260924_001237_fail_global.log -> 404
+2026-09-24 00:12:45,754 - DEBUG - [global] _api_put: PUT runs/20260924_001237_fail_global.log -> 201 (23094 bytes)
+2026-09-24 00:12:45,759 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_001237_fail_global.log
+2026-09-24 00:12:45,759 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-24 00:12:45,759 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-24 00:13:35,653 - INFO - [global] Запуск через 3 сек. | ['Whiterun']
+2026-09-24 00:13:38,732 - INFO - [global] Создал мышь
+2026-09-24 00:13:38,732 - INFO - [global] Инициализировал созданную мышь!
+2026-09-24 00:13:53,791 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-24 00:13:53,792 - INFO - [global] СТОП ВСЕ: останавливаю 1 окон: ['Whiterun']
+2026-09-24 00:13:53,793 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-09-24 00:13:54,214 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-24 00:13:54,215 - INFO - [global] СТОП ВСЕ: останавливаю 1 окон: ['Whiterun']
+2026-09-24 00:13:54,215 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-09-24 00:13:54,216 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 00:13:54,434 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-24 00:13:54,435 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-24 00:13:54,435 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-09-24 00:13:55,664 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-24 00:13:55,664 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-24 00:13:55,665 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-09-24 00:16:47,144 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-24 00:16:50,469 - INFO - [global] Запустил чекер обнов
+2026-09-24 00:16:50,470 - INFO - [global] Проверяю обновы...
+2026-09-24 00:16:50,475 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-24 00:16:52,011 - DEBUG - [global] needs_update: API → 5.11.92
+2026-09-24 00:16:52,036 - DEBUG - [global] needs_update: raw → 5.11.92
+2026-09-24 00:16:52,037 - DEBUG - [global] needs_update: лучший источник API → 5.11.92 (из 2)
+2026-09-24 00:16:52,037 - INFO - [global] needs_update: local=(5, 11, 91) remote=(5, 11, 92) -> has_update=True
+2026-09-24 00:16:52,037 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-24 00:16:52,264 - DEBUG - [global] needs_update: raw → 5.11.92
+2026-09-24 00:16:52,433 - DEBUG - [global] needs_update: API → 5.11.92
+2026-09-24 00:16:52,495 - DEBUG - [global] needs_update: лучший источник raw → 5.11.92 (из 2)
+2026-09-24 00:16:52,495 - INFO - [global] needs_update: local=(5, 11, 91) remote=(5, 11, 92) -> has_update=True
+2026-09-24 00:16:58,168 - INFO - [global] Сделан лёгкий бэкап .py в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.11.91.zip
+2026-09-24 00:16:58,169 - INFO - [global] Обнова: бэкап сделан, качаю файлы ПАРАЛЛЕЛЬНО (8 потоков)...
+2026-09-24 00:17:00,470 - DEBUG - [global] Обнова: скачано 20/71 (ok=20, fail=0)
+2026-09-24 00:17:01,098 - DEBUG - [global] Обнова: скачано 40/71 (ok=40, fail=0)
+2026-09-24 00:17:01,837 - DEBUG - [global] Обнова: скачано 60/71 (ok=56, fail=4)
+2026-09-24 00:17:02,173 - DEBUG - [global] Обнова: скачано 71/71 (ok=67, fail=4)
+2026-09-24 00:17:02,174 - INFO - [global] Обнова: скачано 67/71 файлов за 4.0с, ошибок: 4
+2026-09-24 00:17:02,175 - WARNING - [global] Обнова: НЕ скачаны (4): ['profiles/PvPDodge/pvp.py', 'profiles/Rewards/rewards.py', 'profiles/Buyer/buyer.py', 'profiles/MainAlchemy/main_alch.py']
+2026-09-24 00:17:02,175 - DEBUG - [global] Обнова: повтор неудачных (4)...
+2026-09-24 00:17:02,532 - WARNING - [global] Обнова: окончательно НЕ скачаны: ['profiles/PvPDodge/pvp.py', 'profiles/Rewards/rewards.py', 'profiles/Buyer/buyer.py', 'profiles/MainAlchemy/main_alch.py']
+2026-09-24 00:17:02,582 - INFO - [global] Создан apply_update.bat: C:\Users\PC\Desktop\L2Mauto\apply_update.bat
+2026-09-24 00:17:02,583 - INFO - [global] Накатил обнпату через apply_update.bat, закрываюсь для рестарта...
+2026-09-24 00:17:13,540 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-24 00:17:15,000 - INFO - [global] Запустил чекер обнов
+2026-09-24 00:17:15,001 - INFO - [global] Проверяю обновы...
+2026-09-24 00:17:15,001 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-24 00:17:16,297 - DEBUG - [global] needs_update: raw → 5.11.92
+2026-09-24 00:17:16,390 - DEBUG - [global] needs_update: raw → 5.11.92
+2026-09-24 00:17:16,595 - DEBUG - [global] needs_update: API → 5.11.92
+2026-09-24 00:17:16,659 - DEBUG - [global] needs_update: лучший источник raw → 5.11.92 (из 2)
+2026-09-24 00:17:16,660 - INFO - [global] needs_update: local=(5, 11, 92) remote=(5, 11, 92) -> has_update=False
+2026-09-24 00:17:16,660 - DEBUG - [global] needs_update: API → 5.11.92
+2026-09-24 00:17:16,717 - DEBUG - [global] needs_update: лучший источник raw → 5.11.92 (из 2)
+2026-09-24 00:17:16,718 - INFO - [global] needs_update: local=(5, 11, 92) remote=(5, 11, 92) -> has_update=False
+2026-09-24 00:17:16,779 - INFO - [global] Установлена последняя версия бота | 5.11.92
+2026-09-24 00:18:05,608 - INFO - [global] Запуск через 3 сек. | ['Whiterun']
+2026-09-24 00:18:08,668 - INFO - [global] Создал мышь
+2026-09-24 00:18:08,668 - INFO - [global] Инициализировал созданную мышь!
+2026-09-24 00:18:31,962 - DEBUG - [global] YOLO find_item: sample 60×53, inv 259×318
+2026-09-24 00:18:38,725 - DEBUG - [global] YOLO: модель загружена (C:\Users\PC\Desktop\L2Mauto\bot\models\item_detector.pt)
+2026-09-24 00:18:40,247 - DEBUG - [global] YOLO find_item: YOLO нашёл 47 слотов, сравниваю с образцом 60×53
+2026-09-24 00:18:40,311 - DEBUG - [global] YOLO: слот (155,279) 49×49 conf=0.52 score=0.512
+2026-09-24 00:18:40,311 - DEBUG - [global] YOLO: слот (45,219) 53×48 conf=0.43 score=0.509
+2026-09-24 00:18:40,311 - DEBUG - [global] YOLO: слот (43,272) 55×48 conf=0.33 score=0.482
+2026-09-24 00:18:40,311 - DEBUG - [global] YOLO: слот (53,224) 52×49 conf=0.44 score=0.482
+2026-09-24 00:18:40,311 - DEBUG - [global] YOLO: слот (49,114) 59×51 conf=0.16 score=0.482
+2026-09-24 00:18:40,311 - DEBUG - [global] YOLO find_item: лучший score=0.512 (порог 0.7) из 47 слотов
+2026-09-24 00:18:40,311 - WARNING - [global] YOLO find_item: предмет не найден — лучший score 0.512 < порога 0.7
+2026-09-24 00:18:45,260 - DEBUG - [global] YOLO find_item: sample 60×53, inv 259×318
+2026-09-24 00:18:45,532 - DEBUG - [global] YOLO find_item: YOLO нашёл 54 слотов, сравниваю с образцом 60×53
+2026-09-24 00:18:45,592 - DEBUG - [global] YOLO: слот (49,195) 52×46 conf=0.34 score=0.543
+2026-09-24 00:18:45,592 - DEBUG - [global] YOLO: слот (155,86) 50×46 conf=0.64 score=0.517
+2026-09-24 00:18:45,592 - DEBUG - [global] YOLO: слот (43,83) 56×46 conf=0.22 score=0.470
+2026-09-24 00:18:45,592 - DEBUG - [global] YOLO: слот (225,252) 43×46 conf=0.19 score=0.453
+2026-09-24 00:18:45,593 - DEBUG - [global] YOLO: слот (44,139) 58×45 conf=0.16 score=0.435
+2026-09-24 00:18:45,593 - DEBUG - [global] YOLO find_item: лучший score=0.543 (порог 0.7) из 54 слотов
+2026-09-24 00:18:45,593 - WARNING - [global] YOLO find_item: предмет не найден — лучший score 0.543 < порога 0.7
+2026-09-24 00:19:15,722 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-24 00:19:15,727 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-24 00:19:16,900 - DEBUG - [global] _api_put: GET runs/20260924_001915_fail_periodic.log -> 404
+2026-09-24 00:19:18,898 - DEBUG - [global] _api_put: PUT runs/20260924_001915_fail_periodic.log -> 201 (1339 bytes)
+2026-09-24 00:19:18,903 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_001915_fail_periodic.log
+2026-09-24 00:19:20,336 - DEBUG - [global] _api_put: GET debug/periodic/au_after_click.png -> 200
+2026-09-24 00:19:22,452 - DEBUG - [global] _api_put: PUT debug/periodic/au_after_click.png -> 200 (96826 bytes)
+2026-09-24 00:19:23,812 - DEBUG - [global] _api_put: GET debug/periodic/au_after_item_click.png -> 200
+2026-09-24 00:19:25,995 - DEBUG - [global] _api_put: PUT debug/periodic/au_after_item_click.png -> 200 (110300 bytes)
+2026-09-24 00:19:27,093 - DEBUG - [global] log_uploader: START window=Whiterun made=0 token=...Rjnfq
+2026-09-24 00:19:27,156 - DEBUG - [global] _api_put: GET debug/periodic/au_after_tab_sell.png -> 200
+2026-09-24 00:19:28,360 - DEBUG - [global] _api_put: GET runs/20260924_001927_fail_Whiterun.log -> 404
+2026-09-24 00:19:30,011 - DEBUG - [global] _api_put: PUT debug/periodic/au_after_tab_sell.png -> 200 (2045259 bytes)
+2026-09-24 00:19:30,342 - DEBUG - [global] _api_put: PUT runs/20260924_001927_fail_Whiterun.log -> 409 (56963 bytes)
+2026-09-24 00:19:30,342 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 8642136b69e10da1c2b2a94a40260d4589ed1b67 but expected ec701bb9df316a96aa1fdb5ad840ff3503e3ef72","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-24 00:19:30,346 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-09-24 00:19:31,232 - DEBUG - [global] _api_put: GET debug/periodic/au_lot_zone.png -> 200
+2026-09-24 00:19:31,568 - DEBUG - [global] _api_put: GET debug/Whiterun/au_final_fullscreen.png -> 200
+2026-09-24 00:19:31,944 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-24 00:19:33,052 - DEBUG - [global] _api_put: PUT debug/periodic/au_lot_zone.png -> 200 (3675 bytes)
+2026-09-24 00:19:34,487 - DEBUG - [global] _api_put: GET debug/periodic/au_page_1.png -> 200
+2026-09-24 00:19:34,524 - DEBUG - [global] _api_put: PUT debug/Whiterun/au_final_fullscreen.png -> 200 (2135237 bytes)
+2026-09-24 00:19:36,012 - DEBUG - [global] _api_put: GET debug/Whiterun/au_page_1.png -> 200
+2026-09-24 00:19:36,873 - DEBUG - [global] _api_put: PUT debug/periodic/au_page_1.png -> 200 (96826 bytes)
+2026-09-24 00:19:37,200 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 00:19:38,211 - DEBUG - [global] _api_put: GET debug/periodic/au_page_2.png -> 200
+2026-09-24 00:19:38,308 - DEBUG - [global] _api_put: PUT debug/Whiterun/au_page_1.png -> 200 (96826 bytes)
+2026-09-24 00:19:39,785 - DEBUG - [global] _api_put: GET debug/Whiterun/au_page_2.png -> 200
+2026-09-24 00:19:40,551 - DEBUG - [global] _api_put: PUT debug/periodic/au_page_2.png -> 200 (102860 bytes)
+2026-09-24 00:19:41,733 - DEBUG - [global] _api_put: GET debug/periodic/au_sample.png -> 200
+2026-09-24 00:19:42,013 - DEBUG - [global] _api_put: PUT debug/Whiterun/au_page_2.png -> 200 (102860 bytes)
+2026-09-24 00:19:43,287 - DEBUG - [global] _api_put: GET debug/Whiterun/au_sample.png -> 200
+2026-09-24 00:19:43,679 - DEBUG - [global] _api_put: PUT debug/periodic/au_sample.png -> 200 (3675 bytes)
+2026-09-24 00:19:44,833 - DEBUG - [global] _api_put: GET debug/periodic/au_step_cancel_1_78187.png -> 404
+2026-09-24 00:19:45,113 - DEBUG - [global] _api_put: PUT debug/Whiterun/au_sample.png -> 200 (3675 bytes)
+2026-09-24 00:19:46,297 - DEBUG - [global] _api_put: GET debug/Whiterun/au_step_cancel_1_78187.png -> 404
+2026-09-24 00:19:48,260 - DEBUG - [global] _api_put: PUT debug/periodic/au_step_cancel_1_78187.png -> 201 (1925650 bytes)
+2026-09-24 00:19:49,143 - DEBUG - [global] _api_put: PUT debug/Whiterun/au_step_cancel_1_78187.png -> 409 (1925650 bytes)
+2026-09-24 00:19:49,143 - WARNING - [global] _api_put: PUT failed body: {"message":"is at f2fdb7d6d74709a2f6880e84d794e6f32d233c66 but expected 31242548e16f3d562a7ffeb511a7b45aa7babfb2","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-24 00:19:49,412 - DEBUG - [global] _api_put: GET debug/periodic/au_step_cancel_1_78657.png -> 404
+2026-09-24 00:19:50,423 - DEBUG - [global] _api_put: GET debug/Whiterun/au_step_cancel_1_78657.png -> 404
+2026-09-24 00:19:53,048 - INFO - [global] Ошибка отправки в тг | 5225806782 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
+2026-09-24 00:19:53,315 - DEBUG - [global] _api_put: PUT debug/periodic/au_step_cancel_1_78657.png -> 201 (2559020 bytes)
+2026-09-24 00:19:54,442 - DEBUG - [global] _api_put: GET debug/periodic/au_step_cancel_2_78678.png -> 404
+2026-09-24 00:19:57,816 - DEBUG - [global] _api_put: PUT debug/Whiterun/au_step_cancel_1_78657.png -> 409 (2559020 bytes)
+2026-09-24 00:19:57,816 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 2b931500a80a928d3439d1e7c8ac3295e26d7aa4 but expected 608e08858bbb6679335d407de3fff7f9e3d265db","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-24 00:19:57,824 - DEBUG - [global] _api_put: PUT debug/periodic/au_step_cancel_2_78678.png -> 201 (2566611 bytes)
+2026-09-24 00:19:59,093 - DEBUG - [global] _api_put: GET debug/Whiterun/au_step_cancel_2_78678.png -> 404
+2026-09-24 00:19:59,118 - DEBUG - [global] _api_put: GET debug/periodic/au_step_item_78602.png -> 404
+2026-09-24 00:20:02,285 - DEBUG - [global] _api_put: PUT debug/periodic/au_step_item_78602.png -> 201 (2114982 bytes)
+2026-09-24 00:20:02,447 - DEBUG - [global] _api_put: PUT debug/Whiterun/au_step_cancel_2_78678.png -> 409 (2566611 bytes)
+2026-09-24 00:20:02,447 - WARNING - [global] _api_put: PUT failed body: {"message":"is at b09302f97fdbdcaa4a51aaeac33ac8befbb14799 but expected 2b931500a80a928d3439d1e7c8ac3295e26d7aa4","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-24 00:20:03,499 - DEBUG - [global] _api_put: GET debug/periodic/au_step_ok_cancel_1_78218.png -> 404
+2026-09-24 00:20:03,679 - DEBUG - [global] _api_put: GET debug/Whiterun/au_step_ok_cancel_1_78218.png -> 404
+2026-09-24 00:20:06,567 - DEBUG - [global] _api_put: PUT debug/periodic/au_step_ok_cancel_1_78218.png -> 201 (2045967 bytes)
+2026-09-24 00:20:06,572 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 12/12 (удалено с диска: 12)
+2026-09-24 00:20:06,587 - DEBUG - [global] _api_put: PUT debug/Whiterun/au_step_ok_cancel_1_78218.png -> 409 (2045967 bytes)
+2026-09-24 00:20:06,587 - WARNING - [global] _api_put: PUT failed body: {"message":"is at d9fb87323831517f8fa6cba40a35a47e3a6f11f6 but expected b09302f97fdbdcaa4a51aaeac33ac8befbb14799","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-24 00:20:06,591 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 4/10 (удалено с диска: 4)
