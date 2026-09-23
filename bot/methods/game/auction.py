@@ -180,40 +180,12 @@ class Auction(GameAction):
             # Логи врали, скрины показывали что окно реально в сне.
             #
             # Решение: ЦИКЛ из 3 попыток turn_off с проверкой is_on() между.
-            # Если после swipe окно всё ещё в энерго — повторяем. ignore=False
-            # чтобы turn_off сам проверял результат (не trust blindly).
-            woke = False
-            for attempt in range(1, 4):
-                try:
-                    # ignore=False только на последней попытке — turn_off
-                    # сам проверит пиксель zalupka_gui после swipe (телепорт).
-                    # На первых попытках ignore=True (быстро, без долгих проверок).
-                    ignore_flag = (attempt < 3)
-                    await self.profile.energo.turn_off(ignore=ignore_flag)
-                except Exception as e:
-                    log(f"Аук: turn_off попытка {attempt}/3 exception: {e}",
-                        self.window_id, level="WARNING")
-
-                await asyncio.sleep(1.0)
-
-                # Проверка — реально вышло ли из сна?
-                if await self.profile.energo.is_on():
-                    log(f"Аук: после turn_off попытка {attempt}/3 — окно "
-                        f"ВСЁ ЕЩЁ в энерго (swipe не сработал) — повторяю",
-                        self.window_id, level="WARNING")
-                    continue
-                # is_on() = False — окно вышло из сна (или не было в нём)
-                woke = True
-                if attempt > 1:
-                    log(f"Аук: окно вышло из сна с попытки {attempt}/3",
-                        self.window_id)
-                break
-
+            # Используем _wake_up из base.py — пробует turn_off до 3 раз
+            # с проверкой is_on() после каждой попытки.
+            woke = await self.profile._wake_up(max_attempts=3)
             if not woke:
-                log("Аук: ВАЖНО — окно НЕ вышло из энерго за 3 попытки! "
-                    "Аукцион не откроется — будет пустой кадр. Пропускаю окно.",
+                log("Аук: окно НЕ вышло из сна — пропускаю",
                     self.window_id, level="ERROR")
-                # Добавить в пропущенные — вернёмся в конце прогона
                 try:
                     from gui.maingui import NedoGui
                     gui = NedoGui._instance if hasattr(NedoGui, '_instance') else None
@@ -223,7 +195,6 @@ class Auction(GameAction):
                     pass
                 return False
 
-            # Пауза после выхода из энерго — окно должно «проснуться» полностью
             await asyncio.sleep(T_AFTER_ENERGY_OFF)
 
             # 2. Открыть главное меню (CBT-кнопка, маленькое окно 400x225)
