@@ -1364,89 +1364,64 @@ class Auction(GameAction):
                     await self._swipe_inventory('down')
                 continue
 
-            # ── ШАГ 2: для каждого слота с красной точкой — сравнить с sample ─
-            # ВАЖНО: красная точка = предмет ТОЛЬКО ЧТО снят с продажи.
-            # Если sample битый (std<5 = пустой фон) — просто берём ПЕРВЫЙ слот
-            # с красной точкой, потому что наш предмет 100% с точкой.
+            # ── ШАГ 2: выбрать слот с красной точкой ──────────────────────
+            # Логика юзера:
+            # - БЕЗ красной точки → точно НЕ наш, пропускаем
+            # - С красной точкой → один из наших
+            # - Если красных точек несколько → наш ПОСЛЕДНИЙ (свежедобавленный
+            #   падает в конец списка)
+            # - Если красная одна → она и есть наш
+            #
+            # Sample (из вкладки или подтверждения) — дополнительная проверка.
+            # Если sample валидный — сравниваем, но КРАСНАЯ ТОЧКА главная.
             sample_std = float(sample_gray.std()) if sample_gray is not None else 0.0
             sample_is_valid = sample_std > 5.0
             log(f"Аук: sample std={sample_std:.1f} → "
-                f"{'валидный' if sample_is_valid else 'битый (берём первый с точкой)'}",
+                f"{'валидный' if sample_is_valid else 'битый'}",
                 self.window_id, level="DEBUG")
 
-            img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            best_score_on_page = 0.0
-            best_dot = None
+            # Сортируем красные точки по позиции: берём ПОСЛЕДНЮЮ
+            # (самый нижний-правый слот = свежедобавленный)
+            red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
+            chosen_dot = red_dots_sorted[-1]  # последний
+            chosen_cx = chosen_dot[0] - 25
+            chosen_cy = chosen_dot[1] + 25
 
-            # Если sample битый — берём ПЕРВУЮ красную точку без сравнения
-            if not sample_is_valid and red_dots:
-                dot_x, dot_y = red_dots[0]
-                slot_cx = dot_x - 25
-                slot_cy = dot_y + 25
-                log(f"Аук: sample битый — берём первый слот с красной точкой "
-                    f"({dot_x},{dot_y}) → ({slot_cx},{slot_cy})",
-                    self.window_id)
-                best_dot = (slot_cx, slot_cy, 1.0)
-            else:
-                # sample валидный — сравниваем каждый слот с красной точкой
+            log(f"Аук: стр {page} — красных точек: {len(red_dots)}, "
+                f"берём ПОСЛЕДНЮЮ ({chosen_dot[0]},{chosen_dot[1]}) → "
+                f"слот ({chosen_cx},{chosen_cy})",
+                self.window_id)
+
+            best_dot = (chosen_cx, chosen_cy, 1.0)
+            best_score_on_page = 1.0
+
+            # Если sample валидный — логируем сравнение для диагностики
+            # (но не меняем выбор — красная точка главная)
+            if sample_is_valid:
                 for (dot_x, dot_y) in red_dots:
                     slot_cx = dot_x - 25
                     slot_cy = dot_y + 25
                     slot_w, slot_h = 50, 50
-
                     x1 = max(0, slot_cx - slot_w // 2)
                     y1 = max(0, slot_cy - slot_h // 2)
                     x2 = min(img.shape[1], slot_cx + slot_w // 2)
                     y2 = min(img.shape[0], slot_cy + slot_h // 2)
-
                     slot_img = img[y1:y2, x1:x2]
                     if slot_img.size == 0:
                         continue
 
-                    # Прямое попиксельное сравнение — resize обоих к 50×50
-                    # и считаем среднюю абсолютную разницу (MSE)
+                    # Попиксельное сравнение
                     slot_resized = cv2.resize(slot_img, (50, 50),
                                               interpolation=cv2.INTER_AREA)
                     sample_resized = cv2.resize(sample_bgr, (50, 50),
                                                  interpolation=cv2.INTER_AREA)
                     diff = cv2.absdiff(slot_resized, sample_resized)
-                    mse = float(diff.mean())  # 0 = идентичны, 255 = полностью разные
-                    # Конвертируем в score: 0=разные, 1=идентичные
-                    # mse<30 → score>0.7 (похожи), mse<10 → score>0.9 (одинаковые)
+                    mse = float(diff.mean())
                     pixel_score = max(0.0, 1.0 - (mse / 80.0))
 
-                    # Также matchTemplate + pHash для надёжности
-                    slot_gray = cv2.cvtColor(slot_img, cv2.COLOR_BGR2GRAY)
-                    s_gray_resized = cv2.resize(sample_gray,
-                                                (slot_img.shape[1], slot_img.shape[0]),
-                                                interpolation=cv2.INTER_AREA)
-                    try:
-                        corr = cv2.matchTemplate(np.float32(slot_gray),
-                                                np.float32(s_gray_resized),
-                                                cv2.TM_CCOEFF_NORMED)[0, 0]
-                        tm_score = max(0.0, float(corr))
-                    except Exception:
-                        tm_score = 0.0
-
-                    phash_score = 0.0
-                    try:
-                        from bot.yolo_detector import compare_icons
-                        phash_score = compare_icons(slot_img, sample_bgr)
-                    except Exception:
-                        pass
-
-                    # Берём МАКСИМАЛЬНЫЙ из трёх — если хоть один уверен
-                    combined = max(pixel_score, tm_score, phash_score)
-
-                    log(f"Аук: стр {page} слот красн.точка ({dot_x},{dot_y}) "
-                        f"→ слот ({slot_cx},{slot_cy}) pixel={pixel_score:.3f} "
-                        f"TM={tm_score:.3f} pHash={phash_score:.3f} "
-                        f"max={combined:.3f}",
+                    log(f"Аук:   слот ({slot_cx},{slot_cy}) pixel={pixel_score:.3f} "
+                        f"mse={mse:.0f}",
                         self.window_id, level="DEBUG")
-
-                    if combined > best_score_on_page:
-                        best_score_on_page = combined
-                        best_dot = (slot_cx, slot_cy, combined)
 
             # ── ШАГ 3: если нашли слот с score > 0.5 — это наш предмет ─
             # Порог 0.5 (не 0.65) — красная точка уже подтверждает что предмет наш,
