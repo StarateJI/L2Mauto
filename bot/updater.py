@@ -12,11 +12,11 @@ from bot.clogger import log
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
 
 # Список URL для проверки версии:
-# 1. raw.githubusercontent.com — оригинал, свежая версия
-# 2. cdn.jsdelivr.net — CDN (не лимитируется)
-# api.github.com УБРАН — давал 403 rate limit
+# 1. raw.githubusercontent.com — оригинал (но кеширует ~5 мин)
+# 2. GitHub API с XOR-токеном — не кеширует, нет rate limit
 REPO_VERSION_URLS = [
     "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt",
+    "https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main",
 ]
 REPO_ZIP = "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip"
 
@@ -88,17 +88,27 @@ def _fetch_remote_version() -> str | None:
 
     for url in REPO_VERSION_URLS:
         try:
-            # raw / jsdelivr — простой текст (api.github.com убран)
-            full_url = url + cache_buster
-            r = requests.get(full_url, timeout=5, headers=headers)
-            r.raise_for_status()
-            content = r.text.strip()
-            if content and content[0].isdigit():
-                src = "jsdelivr" if "jsdelivr" in url else "raw"
-                versions_found.append((len(versions_found), src, content))
-                log(f"needs_update: {src} → {content}", level="DEBUG")
+            if "api.github.com" in url:
+                # GitHub API — JSON с base64 content, не кешируется
+                r = requests.get(url, timeout=5, headers=headers)
+                r.raise_for_status()
+                import base64
+                data = r.json()
+                content = base64.b64decode(data["content"]).decode().strip()
+                if content and content[0].isdigit():
+                    versions_found.append((len(versions_found), "API", content))
+                    log(f"needs_update: API → {content}", level="DEBUG")
+            else:
+                # raw — простой текст (может кешировать)
+                full_url = url + cache_buster
+                r = requests.get(full_url, timeout=5, headers=headers)
+                r.raise_for_status()
+                content = r.text.strip()
+                if content and content[0].isdigit():
+                    versions_found.append((len(versions_found), "raw", content))
+                    log(f"needs_update: raw → {content}", level="DEBUG")
         except Exception as e:
-            src = "jsdelivr" if "jsdelivr" in url else "raw"
+            src = "API" if "api.github.com" in url else "raw"
             log(f"needs_update: {src} failed: {type(e).__name__}: {e}",
                 level="DEBUG")
             continue
