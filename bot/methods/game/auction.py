@@ -1218,112 +1218,43 @@ class Auction(GameAction):
 
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет в инвентаре.
-        1. YOLOv8 + ORB — основной (находит слоты, сравнивает с образцом)
-        2. matchTemplate — fallback если YOLOv8 не установлен
-        3. Красная точка — подтверждение что предмет снят с продажи
+        Искать предмет в инвентаре ТОЛЬКО через YOLOv8 + ORB.
+        matchTemplate УБРАН — был ненадёжным.
+        Красная точка — подтверждение что предмет снят с продажи.
         """
         best_result = None
-        h_sample, w_sample = sample_gray.shape[:2]
 
         try:
             from bot.yolo_detector import find_item as yolo_find_item
             yolo_available = True
         except Exception:
             yolo_available = False
+            log("Аук: YOLOv8 недоступен — pip install ultralytics + "
+                "bot/models/item_detector.pt", self.window_id, level="ERROR")
+
+        if not yolo_available:
+            return None
 
         for page in range(1, SCAN_PAGES + 1):
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
-            gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-            if yolo_available:
-                try:
-                    sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
-                    result = yolo_find_item(img, sample_bgr, conf_threshold=0.3)
-                    if result is not None:
-                        cx, cy, matches = result
-                        win_cx = cx + INV_SCAN[0]
-                        win_cy = cy + INV_SCAN[1]
-                        log(f"Аук: YOLOv8 НАШЁЛ — стр {page} ({cx},{cy}) matches={matches}", self.window_id)
-                        best_result = (win_cx, win_cy, matches / 100.0, page)
-                        break
-                except Exception as e:
-                    log(f"Аук: YOLOv8 error: {e}", self.window_id, level="DEBUG")
-
-            candidates = []
-            for scale in TM_SCALES:
-                new_w = int(w_sample * scale)
-                new_h = int(h_sample * scale)
-                if new_w < 5 or new_h < 5:
-                    continue
-                if new_w > gray.shape[1] or new_h > gray.shape[0]:
-                    continue
-                scaled = cv2.resize(sample_gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
-                try:
-                    result = cv2.matchTemplate(gray, scaled, cv2.TM_CCOEFF_NORMED)
-                except cv2.error:
-                    continue
-                locs = np.where(result >= TM_THRESHOLD)
-                for (pt_y, pt_x) in zip(*locs):
-                    cx = int(pt_x) + new_w // 2
-                    cy = int(pt_y) + new_h // 2
-                    score = float(result[int(pt_y), int(pt_x)])
-                    candidates.append((cx, cy, score))
-
-            # Дедупликация: кандидаты в пределах 25px друг от друга —
-            # оставляем с максимальным score (это один и тот же предмет,
-            # сматченный на разных масштабах).
-            candidates.sort(key=lambda c: -c[2])
-            deduped = []
-            for c in candidates:
-                if all(abs(c[0] - d[0]) > 25 or abs(c[1] - d[1]) > 25
-                       for d in deduped):
-                    deduped.append(c)
-
-            best_page_score = deduped[0][2] if deduped else 0.0
-
-            # 2. ПОДТВЕРЖДЕНИЕ: красные точки на этой странице
-            red_dots = self._find_red_dots(img)
-            log(f"Аук: стр {page} — кандидатов TM: {len(deduped)} "
-                f"(лучший score={best_page_score:.3f}), "
-                f"красных точек: {len(red_dots)}", self.window_id)
-
-            # 3. Ищем кандидата с красной точкой рядом.
-            #    Красная точка в Lineage2M — правый верхний угол ячейки,
-            #    т.е. в пределах ~40px от центра иконки 60×53.
-            for (cx, cy, score) in deduped:
-                confirmed_dot = None
-                for (dx, dy) in red_dots:
-                    if abs(dx - cx) <= 40 and abs(dy - cy) <= 40:
-                        confirmed_dot = (dx, dy)
-                        break
-                if confirmed_dot is None:
-                    # Иконка сматчилась, но красной точки рядом нет →
-                    # это B&W-дубликат (непродаваемый), не наш предмет.
-                    log(f"Аук: стр {page} — иконка ({cx},{cy}) "
-                        f"score={score:.3f} НО без красной точки → дубликат, "
-                        f"пропускаю", self.window_id, level="DEBUG")
-                    continue
-
-                # Есть И иконка И красная точка → наш предмет.
-                win_cx = cx + INV_SCAN[0]
-                win_cy = cy + INV_SCAN[1]
-                if best_result is None or score > best_result[2]:
-                    best_result = (win_cx, win_cy, score, page)
-                    log(f"Аук: НАЙДЕН И ПОДТВЕРЖДЁН — стр {page} "
-                        f"иконка ({cx},{cy}) + точка {confirmed_dot} "
-                        f"→ клик ({win_cx},{win_cy}) score={score:.3f}",
+            try:
+                sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
+                result = yolo_find_item(img, sample_bgr, conf_threshold=0.3)
+                if result is not None:
+                    cx, cy, matches = result
+                    win_cx = cx + INV_SCAN[0]
+                    win_cy = cy + INV_SCAN[1]
+                    log(f"Аук: YOLOv8 НАШЁЛ — стр {page} ({cx},{cy}) matches={matches}",
                         self.window_id)
-                # Точное совпадение с подтверждением — дальше не листаем.
-                if score >= 0.90:
-                    log(f"Аук: точное совпадение с красной точкой "
-                        f"(score >= 0.90), не листаю дальше", self.window_id)
+                    best_result = (win_cx, win_cy, matches / 100.0, page)
                     break
-
-            if best_result is not None and best_result[2] >= 0.90:
-                break
+                else:
+                    log(f"Аук: YOLOv8 не нашёл на стр {page}", self.window_id, level="DEBUG")
+            except Exception as e:
+                log(f"Аук: YOLOv8 error: {e}", self.window_id, level="DEBUG")
 
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
@@ -1415,9 +1346,9 @@ class Auction(GameAction):
 
         log("Аук: лот снят, предмет упал в конец инвентаря", self.window_id)
 
-        # 4. Найти предмет в инвентаре (YOLOv8 + matchTemplate, 5 страниц)
+        # 4. Найти предмет в инвентаре (YOLOv8, 5 страниц)
         await self._save_debug("au_after_click.png", self._grab(INV_SCAN))
-        log("Аук: ищу предмет (YOLOv8 + matchTemplate)...", self.window_id)
+        log("Аук: ищу предмет (YOLOv8)...", self.window_id)
 
         try:
             item_pos = await self._find_item(sample_gray)
