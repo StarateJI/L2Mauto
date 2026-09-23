@@ -298,6 +298,36 @@ class BaseProfile(ABC):
             log(f"Не удалось активнуть: {e}", window_id)
             return False
 
+    async def _wake_up(self, max_attempts: int = 3) -> bool:
+        """
+        Выйти из энергорежима с проверкой результата.
+        Пробуем turn_off() до max_attempts раз, после каждой проверяем is_on().
+        Возвращает True если окно реально вышло из сна, False если не вышло.
+        """
+        if not await self.energo.is_on():
+            return True
+
+        for attempt in range(max_attempts):
+            try:
+                await self.energo.turn_off()
+                await asyncio.sleep(2)
+            except Exception as e:
+                log(f"_wake_up: turn_off попытка {attempt+1} упала: {e}",
+                    self.window_id, level="WARNING")
+
+            if not await self.energo.is_on():
+                log(f"_wake_up: вышли из сна с попытки {attempt+1}",
+                    self.window_id)
+                return True
+
+            log(f"_wake_up: попытка {attempt+1} не вышла из сна — повторяю",
+                self.window_id, level="WARNING")
+            await asyncio.sleep(1.5)
+
+        log(f"_wake_up: НЕ вышли из сна за {max_attempts} попыток",
+            self.window_id, level="ERROR")
+        return False
+
     def send_event(self, event: Any) -> None:
         """
         Добавляет событие в очередь профиля, может быть 2 сразу и более
