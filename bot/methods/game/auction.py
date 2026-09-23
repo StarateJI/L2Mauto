@@ -87,6 +87,11 @@ INV_SCAN = (686, 130, 259, 318)  # инвентарь (было 915,173,345,424)
 ZONE_PRICE = (651, 230, 60, 15)  # OCR цены (было 868,306,80,20)
 STATUS_ZONE = (598, 143, 105, 26) # статус лота (было 797,190,140,35)
 OK_CHECK_ZONE = (525, 360, 45, 45) # оранжевая ОК (было 700,480,60,60)
+# Зона иконки в окне подтверждения 'Отмена лота' (после клика Отмена).
+# VLM нашёл: в окне бота 960×540 иконка на ~15-20% ширины, ~45-50% высоты,
+# размер ~60×60. Точные координаты: (115, 240, 60, 60) — центр (144, 270).
+# Sample из этого места ЧИЩЕ чем из LOT_SEARCH (вкладка Продажа часто тёмная).
+CONFIRM_ICON = (115, 240, 60, 60)
 
 # ── Калькулятор (3x4 numpad, 960×540) ────────────────────────────────────
 # База: "5" на (584, 391) при 960×540 (было 778,521 при 1280×720)
@@ -1048,8 +1053,13 @@ class Auction(GameAction):
                 self.window_id, level="WARNING")
             return True  # Если проверка упала — лучше не трогать
 
-    async def _cancel_lot(self) -> bool:
-        """Клик 'Отмена лота' и ожидание окна подтверждения."""
+    async def _cancel_lot(self) -> Tuple[bool, Optional[np.ndarray]]:
+        """
+        Клик 'Отмена лота' и ожидание окна подтверждения.
+        Возвращает (success, confirm_sample_bgr).
+        confirm_sample — иконка из окна подтверждения (если появилась).
+        Эта иконка ЧИЩЕ чем из вкладки Продажа (тёмная).
+        """
         for attempt in range(1, 3):
             # _click_snap — клик + полный скрин после
             await self._click_snap(f'cancel_{attempt}', BTN_CANCEL_LOT[0],
@@ -1057,9 +1067,26 @@ class Auction(GameAction):
             log(f"Аук: клик Отмена лота ({attempt}/2) {BTN_CANCEL_LOT}", self.window_id)
             if self._confirm_window_visible():
                 log("Аук: окно подтверждения появилось", self.window_id)
-                return True
+                # Берём sample из окна подтверждения (чище чем из вкладки)
+                confirm_sample = None
+                try:
+                    confirm_sample = self._grab(CONFIRM_ICON)
+                    gray = cv2.cvtColor(confirm_sample, cv2.COLOR_BGR2GRAY)
+                    mean_v = float(gray.mean())
+                    log(f"Аук: sample из окна подтверждения — mean={mean_v:.0f}",
+                        self.window_id, level="DEBUG")
+                    await self._save_debug("au_confirm_sample.png", confirm_sample)
+                    if mean_v < 20:
+                        # Окно подтверждения тёмное — не используем
+                        log("Аук: sample из подтверждения тёмный — не использую",
+                            self.window_id, level="DEBUG")
+                        confirm_sample = None
+                except Exception as e:
+                    log(f"Аук: не удалось взять sample из подтверждения: {e}",
+                        self.window_id, level="DEBUG")
+                return True, confirm_sample
         log("Аук: окно подтверждения НЕ появилось", self.window_id, level="WARNING")
-        return False
+        return False, None
 
     async def _click_ok_cancel(self) -> bool:
         """Клик ОК в окне подтверждения. До 4 попыток."""
@@ -1614,17 +1641,30 @@ class Auction(GameAction):
                 self.window_id, level="INFO")
             return 'empty'
 
-        # 3. Клик "Отмена лота"
-        if not await self._cancel_lot():
+        # 3. Клик "Отмена лота" — берём sample из окна подтверждения
+        cancel_ok, confirm_sample = await self._cancel_lot()
+        if not cancel_ok:
             # Окно подтверждения НЕ появилось после 2 кликов по «Отмена лота».
             # Это значит список лотов ПУСТОЙ — кнопка серая/неактивная, клик
             # по ней ничего не делает. Это НЕ ошибка — просто нечего снимать.
-            # Раньше тут было return 'error' → бот стопал весь прогон.
-            # Правильно: return 'empty' — завершить как «нечего переставлять».
             log("Аук: окно подтверждения не появилось — список лотов пуст "
                 "(кнопка «Отмена» серая). Завершаю прогон (не ошибка).",
                 self.window_id, level="INFO")
             return 'empty'
+
+        # 3b. Если есть sample из окна подтверждения — используем его
+        # (он чище чем из вкладки Продажа, где часто тёмный фон)
+        if confirm_sample is not None:
+            log("Аук: используем sample из окна подтверждения (чище)",
+                self.window_id, level="DEBUG")
+            sample = confirm_sample
+            sample_gray = cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY)
+            sample_mean = float(sample_gray.mean())
+            log(f"Аук: sample из подтверждения mean={sample_mean:.0f}",
+                self.window_id)
+        else:
+            log("Аук: sample из подтверждения не получен — используем из вкладки",
+                self.window_id, level="DEBUG")
 
         # 4. Подождать анимацию и кликнуть ОК
         await asyncio.sleep(T_CONFIRM_SETTLE)
