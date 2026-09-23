@@ -734,6 +734,11 @@ class Auction(GameAction):
 
         Использует singleton _sct (тот же что и _grab) — НЕ создаёт новый mss.
         Синхронный (быстрый ~50ms) — не блокирует event loop надолго.
+
+        ВНИМАНИЕ: mss использует thread-local handles. При вызове из
+        потока QThread/asyncio _sct.grab падает с
+        AttributeError '_thread._local' object has no attribute 'srcdc'.
+        Ловим и пересоздаём локально (как в _grab).
         """
         try:
             out_dir = os.path.dirname(os.path.abspath(__file__))
@@ -746,7 +751,22 @@ class Auction(GameAction):
                 monitor = monitors[1]
             else:
                 monitor = monitors[0]
-            shot = _sct.grab(monitor)
+            try:
+                shot = _sct.grab(monitor)
+            except Exception as e:
+                # srcdc/memdc thread-local crash — пересоздаём локально
+                if 'srcdc' in str(e) or 'memdc' in str(e):
+                    try:
+                        local_sct = mss.mss()
+                    except Exception:
+                        local_sct = mss.MSS()
+                    shot = local_sct.grab(monitor)
+                    try:
+                        local_sct.close()
+                    except Exception:
+                        pass
+                else:
+                    raise
             arr = np.array(shot)  # BGRA
             img = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
             cv2.imwrite(path, img)
@@ -775,6 +795,7 @@ class Auction(GameAction):
             from ctypes import wintypes
 
             user32 = ctypes.windll.user32
+            kernel32 = ctypes.windll.kernel32
             hwnd_val = self.window_info[self.window_id].get("ID")
             if not hwnd_val:
                 return False
@@ -787,7 +808,11 @@ class Auction(GameAction):
 
             # Трюк с AttachThreadInput: позволяет «украсть» foreground
             fg_thread = user32.GetWindowThreadProcessId(fg_now, None)
-            my_thread = user32.GetCurrentThreadId()
+            # GetCurrentThreadId находится в kernel32.dll, НЕ в user32!
+            # Раньше вызывали user32.GetCurrentThreadId() → падало с
+            # 'function GetCurrentThreadId not found' → foreground не
+            # ставился → клики уходили мимо окна.
+            my_thread = kernel32.GetCurrentThreadId()
 
             attached = False
             if fg_thread and fg_thread != my_thread:
@@ -1330,7 +1355,11 @@ class Auction(GameAction):
             if best_result is None:
                 try:
                     img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-                    tm_match = self._match_template_multiscale(img_gray, sample_gray)
+                    sample_bgr_for_tm = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
+                    tm_match = self._match_template_multiscale(
+                        img_gray, sample_gray,
+                        img_bgr=img, sample_bgr=sample_bgr_for_tm
+                    )
                     if tm_match is not None:
                         cx, cy, score = tm_match
                         win_cx = cx + INV_SCAN[0]
@@ -1370,11 +1399,18 @@ class Auction(GameAction):
 
     def _match_template_multiscale(self, img_gray: np.ndarray,
                                     sample_gray: np.ndarray,
-                                    threshold: float = 0.70) -> Optional[Tuple[int, int, float]]:
+                                    threshold: float = 0.75,
+                                    img_bgr: np.ndarray = None,
+                                    sample_bgr: np.ndarray = None) -> Optional[Tuple[int, int, float]]:
         """
-        matchTemplate multi-scale на grayscale.
+        matchTemplate multi-scale на grayscale + ДОПОЛНИТЕЛЬНАЯ проверка pHash.
+
         Пробует 5 масштабов sample (0.7, 0.85, 1.0, 1.15, 1.3) чтобы
         компенсировать разный размер иконок (sample 60×53 vs slot ~48×48).
+
+        После matchTemplate находит лучший слот и ДОПОЛНИТЕЛЬНО проверяет
+        через pHash — если pHash < 0.5, значит matchTemplate совпал на
+        тёмном фоне (ложное срабатывание), отклоняем.
 
         Возвращает (cx, cy, score) или None.
         """
@@ -1387,7 +1423,7 @@ class Auction(GameAction):
         sample_f = np.float32(sample_gray)
 
         scales = [1.3, 1.15, 1.0, 0.85, 0.7]
-        best = None  # (score, cx, cy)
+        best = None  # (score, cx, cy, w, h)
 
         for scale in scales:
             new_w = max(8, int(sample_gray.shape[1] * scale))
@@ -1401,17 +1437,47 @@ class Auction(GameAction):
                 _, max_val, _, max_loc = cv2.minMaxLoc(res)
                 if best is None or max_val > best[0]:
                     best = (float(max_val), max_loc[0] + new_w // 2,
-                            max_loc[1] + new_h // 2)
+                            max_loc[1] + new_h // 2, new_w, new_h)
             except cv2.error:
                 continue
 
         if best is None:
             return None
-        score, cx, cy = best
+        score, cx, cy, w, h = best
+
         if score < threshold:
-            log(f"Аук: TM лучший score={score:.3f} < {threshold}",
+            log(f"Аук: TM score={score:.3f} < {threshold}",
                 self.window_id, level="DEBUG")
             return None
+
+        # ДОПОЛНИТЕЛЬНАЯ проверка через pHash — отсеивает ложные срабатывания
+        # matchTemplate на тёмных иконках. Если sample_bgr и img_bgr переданы —
+        # вырезаем найденный слот и сравниваем с sample через pHash.
+        if img_bgr is not None and sample_bgr is not None:
+            try:
+                from bot.yolo_detector import compare_icons
+                x1 = max(0, cx - w // 2)
+                y1 = max(0, cy - h // 2)
+                x2 = min(img_bgr.shape[1], cx + w // 2)
+                y2 = min(img_bgr.shape[0], cy + h // 2)
+                slot_img = img_bgr[y1:y2, x1:x2]
+                if slot_img.size > 0:
+                    phash_score = compare_icons(slot_img, sample_bgr)
+                    log(f"Аук: TM score={score:.3f}, pHash проверка={phash_score:.3f}",
+                        self.window_id, level="DEBUG")
+                    # Если matchTemplate уверен (>0.85) НО pHash низкий (<0.5)
+                    # — это ложное срабатывание на тёмном фоне. Отклоняем.
+                    if score > 0.85 and phash_score < 0.5:
+                        log(f"Аук: TM отклонён — pHash={phash_score:.3f} низкий "
+                            f"(ложное совпадение на тёмном)",
+                            self.window_id, level="DEBUG")
+                        return None
+                    # Если оба согласны — берём средний score
+                    score = (score + phash_score) / 2.0
+            except Exception as e:
+                log(f"Аук: pHash проверка упала: {e}", self.window_id,
+                    level="DEBUG")
+
         return (cx, cy, score)
 
     # ──────────────────────────────────────────────────────────────────────
