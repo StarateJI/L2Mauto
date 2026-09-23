@@ -1489,12 +1489,31 @@ class Auction(GameAction):
         Возвращает 'ok' / 'empty' / 'error'.
         """
         # 1. Снять образец лота (вся зона целиком, без обрезки)
-        sample = self._grab(LOT_SEARCH)
+        # ВАЖНО: если вкладка Продажа ещё не прогрузилась — sample будет
+        # тёмным (mean<20). matchTemplate найдёт любой тёмный слот в инвентаре
+        # и кликнет на ЧБ/привязанный предмет. Поэтому ПРОВЕРЯЕМ яркость
+        # sample и если тёмный — ждём и переснимаем (до 3 раз).
+        sample = None
+        for grab_attempt in range(3):
+            sample = self._grab(LOT_SEARCH)
+            gray = cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY)
+            mean_bright = float(gray.mean())
+            if mean_bright > 20:
+                log(f"Аук: sample берётся (попытка {grab_attempt+1}, "
+                    f"mean={mean_bright:.1f}) — нормально", self.window_id)
+                break
+            log(f"Аук: sample ТЁМНЫЙ (попытка {grab_attempt+1}, "
+                f"mean={mean_bright:.1f}<20) — жду 2с и переснимаю",
+                self.window_id, level="WARNING")
+            await asyncio.sleep(2.0)
+
         await self._save_debug("au_lot_zone.png", sample)
         await self._save_debug("au_sample.png", sample)
 
         # Считаем SIFT keypoints образца — если 0, значит строка пустая
         # (нет иконки/лота на продаже). Это НЕ ошибка — просто нечего переставлять.
+        # Также: если sample после 3 попыток всё ещё тёмный (mean<20) — это
+        # не лот, а пустая строка. Возвращаем 'empty'.
         kp_count = 0
         try:
             sift = cv2.SIFT_create()
@@ -1505,6 +1524,14 @@ class Auction(GameAction):
             pass
 
         sample_gray = cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY)
+        sample_mean = float(sample_gray.mean())
+        # Если sample тёмный И мало SIFT точек (<10) — это пустой лот,
+        # не иконка. Не трогаем, идём дальше.
+        if sample_mean < 20 and kp_count < 10:
+            log(f"Аук: sample тёмный (mean={sample_mean:.1f}) и мало SIFT "
+                f"точек ({kp_count}<10) — лот пустой. Завершаю (не ошибка).",
+                self.window_id, level="INFO")
+            return 'empty'
 
         # 2. Защита от вечного цикла: если первый лот в статусе «Продаётся» —
         # значит он только что выставлен, снимать/переставлять его НЕ НАДО.
