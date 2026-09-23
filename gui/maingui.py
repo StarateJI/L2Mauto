@@ -52,15 +52,8 @@ class UpdateChecker(QThread):
             try:
                 log("Проверяю обновы...")
                 if needs_update():
-                    log("Доступна обнова! Автообновление через 5 сек...")
-                    import time as _t
-                    _t.sleep(5)
-                    # Автообновление — без кнопки
-                    try:
-                        from bot.updater import update
-                        update()
-                    except Exception as e:
-                        log(f"Автообновление упало: {e}", level="ERROR")
+                    log("Доступна обнова! Спавню кнопку")
+                    self.update_available.emit()
                 else:
                     log(f"Установлена последняя версия бота | {get_my_version()}")
             except Exception:
