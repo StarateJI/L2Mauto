@@ -464,10 +464,14 @@ def update():
         )
 
         print("NE TROGAI NI4EGO - APPLYING UPDATE")
-        sys.exit(0)
+        # os._exit а не sys.exit — потому что update() вызывается из QThread
+        # и sys.exit(0) в QThread не завершает процесс, а зависает.
+        import os as _os
+        _os._exit(0)
 
     except Exception as e:
         log(f"Обнова бахнула: {e}")
         import traceback
         log(traceback.format_exc(), level="ERROR")
-        sys.exit(1)
+        import os as _os
+        _os._exit(1)
