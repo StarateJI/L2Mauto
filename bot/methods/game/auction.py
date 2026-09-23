@@ -1213,7 +1213,8 @@ class Auction(GameAction):
 
             try:
                 sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
-                result = yolo_find_item(img, sample_bgr, conf_threshold=0.3)
+                result = yolo_find_item(img, sample_bgr, conf_threshold=0.15,
+                                        match_threshold=0.70)
                 if result is not None:
                     cx, cy, matches = result
                     win_cx = cx + INV_SCAN[0]
