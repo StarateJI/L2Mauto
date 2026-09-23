@@ -122,6 +122,32 @@ class Dungeon(EventDrivenProfile):
             log(f"Данги: OCR ошибка: {e}", level="DEBUG")
         return False, 0
 
+    def _match_icon_multiscale(self, gray_scene, icon_gray,
+                              scales=(0.95, 1.0, 1.05),
+                              threshold=0.65):
+        """Мульти-скейл matchTemplate для поиска шаблона."""
+        best_score = 0.0
+        best_loc = None
+        if gray_scene is None or icon_gray is None:
+            return best_score, best_loc
+        for scale in scales:
+            new_w = int(icon_gray.shape[1] * scale)
+            new_h = int(icon_gray.shape[0] * scale)
+            if new_w <= 5 or new_h <= 5:
+                continue
+            if new_w > gray_scene.shape[1] or new_h > gray_scene.shape[0]:
+                continue
+            scaled = cv2.resize(icon_gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            try:
+                result = cv2.matchTemplate(gray_scene, scaled, cv2.TM_CCOEFF_NORMED)
+                _, max_val, _, max_loc = cv2.minMaxLoc(result)
+                if max_val > best_score:
+                    best_score = max_val
+                    best_loc = max_loc
+            except cv2.error:
+                continue
+        return best_score, best_loc
+
     async def _blessed_land_loop(self):
         """
         Благословенная Земля — одиночный данж.
@@ -164,6 +190,19 @@ class Dungeon(EventDrivenProfile):
             if menu_shot is not None:
                 self._save_debug("blessed_menu_opened.png", menu_shot)
 
+            # Загрузить шаблон для matchTemplate
+            icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     "blessed_zemlya.png")
+            if not os.path.exists(icon_path):
+                icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                         "blessed_land_text.png")
+            icon_gray = None
+            if os.path.exists(icon_path):
+                icon_bgr = cv2.imread(icon_path)
+                if icon_bgr is not None:
+                    icon_gray = cv2.cvtColor(icon_bgr, cv2.COLOR_BGR2GRAY)
+                    log(f"Данги: шаблон {icon_gray.shape[1]}x{icon_gray.shape[0]} загружен", window_id)
+
             # 3. Зона списка данжей
             list_x_rel = 0
             list_y_rel = int(wh * 0.20)
@@ -196,8 +235,27 @@ class Dungeon(EventDrivenProfile):
 
                 ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
 
+                # matchTemplate — поиск по шаблону
+                tm_score, tm_loc = (0.0, None)
+                if icon_gray is not None:
+                    tm_score, tm_loc = self._match_icon_multiscale(
+                        scene_gray, icon_gray,
+                        scales=(0.95, 1.0, 1.05),
+                        threshold=0.65)
+
                 log(f"Данги: попытка {scroll_attempt+1}/{MAX_SCROLL_ATTEMPTS} — "
-                    f"OCR={'да' if ocr_found else 'нет'}", window_id, level="DEBUG")
+                    f"TM={tm_score:.3f} OCR={'да' if ocr_found else 'нет'}",
+                    window_id, level="DEBUG")
+
+                # Нашли через matchTemplate
+                if tm_score >= 0.65 and tm_loc is not None:
+                    click_x_rel = list_x_rel + tm_loc[0] + icon_gray.shape[1] // 2
+                    click_y_rel = list_y_rel + tm_loc[1] + icon_gray.shape[0] // 2
+                    found = True
+                    log(f"Данги: найден через matchTemplate "
+                        f"({click_x_rel},{click_y_rel}) score={tm_score:.3f}", window_id)
+                    self._save_debug("blessed_found_tm.png", scene_bgr)
+                    break
 
                 if ocr_found:
                     click_x_rel = list_x_rel + int(list_w * 0.15)

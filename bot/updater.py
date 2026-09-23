@@ -17,7 +17,6 @@ VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
 # api.github.com УБРАН — давал 403 rate limit
 REPO_VERSION_URLS = [
     "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt",
-    "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/bot/version.txt",
 ]
 REPO_ZIP = "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip"
 
