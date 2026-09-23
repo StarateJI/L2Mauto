@@ -7,6 +7,7 @@ import configparser
 import sys
 import subprocess
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from bot.clogger import log
 
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
@@ -67,67 +68,71 @@ def _load_github_token() -> str | None:
 
 def _fetch_remote_version() -> str | None:
     """
-    Попробовать получить remote версию из нескольких источников.
+    Проверить remote версию из нескольких источников ПАРАЛЛЕЛЬНО.
     Возвращает строку с версией или None если все источники упали.
 
     Сравнивает версии из всех источников и берёт МАКСИМАЛЬНУЮ —
     так мы не зависим от того что jsdelivr закешировал старую версию.
     """
+    tok = _load_github_token()
     headers = {
         "Cache-Control": "no-cache, no-store, max-age=0",
         "Pragma": "no-cache",
     }
-    tok = _load_github_token()
     if tok:
         headers["Authorization"] = f"token {tok}"
 
-    # Cache-buster — уникальный URL для каждого запроса
     cache_buster = f"?ts={int(time.time())}"
 
-    versions_found: list[tuple[int, str, str]] = []  # (порядок, источник, версия)
-
-    for url in REPO_VERSION_URLS:
+    def _fetch_one(url: str):
         try:
             if "api.github.com" in url:
-                # GitHub API — JSON с base64 content, не кешируется
                 r = requests.get(url, timeout=5, headers=headers)
                 r.raise_for_status()
                 import base64
                 data = r.json()
                 content = base64.b64decode(data["content"]).decode().strip()
                 if content and content[0].isdigit():
-                    versions_found.append((len(versions_found), "API", content))
-                    log(f"needs_update: API → {content}", level="DEBUG")
+                    return ("API", content)
             else:
-                # raw — простой текст (может кешировать)
                 full_url = url + cache_buster
                 r = requests.get(full_url, timeout=5, headers=headers)
                 r.raise_for_status()
                 content = r.text.strip()
                 if content and content[0].isdigit():
-                    versions_found.append((len(versions_found), "raw", content))
-                    log(f"needs_update: raw → {content}", level="DEBUG")
+                    return ("raw", content)
         except Exception as e:
             src = "API" if "api.github.com" in url else "raw"
             log(f"needs_update: {src} failed: {type(e).__name__}: {e}",
                 level="DEBUG")
-            continue
+        return None
+
+    versions_found = []
+    # ПАРАЛЛЕЛЬНЫЙ опрос источников — не ждём медленный raw если API быстрый
+    with ThreadPoolExecutor(max_workers=len(REPO_VERSION_URLS)) as ex:
+        futures = {ex.submit(_fetch_one, u): u for u in REPO_VERSION_URLS}
+        for fut in as_completed(futures, timeout=8):
+            try:
+                res = fut.result()
+                if res:
+                    versions_found.append(res)
+                    log(f"needs_update: {res[0]} → {res[1]}", level="DEBUG")
+            except Exception:
+                pass
 
     if not versions_found:
         return None
 
-    # Взять МАКСИМАЛЬНУЮ версию из всех полученных — чтобы закешированный
-    # jsdelivr не блокировал обновление если raw уже отдаёт новую.
     def _vk(v: str):
         try:
             return tuple(int(x) for x in v.split("."))
         except Exception:
             return (0, 0, 0)
 
-    best = max(versions_found, key=lambda x: _vk(x[2]))
-    log(f"needs_update: лучший источник {best[1]} → {best[2]} "
+    best = max(versions_found, key=lambda x: _vk(x[1]))
+    log(f"needs_update: лучший источник {best[0]} → {best[1]} "
         f"(из {len(versions_found)})", level="DEBUG")
-    return best[2]
+    return best[1]
 
 
 def needs_update() -> bool:
@@ -399,12 +404,11 @@ def update():
     try:
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         backup()
-        log("Обнова: бэкап сделан, качаю файлы по отдельности...", level="INFO")
+        log("Обнова: бэкап сделан, качаю файлы ПАРАЛЛЕЛЬНО (8 потоков)...", level="INFO")
 
         # GitHub кеширует ZIP (194MB из-за старой истории).
-        # Вместо ZIP — скачиваем только изменённые файлы через raw URLs.
-        import time as _time
-        
+        # Скачиваем отдельные файлы через raw URLs ПАРАЛЛЕЛЬНО через пул потоков.
+
         # Список файлов для скачивания (относительно корня репо)
         FILES_TO_DOWNLOAD = [
             "bot/version.txt",
@@ -486,32 +490,67 @@ def update():
         os.makedirs(temp_dir, exist_ok=True)
 
         raw_base = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/"
-        downloaded = 0
-        failed = []
 
-        for filepath in FILES_TO_DOWNLOAD:
+        # Одна HTTP-сессия на все файлы — keep-alive, переиспользование TCP.
+        # Так 71 файл качается за ~5 сек вместо ~30 сек.
+        session = requests.Session()
+        tok = _load_github_token()
+        if tok:
+            session.headers["Authorization"] = f"token {tok}"
+        session.headers["Cache-Control"] = "no-cache"
+
+        def _download_one(filepath: str):
             url = raw_base + filepath
             local_path = os.path.join(temp_dir, filepath.replace("/", os.sep))
             os.makedirs(os.path.dirname(local_path), exist_ok=True)
             try:
-                r = requests.get(url, timeout=(8, 30))
+                r = session.get(url, timeout=(8, 30))
                 if r.status_code == 200:
                     with open(local_path, "wb") as f:
                         f.write(r.content)
-                    downloaded += 1
-                    if downloaded % 10 == 0:
-                        log(f"Обнова: скачано {downloaded}/{len(FILES_TO_DOWNLOAD)} файлов", level="DEBUG")
+                    return filepath, True, None
                 else:
-                    failed.append(filepath)
+                    return filepath, False, f"HTTP {r.status_code}"
             except Exception as e:
-                failed.append(filepath)
-                log(f"Обнова: не скачал {filepath}: {e}", level="WARNING")
-            _time.sleep(0.1)  # не забиваем канал
+                return filepath, False, f"{type(e).__name__}: {e}"
 
-        log(f"Обнова: скачано {downloaded}/{len(FILES_TO_DOWNLOAD)} файлов, "
-            f"ошибок: {len(failed)}", level="INFO")
+        # ПАРАЛЛЕЛЬНАЯ загрузка — 8 потоков одновременно.
+        # raw.githubusercontent держит keep-alive, не банит параллельные запросы.
+        t0 = time.time()
+        downloaded = 0
+        failed = []
+        with ThreadPoolExecutor(max_workers=8) as ex:
+            futures = [ex.submit(_download_one, fp) for fp in FILES_TO_DOWNLOAD]
+            for i, fut in enumerate(as_completed(futures), 1):
+                fp, ok, err = fut.result()
+                if ok:
+                    downloaded += 1
+                else:
+                    failed.append(fp)
+                # логируем прогресс каждые 20 файлов
+                if i % 20 == 0 or i == len(FILES_TO_DOWNLOAD):
+                    log(f"Обнова: скачано {i}/{len(FILES_TO_DOWNLOAD)} "
+                        f"(ok={downloaded}, fail={len(failed)})", level="DEBUG")
+
+        dt = time.time() - t0
+        log(f"Обнова: скачано {downloaded}/{len(FILES_TO_DOWNLOAD)} файлов "
+            f"за {dt:.1f}с, ошибок: {len(failed)}", level="INFO")
         if failed:
-            log(f"Обнова: НЕ скачаны: {failed}", level="WARNING")
+            log(f"Обнова: НЕ скачаны ({len(failed)}): {failed[:10]}", level="WARNING")
+            # ПОВТОРНАЯ попытка для упавших — последовательно, без пула
+            if failed:
+                log(f"Обнова: повтор неудачных ({len(failed)})...", level="DEBUG")
+                still_failed = []
+                for fp in failed:
+                    res_fp, ok, err = _download_one(fp)
+                    if ok:
+                        downloaded += 1
+                        log(f"Обнова: повторно скачан {fp}", level="DEBUG")
+                    else:
+                        still_failed.append(fp)
+                failed = still_failed
+                if failed:
+                    log(f"Обнова: окончательно НЕ скачаны: {failed}", level="WARNING")
 
         # _write_apply_bat + запуск
 
