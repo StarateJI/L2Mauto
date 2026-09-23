@@ -1365,77 +1365,93 @@ class Auction(GameAction):
                 continue
 
             # ── ШАГ 2: для каждого слота с красной точкой — сравнить с sample ─
+            # ВАЖНО: красная точка = предмет ТОЛЬКО ЧТО снят с продажи.
+            # Если sample битый (std<5 = пустой фон) — просто берём ПЕРВЫЙ слот
+            # с красной точкой, потому что наш предмет 100% с точкой.
+            sample_std = float(sample_gray.std()) if sample_gray is not None else 0.0
+            sample_is_valid = sample_std > 5.0
+            log(f"Аук: sample std={sample_std:.1f} → "
+                f"{'валидный' if sample_is_valid else 'битый (берём первый с точкой)'}",
+                self.window_id, level="DEBUG")
+
             img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             best_score_on_page = 0.0
             best_dot = None
 
-            for (dot_x, dot_y) in red_dots:
-                # Красная точка в правом верхнем углу слота → центр слота
-                # смещён влево-вниз от точки примерно на (25, 25) пикселей
-                # (размер слота ~50×50, точка в углу)
+            # Если sample битый — берём ПЕРВУЮ красную точку без сравнения
+            if not sample_is_valid and red_dots:
+                dot_x, dot_y = red_dots[0]
                 slot_cx = dot_x - 25
                 slot_cy = dot_y + 25
-                # Размер слота ~50×50 (стандарт L2M)
-                slot_w, slot_h = 50, 50
+                log(f"Аук: sample битый — берём первый слот с красной точкой "
+                    f"({dot_x},{dot_y}) → ({slot_cx},{slot_cy})",
+                    self.window_id)
+                best_dot = (slot_cx, slot_cy, 1.0)
+            else:
+                # sample валидный — сравниваем каждый слот с красной точкой
+                for (dot_x, dot_y) in red_dots:
+                    slot_cx = dot_x - 25
+                    slot_cy = dot_y + 25
+                    slot_w, slot_h = 50, 50
 
-                x1 = max(0, slot_cx - slot_w // 2)
-                y1 = max(0, slot_cy - slot_h // 2)
-                x2 = min(img.shape[1], slot_cx + slot_w // 2)
-                y2 = min(img.shape[0], slot_cy + slot_h // 2)
+                    x1 = max(0, slot_cx - slot_w // 2)
+                    y1 = max(0, slot_cy - slot_h // 2)
+                    x2 = min(img.shape[1], slot_cx + slot_w // 2)
+                    y2 = min(img.shape[0], slot_cy + slot_h // 2)
 
-                slot_img = img[y1:y2, x1:x2]
-                if slot_img.size == 0:
-                    continue
+                    slot_img = img[y1:y2, x1:x2]
+                    if slot_img.size == 0:
+                        continue
 
-                # Сравнить slot_img с sample через matchTemplate + pHash
-                slot_gray = cv2.cvtColor(slot_img, cv2.COLOR_BGR2GRAY)
+                    # Прямое попиксельное сравнение — resize обоих к 50×50
+                    # и считаем среднюю абсолютную разницу (MSE)
+                    slot_resized = cv2.resize(slot_img, (50, 50),
+                                              interpolation=cv2.INTER_AREA)
+                    sample_resized = cv2.resize(sample_bgr, (50, 50),
+                                                 interpolation=cv2.INTER_AREA)
+                    diff = cv2.absdiff(slot_resized, sample_resized)
+                    mse = float(diff.mean())  # 0 = идентичны, 255 = полностью разные
+                    # Конвертируем в score: 0=разные, 1=идентичные
+                    # mse<30 → score>0.7 (похожи), mse<10 → score>0.9 (одинаковые)
+                    pixel_score = max(0.0, 1.0 - (mse / 80.0))
 
-                # matchTemplate на одном масштабе (1:1) — sample уже ~60×53
-                # как слот. Multi-scale тут излишен — оба ~одинаковые.
-                try:
-                    res = cv2.matchTemplate(
-                        np.float32(img_gray),
-                        np.float32(cv2.resize(sample_gray,
-                                              (slot_img.shape[1], slot_img.shape[0]),
-                                              interpolation=cv2.INTER_AREA)),
-                        cv2.TM_CCOEFF_NORMED
-                    )
-                    # res — карта совпадений, берём значение в точке слота
-                    # но проще: прямое сравнение slot vs sample
-                    s_resized = cv2.resize(sample_gray, (slot_img.shape[1], slot_img.shape[0]),
-                                            interpolation=cv2.INTER_AREA)
-                    corr = cv2.matchTemplate(np.float32(slot_gray),
-                                            np.float32(s_resized),
-                                            cv2.TM_CCOEFF_NORMED)[0, 0]
-                    tm_score = max(0.0, float(corr))
-                except Exception:
-                    tm_score = 0.0
+                    # Также matchTemplate + pHash для надёжности
+                    slot_gray = cv2.cvtColor(slot_img, cv2.COLOR_BGR2GRAY)
+                    s_gray_resized = cv2.resize(sample_gray,
+                                                (slot_img.shape[1], slot_img.shape[0]),
+                                                interpolation=cv2.INTER_AREA)
+                    try:
+                        corr = cv2.matchTemplate(np.float32(slot_gray),
+                                                np.float32(s_gray_resized),
+                                                cv2.TM_CCOEFF_NORMED)[0, 0]
+                        tm_score = max(0.0, float(corr))
+                    except Exception:
+                        tm_score = 0.0
 
-                # pHash проверка
-                phash_score = 0.0
-                try:
-                    from bot.yolo_detector import compare_icons
-                    phash_score = compare_icons(slot_img, sample_bgr)
-                except Exception:
-                    pass
+                    phash_score = 0.0
+                    try:
+                        from bot.yolo_detector import compare_icons
+                        phash_score = compare_icons(slot_img, sample_bgr)
+                    except Exception:
+                        pass
 
-                # Среднее score — берём только если оба метода >0.5
-                if tm_score > 0.5 and phash_score > 0.5:
-                    combined = (tm_score + phash_score) / 2.0
-                else:
-                    combined = 0.0
+                    # Берём МАКСИМАЛЬНЫЙ из трёх — если хоть один уверен
+                    combined = max(pixel_score, tm_score, phash_score)
 
-                log(f"Аук: стр {page} слот красн.точка ({dot_x},{dot_y}) "
-                    f"→ слот ({slot_cx},{slot_cy}) TM={tm_score:.3f} "
-                    f"pHash={phash_score:.3f} combined={combined:.3f}",
-                    self.window_id, level="DEBUG")
+                    log(f"Аук: стр {page} слот красн.точка ({dot_x},{dot_y}) "
+                        f"→ слот ({slot_cx},{slot_cy}) pixel={pixel_score:.3f} "
+                        f"TM={tm_score:.3f} pHash={phash_score:.3f} "
+                        f"max={combined:.3f}",
+                        self.window_id, level="DEBUG")
 
-                if combined > best_score_on_page:
-                    best_score_on_page = combined
-                    best_dot = (slot_cx, slot_cy, combined)
+                    if combined > best_score_on_page:
+                        best_score_on_page = combined
+                        best_dot = (slot_cx, slot_cy, combined)
 
-            # ── ШАГ 3: если нашли слот с combined > 0.65 — это наш предмет ─
-            if best_dot is not None and best_dot[2] >= 0.65:
+            # ── ШАГ 3: если нашли слот с score > 0.5 — это наш предмет ─
+            # Порог 0.5 (не 0.65) — красная точка уже подтверждает что предмет наш,
+            # score нужен только чтобы выбрать лучший из нескольких с точкой.
+            if best_dot is not None and best_dot[2] >= 0.5:
                 slot_cx, slot_cy, score = best_dot
                 win_cx = slot_cx + INV_SCAN[0]
                 win_cy = slot_cy + INV_SCAN[1]
