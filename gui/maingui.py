@@ -454,6 +454,25 @@ class NedoGui(QWidget):
         self.cache[profile_name] = num
         save_cache(self.cache)
 
+        # Для Dungeon — выбор типа данжа (Благословенная Земля / Пати данж)
+        batch_kwargs = {}
+        if profile_name == "Dungeon":
+            from gui.cache import load_cache, save_cache as _save_cache
+            _cache = load_cache()
+            last_dungeon = _cache.get("DungeonType", "Пати данж")
+            items = ["Пати данж", "Благословенная Земля"]
+            dungeon_type, dok = QInputDialog.getItem(
+                self, "Выбор данжа",
+                "Какой данж запускать?", items,
+                items.index(last_dungeon) if last_dungeon in items else 0,
+                editable=False
+            )
+            if not dok:
+                return
+            _cache["DungeonType"] = dungeon_type
+            _save_cache(_cache)
+            batch_kwargs["dungeon_type"] = dungeon_type
+
         batches = [windows[i:i + num] for i in range(0, len(windows), num)]
         self.controller.reset_batch_cancel()
         self._batch_stop = False  # флаг жёсткой остановки process_batch
@@ -493,7 +512,7 @@ class NedoGui(QWidget):
             # Лог старта пачки — пользователь видит прогресс в консоли
             log(f"Пачка {batch_idx + 1}/{len(batches)}: старт ({len(batch)} окон: {batch})")
             _batch_start_ts = _time.monotonic()
-            self.start_windows(profile_class, batch)
+            self.start_windows(profile_class, batch, **batch_kwargs)
 
             def wait_c(attempts=0):
                 if self.controller.batch_cancelled or self._batch_stop:

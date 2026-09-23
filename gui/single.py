@@ -244,8 +244,28 @@ class WindowControlDialog(QDialog):
 
             load_settings(nick, region=region)
 
+        # Для Dungeon — выбор типа данжа
+        kwargs = {}
+        if profile_class.__name__ == "Dungeon":
+            from PyQt5.QtWidgets import QInputDialog
+            from gui.cache import load_cache, save_cache
+            cache = load_cache()
+            last_dungeon = cache.get("DungeonType", "Пати данж")
+            items = ["Пати данж", "Благословенная Земля"]
+            dungeon_type, dok = QInputDialog.getItem(
+                self, "Выбор данжа",
+                "Какой данж запускать?", items,
+                items.index(last_dungeon) if last_dungeon in items else 0,
+                editable=False
+            )
+            if not dok:
+                return
+            cache["DungeonType"] = dungeon_type
+            save_cache(cache)
+            kwargs["dungeon_type"] = dungeon_type
+
         label.setText(profile_name)
-        self.controller.start_windows(profile_class, [nick])
+        self.controller.start_windows(profile_class, [nick], **kwargs)
         QTimer.singleShot(100, lambda: self.update_buttons(nick))
 
     def stop_profile(self, nick, label):
