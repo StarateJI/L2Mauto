@@ -1115,6 +1115,7 @@ class Auction(GameAction):
         await self._click(*BTN_FIELD_PRICE)
         await asyncio.sleep(0.4)
 
+        log(f"Аук: ВВОД ЦЕНЫ '{price_str}' — клик по цифрам:", self.window_id)
         for digit in price_str:
             coord = CALC_DIGITS.get(digit)
             if coord is None:
@@ -1122,6 +1123,7 @@ class Auction(GameAction):
                     self.window_id, level="WARNING")
                 continue
             await self._click(*coord)
+            log(f"Аук:   клик '{digit}' → {coord}", self.window_id, level="DEBUG")
             await asyncio.sleep(0.15)
         log(f"Аук: введена цена {price_str}", self.window_id)
 
@@ -1480,26 +1482,29 @@ class Auction(GameAction):
         min_price = self._ocr_price()
         MAX_REASONABLE_PRICE = 10_000_000  # 10M — верхняя граница sanity
         if min_price is None or min_price < 10 or min_price > MAX_REASONABLE_PRICE:
-            log("Аук: не удалось прочитать мин. цену — закрываю окно, предмет "
-                "остаётся в инвентаре (НЕ выставлен). Не повторяю цикл.",
-                self.window_id, level="WARNING")
+            log("Аук: не удалось прочитать мин. цену — СТОП, не выставляю "
+                "(защита от продажи за бесценок)", self.window_id, level="ERROR")
             self.profile.notify("error",
                                "Аук: OCR цены не сработал — предмет НЕ выставлен")
             # Закрыть окно цены крестиком (выйти без выставления)
             await self._click(*BTN_CLOSE)
             await asyncio.sleep(1)
-            # ВАЖНО: возвращаем 'ok' а не 'error'!
-            # 'error' привёл бы к ПОВТОРЕНИЮ цикла — бот опять кликнул бы
-            # «Отмена лота» на той же строке (лот уже снят, но в строке
-            # остался следующий предмет) и снимал бы его ЕЩЁ РАЗ.
-            # 'ok' = «цикл завершён, идём к следующему лоту».
-            return 'ok'
+            return 'error'
 
         my_price = max(min_price - 1, 10)  # не ниже 10 (игровой минимум)
-        log(f"Аук: моя цена = {my_price} (мин={min_price})", self.window_id)
+        log(f"Аук: моя цена = {my_price} (мин={min_price}) — ВВОЖУ",
+            self.window_id)
 
         # 7. Ввести цену
         await self._type_price(str(my_price))
+
+        # 7b. Пауза дать цене записаться в поле, потом скрин для проверки
+        await asyncio.sleep(0.8)
+        try:
+            after_price_typed = self._grab(INV_SCAN)
+            await self._save_debug("au_after_price_typed.png", after_price_typed)
+        except Exception:
+            pass
 
         # 8. Клик "ОК" в окне цены
         await self._click(*BTN_OK_PRICE)
