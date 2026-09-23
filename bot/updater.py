@@ -372,7 +372,9 @@ def update():
         try:
             r = requests.get(REPO_ZIP, timeout=(10, 60), stream=True)
             r.raise_for_status()
-            # Читаем чанками с логированием прогресса — io.BytesIO вместо b""
+            # Читаем чанками с ограничением скорости — НЕ ложим инет.
+            # Пауза 50ms между чанками = ~1.2 MB/сек max (не забивает канал).
+            import time as _time
             buf = io.BytesIO()
             total = 0
             last_log = 0
@@ -380,10 +382,10 @@ def update():
                 if chunk:
                     buf.write(chunk)
                     total += len(chunk)
-                    # Лог прогресса каждые 1 МБ
                     if total - last_log >= 1024 * 1024:
                         log(f"Обнова: скачано {total // 1024} КБ...", level="DEBUG")
                         last_log = total
+                    _time.sleep(0.05)  # 50ms пауза — не забиваем канал
             log(f"Обнова: ZIP скачан ({total // 1024} КБ), распаковываю...", level="INFO")
             z = zipfile.ZipFile(buf)
         except requests.exceptions.ConnectTimeout:
