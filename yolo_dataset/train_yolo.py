@@ -111,11 +111,10 @@ def train():
     
     results = model.train(
         data=DATA_YAML,
-        epochs=50,          # 50 эпох (хватит для 1 класса)
         imgsz=640,          # размер входа
         batch=8,            # batch size (уменьшить если мало RAM)
-        device="cpu",        # CPU (AMD GPU не поддерживает CUDA, а ROCm только Linux)
-        epochs=100,          # 100 эпох (~30-40 мин на CPU для 45 скринов)
+        device="cpu",       # CPU (AMD GPU не поддерживает CUDA, а ROCm только Linux)
+        epochs=100,         # 100 эпох (~30-40 мин на CPU для 45 скринов)
         save=True,
         project=os.path.join(DATASET_DIR, "runs"),
         name="train",
