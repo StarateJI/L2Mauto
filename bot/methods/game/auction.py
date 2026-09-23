@@ -1102,20 +1102,10 @@ class Auction(GameAction):
         """
         Ввести цену кликами по калькулятору.
         Сначала клик по полю 'Общая цена' (фокус), потом цифры по очереди.
-
-        ⚠️ ВАЖНО: перед вводом ОЧИЩАЕМ поле.
-        Если в поле осталась цена от прошлого предмета (например '9'),
-        бот введёт '191' поверх → получится '9191'. Поэтому:
-        - Двойной клик по полю → выделяет всё
-        - Первый клик цифры заменяет выделенное (игра сама очищает)
         """
-        # Фокус на поле "Общая цена" (двойной клик выделяет старое значение)
+        # Фокус на поле "Общая цена" (иначе цифры уйдут в "Количество")
         await self._click(*BTN_FIELD_PRICE)
-        await asyncio.sleep(0.15)
-        await self._click(*BTN_FIELD_PRICE)  # двойной клик → выделить всё
-        await asyncio.sleep(0.3)
-        log(f"Аук: поле цены выделено (двойной клик {BTN_FIELD_PRICE})",
-            self.window_id, level="DEBUG")
+        await asyncio.sleep(0.4)
 
         for digit in price_str:
             coord = CALC_DIGITS.get(digit)
@@ -1482,14 +1472,20 @@ class Auction(GameAction):
         min_price = self._ocr_price()
         MAX_REASONABLE_PRICE = 10_000_000  # 10M — верхняя граница sanity
         if min_price is None or min_price < 10 or min_price > MAX_REASONABLE_PRICE:
-            log("Аук: не удалось прочитать мин. цену — СТОП, не выставляю "
-                "(защита от продажи за бесценок)", self.window_id, level="ERROR")
+            log("Аук: не удалось прочитать мин. цену — закрываю окно, предмет "
+                "остаётся в инвентаре (НЕ выставлен). Не повторяю цикл.",
+                self.window_id, level="WARNING")
             self.profile.notify("error",
                                "Аук: OCR цены не сработал — предмет НЕ выставлен")
             # Закрыть окно цены крестиком (выйти без выставления)
             await self._click(*BTN_CLOSE)
             await asyncio.sleep(1)
-            return 'error'
+            # ВАЖНО: возвращаем 'ok' а не 'error'!
+            # 'error' привёл бы к ПОВТОРЕНИЮ цикла — бот опять кликнул бы
+            # «Отмена лота» на той же строке (лот уже снят, но в строке
+            # остался следующий предмет) и снимал бы его ЕЩЁ РАЗ.
+            # 'ok' = «цикл завершён, идём к следующему лоту».
+            return 'ok'
 
         my_price = max(min_price - 1, 10)  # не ниже 10 (игровой минимум)
         log(f"Аук: моя цена = {my_price} (мин={min_price})", self.window_id)
@@ -1505,31 +1501,5 @@ class Auction(GameAction):
         await self._click(*BTN_ADD)
         await asyncio.sleep(LONG_PAUSE)
         log("Аук: лот выставлен на продажу", self.window_id)
-
-        # 10. ⚠️ ВАЖНО: убедиться что список лотов обновился.
-        # После выставления — только что выставленный лот появляется в списке
-        # как "Продаётся". Если бот сразу пойдёт к следующей итерации — он
-        # возьмёт sample того же самого лота и СНОВА снимет его.
-        # Решение: подождать 3 сек + проверить что sample иконки изменился.
-        # Если sample идентичен прошлому — подождать ещё.
-        await asyncio.sleep(3.0)
-        try:
-            new_sample = self._grab(LOT_SEARCH)
-            old_gray = cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY)
-            new_gray = cv2.cvtColor(new_sample, cv2.COLOR_BGR2GRAY)
-            diff = cv2.absdiff(old_gray, new_gray).mean()
-            if diff < 5.0:
-                # Sample идентичен — список не обновился. Ждём ещё.
-                log(f"Аук: sample лота не сменился (diff={diff:.1f}) — "
-                    f"ждём обновления списка", self.window_id, level="DEBUG")
-                await asyncio.sleep(3.0)
-                # Проверяем статус «Продаётся» — если да, пропустим этот лот
-                # в следующей итерации через _is_status_prodano()
-            else:
-                log(f"Аук: sample лота сменился (diff={diff:.1f}) — "
-                    f"список обновился нормально", self.window_id, level="DEBUG")
-        except Exception as e:
-            log(f"Аук: проверка обновления списка упала: {e}",
-                self.window_id, level="DEBUG")
 
         return 'ok'
