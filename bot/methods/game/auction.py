@@ -954,21 +954,7 @@ class Auction(GameAction):
                                       "au_status.png")
             cv2.imwrite(debug_path, img)
 
-            # ── Метод 1: RapidOCR (основной для текста) ───────────────────
-            try:
-                from bot.ocr import recognize_text
-                text = recognize_text(img)
-                log(f"Аук: статус лота RapidOCR: '{text}'", self.window_id, level="DEBUG")
-                ocr_match = any(kw in text for kw in
-                                ("продаёт", "продает", "продаю", "продажа",
-                                 "продаё", "продае", "прода", "продаетс"))
-                if ocr_match:
-                    log("Аук: статус = «Продаётся» (RapidOCR)", self.window_id)
-                    return True
-            except Exception as e:
-                log(f"Аук: RapidOCR статус не сработал: {e}", level="DEBUG")
-
-            # ── Метод 2: Tesseract (fallback) ────────────────────────────
+            # ── Метод 1: Tesseract (основной) ────────────────────────────
             h, w = img.shape[:2]
             big = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_CUBIC)
             gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
@@ -984,7 +970,7 @@ class Auction(GameAction):
                     log("Аук: статус = «Продаётся» (Tesseract)", self.window_id)
                     return True
 
-            # ── Метод 3: зелёные пиксели ─────────────────────────────────
+            # ── Метод 2: зелёные пиксели ─────────────────────────────────
             # В Lineage2M статус «Продаётся» часто подсвечен зелёным.
             # HSV: H в [40..90] (зелёный), S>50, V>100
             try:
@@ -1065,17 +1051,7 @@ class Auction(GameAction):
         try:
             img = self._grab(ZONE_PRICE)
 
-            # ── Метод 1: RapidOCR (основной) ───────────────────────────────
-            try:
-                from bot.ocr import recognize_digits
-                price = recognize_digits(img)
-                if price is not None:
-                    log(f"Аук: RapidOCR цена = {price}", self.window_id)
-                    return price
-            except Exception as e:
-                log(f"Аук: RapidOCR цена не сработал: {e}", level="DEBUG")
-
-            # ── Метод 2: Tesseract (fallback) ──────────────────────────────
+            # ── Tesseract (основной) ───────────────────────────────────────
             # Увеличиваем x4 — OCR любит крупные буквы
             h, w = img.shape[:2]
             big = cv2.resize(img, (w * 4, h * 4), interpolation=cv2.INTER_CUBIC)
