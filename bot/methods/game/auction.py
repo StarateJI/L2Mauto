@@ -954,29 +954,37 @@ class Auction(GameAction):
                                       "au_status.png")
             cv2.imwrite(debug_path, img)
 
-            # ── Метод 1: OCR ────────────────────────────────────────────────
+            # ── Метод 1: RapidOCR (основной для текста) ───────────────────
+            try:
+                from bot.ocr import recognize_text
+                text = recognize_text(img)
+                log(f"Аук: статус лота RapidOCR: '{text}'", self.window_id, level="DEBUG")
+                ocr_match = any(kw in text for kw in
+                                ("продаёт", "продает", "продаю", "продажа",
+                                 "продаё", "продае", "прода", "продаетс"))
+                if ocr_match:
+                    log("Аук: статус = «Продаётся» (RapidOCR)", self.window_id)
+                    return True
+            except Exception as e:
+                log(f"Аук: RapidOCR статус не сработал: {e}", level="DEBUG")
+
+            # ── Метод 2: Tesseract (fallback) ────────────────────────────
             h, w = img.shape[:2]
             big = cv2.resize(img, (w * 2, h * 2), interpolation=cv2.INTER_CUBIC)
             gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
             pt = _get_pytesseract()
             text = ""
-            if pt is None:
-                log("Аук: pytesseract недоступен — проверяю статус по цвету",
-                    self.window_id, level="DEBUG")
-            else:
-                text = pt.image_to_string(
-                    gray, lang="rus+eng", config="--psm 7",
-                ).strip().lower()
-                log(f"Аук: статус лота OCR: '{text}'", self.window_id, level="DEBUG")
+            if pt is not None:
+                text = pt.image_to_string(gray, lang="rus+eng", config="--psm 7").strip().lower()
+                log(f"Аук: статус лота Tesseract: '{text}'", self.window_id, level="DEBUG")
+                ocr_match = any(kw in text for kw in
+                                ("продаёт", "продает", "продаю", "продажа",
+                                 "продаё", "продае", "прода", "продаетс"))
+                if ocr_match:
+                    log("Аук: статус = «Продаётся» (Tesseract)", self.window_id)
+                    return True
 
-            ocr_match = any(kw in text for kw in
-                            ("продаёт", "продает", "продаю", "продажа",
-                             "продаё", "продае", "прода", "продаетс"))
-            if ocr_match:
-                log("Аук: статус = «Продаётся» (OCR method)", self.window_id)
-                return True
-
-            # ── Метод 2: зелёные пиксели (статус обычно зелёный) ─────────────
+            # ── Метод 3: зелёные пиксели ─────────────────────────────────
             # В Lineage2M статус «Продаётся» часто подсвечен зелёным.
             # HSV: H в [40..90] (зелёный), S>50, V>100
             try:
@@ -1056,6 +1064,18 @@ class Auction(GameAction):
         """
         try:
             img = self._grab(ZONE_PRICE)
+
+            # ── Метод 1: RapidOCR (основной) ───────────────────────────────
+            try:
+                from bot.ocr import recognize_digits
+                price = recognize_digits(img)
+                if price is not None:
+                    log(f"Аук: RapidOCR цена = {price}", self.window_id)
+                    return price
+            except Exception as e:
+                log(f"Аук: RapidOCR цена не сработал: {e}", level="DEBUG")
+
+            # ── Метод 2: Tesseract (fallback) ──────────────────────────────
             # Увеличиваем x4 — OCR любит крупные буквы
             h, w = img.shape[:2]
             big = cv2.resize(img, (w * 4, h * 4), interpolation=cv2.INTER_CUBIC)
@@ -1223,21 +1243,18 @@ class Auction(GameAction):
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
         Искать предмет в инвентаре.
-        Правильный порядок (как просил пользователь):
-          1. ПЕРВИЧНО — multi-scale matchTemplate по ВСЕЙ зоне INV_SCAN на каждой
-             странице. Находит ВСЕ места с score >= порога (не только лучшее),
-             потому что в инвентаре могут быть чёрно-белые НЕПРОДАВАЕМЫЕ дубликаты
-             с той же иконкой — matchTemplate может сматчить их тоже.
-          2. ПОДТВЕРЖДЕНИЕ — рядом с найденной иконкой проверяем красную точку
-             «новое». Предмет только что снят с продажи → у него ВСЕГДА есть
-             красная точка. Чёрно-белые дубликаты (непродаваемые) точки не имеют.
-          3. Кликаем только если ЕСТЬ И иконка И красная точка рядом.
-
-        Красная точка — ВСПОМОГАТЕЛЬНАЯ (подтверждение), НЕ фильтр страниц.
-        Каждая страница сканируется matchTemplate'ом независимо от наличия точек.
+        1. YOLOv8 + ORB — основной (находит слоты, сравнивает с образцом)
+        2. matchTemplate — fallback если YOLOv8 не установлен
+        3. Красная точка — подтверждение что предмет снят с продажи
         """
-        best_result = None  # (cx, cy, score, page) — window-relative
+        best_result = None
         h_sample, w_sample = sample_gray.shape[:2]
+
+        try:
+            from bot.yolo_detector import find_item as yolo_find_item
+            yolo_available = True
+        except Exception:
+            yolo_available = False
 
         for page in range(1, SCAN_PAGES + 1):
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
@@ -1245,10 +1262,21 @@ class Auction(GameAction):
             await self._save_debug(f"au_page_{page}.png", img)
             gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
-            # 1. ПЕРВИЧНО: multi-scale matchTemplate → все кандидаты >= порога.
-            #    Берём ВСЕ пики, не только лучший — чтобы не пропустить наш
-            #    цветной предмет, если B&W-дубликат получил чуть больший score.
-            candidates = []  # [(cx, cy, score)] в координатах page_gray
+            if yolo_available:
+                try:
+                    sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
+                    result = yolo_find_item(img, sample_bgr, conf_threshold=0.3)
+                    if result is not None:
+                        cx, cy, matches = result
+                        win_cx = cx + INV_SCAN[0]
+                        win_cy = cy + INV_SCAN[1]
+                        log(f"Аук: YOLOv8 НАШЁЛ — стр {page} ({cx},{cy}) matches={matches}", self.window_id)
+                        best_result = (win_cx, win_cy, matches / 100.0, page)
+                        break
+                except Exception as e:
+                    log(f"Аук: YOLOv8 error: {e}", self.window_id, level="DEBUG")
+
+            candidates = []
             for scale in TM_SCALES:
                 new_w = int(w_sample * scale)
                 new_h = int(h_sample * scale)
@@ -1256,11 +1284,9 @@ class Auction(GameAction):
                     continue
                 if new_w > gray.shape[1] or new_h > gray.shape[0]:
                     continue
-                scaled = cv2.resize(sample_gray, (new_w, new_h),
-                                    interpolation=cv2.INTER_AREA)
+                scaled = cv2.resize(sample_gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
                 try:
-                    result = cv2.matchTemplate(gray, scaled,
-                                               cv2.TM_CCOEFF_NORMED)
+                    result = cv2.matchTemplate(gray, scaled, cv2.TM_CCOEFF_NORMED)
                 except cv2.error:
                     continue
                 locs = np.where(result >= TM_THRESHOLD)
