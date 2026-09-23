@@ -1189,9 +1189,18 @@ class Auction(GameAction):
 
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет в инвентаре ТОЛЬКО через YOLOv8 + ORB.
-        matchTemplate УБРАН — был ненадёжным.
-        Красная точка — подтверждение что предмет снят с продажи.
+        Искать предмет в инвентаре.
+
+        Стратегия — ГИБРИД (надёжнее чем один метод):
+        1. YOLOv8 + pHash (find_item в yolo_detector) — находит слоты и
+           сравнивает иконки. Если sample БЕЗ красного свечения — сработает.
+        2. Если YOLO не нашёл → matchTemplate multi-scale как FALLBACK.
+           matchTemplate устойчив к разнице фона (красная aura vs тёмный фон),
+           потому что TM_CCOEFF_NORMED инвариантен к среднему и дисперсии.
+
+        Без проверки красной точки — она глючит (появляется с задержкой,
+        или не детектится цветовым фильтром). И matchTemplate на 0.85+ уже
+        достаточно уверен чтобы не было ложных срабатываний.
         """
         best_result = None
 
@@ -1203,30 +1212,53 @@ class Auction(GameAction):
             log("Аук: YOLOv8 недоступен — pip install ultralytics + "
                 "bot/models/item_detector.pt", self.window_id, level="ERROR")
 
-        if not yolo_available:
-            return None
-
         for page in range(1, SCAN_PAGES + 1):
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
 
-            try:
-                sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
-                result = yolo_find_item(img, sample_bgr, conf_threshold=0.15,
-                                        match_threshold=0.70)
-                if result is not None:
-                    cx, cy, matches = result
-                    win_cx = cx + INV_SCAN[0]
-                    win_cy = cy + INV_SCAN[1]
-                    log(f"Аук: YOLOv8 НАШЁЛ — стр {page} ({cx},{cy}) matches={matches}",
-                        self.window_id)
-                    best_result = (win_cx, win_cy, matches / 100.0, page)
-                    break
-                else:
-                    log(f"Аук: YOLOv8 не нашёл на стр {page}", self.window_id, level="DEBUG")
-            except Exception as e:
-                log(f"Аук: YOLOv8 error: {e}", self.window_id, level="DEBUG")
+            # ── МЕТОД 1: YOLOv8 + pHash ─────────────────────────────────
+            if yolo_available:
+                try:
+                    sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
+                    result = yolo_find_item(img, sample_bgr, conf_threshold=0.15,
+                                            match_threshold=0.70)
+                    if result is not None:
+                        cx, cy, matches = result
+                        win_cx = cx + INV_SCAN[0]
+                        win_cy = cy + INV_SCAN[1]
+                        log(f"Аук: YOLOv8 НАШЁЛ — стр {page} ({cx},{cy}) matches={matches}",
+                            self.window_id)
+                        best_result = (win_cx, win_cy, matches / 100.0, page)
+                        break
+                    else:
+                        log(f"Аук: YOLOv8 не нашёл на стр {page} → пробую matchTemplate",
+                            self.window_id, level="DEBUG")
+                except Exception as e:
+                    log(f"Аук: YOLOv8 error: {e} → пробую matchTemplate",
+                        self.window_id, level="DEBUG")
+
+            # ── МЕТОД 2: matchTemplate multi-scale (FALLBACK) ────────────
+            # Срабатывает когда YOLO не нашёл (например sample с красным
+            # свечением — pHash не справляется, а matchTemplate — да).
+            if best_result is None:
+                try:
+                    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+                    tm_match = self._match_template_multiscale(img_gray, sample_gray)
+                    if tm_match is not None:
+                        cx, cy, score = tm_match
+                        win_cx = cx + INV_SCAN[0]
+                        win_cy = cy + INV_SCAN[1]
+                        log(f"Аук: matchTemplate НАШЁЛ — стр {page} "
+                            f"({cx},{cy}) score={score:.3f}", self.window_id)
+                        best_result = (win_cx, win_cy, score, page)
+                        break
+                    else:
+                        log(f"Аук: matchTemplate не нашёл на стр {page}",
+                            self.window_id, level="DEBUG")
+                except Exception as e:
+                    log(f"Аук: matchTemplate error: {e}", self.window_id,
+                        level="WARNING")
 
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
@@ -1240,14 +1272,61 @@ class Auction(GameAction):
             pages_to_go = best_result[3] - 1
             for _ in range(pages_to_go):
                 await self._swipe_inventory('down')
-            log(f"Аук: предмет найден и подтверждён красной точкой! "
-                f"стр {best_result[3]} ({best_result[0]},{best_result[1]}) "
-                f"score={best_result[2]:.3f}", self.window_id)
+            log(f"Аук: предмет найден! стр {best_result[3]} "
+                f"({best_result[0]},{best_result[1]}) score={best_result[2]:.3f}",
+                self.window_id)
             return (best_result[0], best_result[1])
 
         log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
-            f"(ни иконки с красной точкой)", self.window_id, level="ERROR")
+            f"(ни YOLOv8, ни matchTemplate не сработали)", self.window_id,
+            level="ERROR")
         return None
+
+    def _match_template_multiscale(self, img_gray: np.ndarray,
+                                    sample_gray: np.ndarray,
+                                    threshold: float = 0.70) -> Optional[Tuple[int, int, float]]:
+        """
+        matchTemplate multi-scale на grayscale.
+        Пробует 5 масштабов sample (0.7, 0.85, 1.0, 1.15, 1.3) чтобы
+        компенсировать разный размер иконок (sample 60×53 vs slot ~48×48).
+
+        Возвращает (cx, cy, score) или None.
+        """
+        if img_gray is None or sample_gray is None:
+            return None
+        if sample_gray.shape[0] < 5 or sample_gray.shape[1] < 5:
+            return None
+
+        img_f = np.float32(img_gray)
+        sample_f = np.float32(sample_gray)
+
+        scales = [1.3, 1.15, 1.0, 0.85, 0.7]
+        best = None  # (score, cx, cy)
+
+        for scale in scales:
+            new_w = max(8, int(sample_gray.shape[1] * scale))
+            new_h = max(8, int(sample_gray.shape[0] * scale))
+            scaled = cv2.resize(sample_f, (new_w, new_h),
+                                interpolation=cv2.INTER_AREA)
+            if scaled.shape[0] > img_f.shape[0] or scaled.shape[1] > img_f.shape[1]:
+                continue
+            try:
+                res = cv2.matchTemplate(img_f, scaled, cv2.TM_CCOEFF_NORMED)
+                _, max_val, _, max_loc = cv2.minMaxLoc(res)
+                if best is None or max_val > best[0]:
+                    best = (float(max_val), max_loc[0] + new_w // 2,
+                            max_loc[1] + new_h // 2)
+            except cv2.error:
+                continue
+
+        if best is None:
+            return None
+        score, cx, cy = best
+        if score < threshold:
+            log(f"Аук: TM лучший score={score:.3f} < {threshold}",
+                self.window_id, level="DEBUG")
+            return None
+        return (cx, cy, score)
 
     # ──────────────────────────────────────────────────────────────────────
     # ГЛАВНЫЙ ЦИКЛ ОДНОГО ПРЕДМЕТА
