@@ -1018,40 +1018,84 @@ class Auction(GameAction):
         """
         OCR 'Текущая минимальная цена' из ZONE_PRICE.
         Возвращает int или None.
+
+        Делаем 4 попытки с разными порогами бинаризации — Tesseract капризный
+        к контрасту мелкого шрифта L2M. Берём МАКСИМАЛЬНОЕ значение из
+        успешных попыток (макс обычно самый точный — мелкие части стираются
+        при низком пороге).
         """
         try:
             img = self._grab(ZONE_PRICE)
 
-            # ── Tesseract (основной) ───────────────────────────────────────
-            # Увеличиваем x4 — OCR любит крупные буквы
-            h, w = img.shape[:2]
-            big = cv2.resize(img, (w * 4, h * 4), interpolation=cv2.INTER_CUBIC)
-            # Ч/б + инверсия (tesseract лучше читает чёрный текст на белом)
-            gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
-            inv = cv2.bitwise_not(gray)
-            # Жёсткий контраст
-            _, thr = cv2.threshold(inv, 128, 255, cv2.THRESH_BINARY)
+            # Сохраняем сырой скрин зоны цены для диагностики
+            try:
+                import os
+                debug_dir = os.path.join(os.path.dirname(os.path.dirname(
+                    os.path.dirname(os.path.abspath(__file__)))), "debug_latest")
+                os.makedirs(debug_dir, exist_ok=True)
+                cv2.imwrite(os.path.join(debug_dir,
+                            f"au_price_zone_{self.window_id}.png"), img)
+            except Exception:
+                pass
 
-            # PSM 7 = одна строка, whitelist = цифры
             pt = _get_pytesseract()
             if pt is None:
+                log("Аук: pytesseract не установлен — OCR цены невозможен",
+                    self.window_id, level="ERROR")
                 return None
-            text = pt.image_to_string(
-                thr,
-                config="--psm 7 -c tessedit_char_whitelist=0123456789",
-            ).strip()
-            # Убираем запятые/пробелы (12,500 -> 12500)
-            digits = text.replace(",", "").replace(" ", "").replace(".", "")
-            # Срезаем ведущие нули (00181 -> 181, но "0" оставляем как 0)
-            digits = digits.lstrip('0') or '0'
-            if not digits.isdigit():
-                log(f"Аук: OCR вернул не цифры: '{text}'", self.window_id, level="WARNING")
+
+            # Увеличиваем x6 — OCR любит крупные буквы (было x4, мало)
+            h, w = img.shape[:2]
+            big = cv2.resize(img, (w * 6, h * 6), interpolation=cv2.INTER_CUBIC)
+            gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
+            inv = cv2.bitwise_not(gray)
+
+            prices_found = []
+
+            # 3 порога бинаризации на инвертированном
+            for thresh_val in (100, 128, 160):
+                _, thr = cv2.threshold(inv, thresh_val, 255, cv2.THRESH_BINARY)
+                text = pt.image_to_string(
+                    thr,
+                    config="--psm 7 -c tessedit_char_whitelist=0123456789",
+                ).strip()
+                digits = text.replace(",", "").replace(" ", "").replace(".", "")
+                digits = digits.lstrip('0') or '0'
+                if digits.isdigit():
+                    p = int(digits)
+                    if 10 <= p <= 10_000_000:
+                        prices_found.append(p)
+                        log(f"Аук: OCR цена = {p} (thresh={thresh_val} raw='{text}')",
+                            self.window_id, level="DEBUG")
+
+            # 4-я попытка — grayscale без инверсии (тёмный текст на светлом)
+            if not prices_found:
+                _, thr2 = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
+                text2 = pt.image_to_string(
+                    thr2, config="--psm 7 -c tessedit_char_whitelist=0123456789"
+                ).strip()
+                digits2 = text2.replace(",", "").replace(" ", "").replace(".", "")
+                digits2 = digits2.lstrip('0') or '0'
+                if digits2.isdigit():
+                    p2 = int(digits2)
+                    if 10 <= p2 <= 10_000_000:
+                        prices_found.append(p2)
+                        log(f"Аук: OCR цена = {p2} (gray-no-inv raw='{text2}')",
+                            self.window_id, level="DEBUG")
+
+            if not prices_found:
+                log("Аук: OCR цена не удался (ни одна попытка не сработала)",
+                    self.window_id, level="WARNING")
                 return None
-            price = int(digits)
-            log(f"Аук: OCR цена = {price} (raw='{text}')", self.window_id)
+
+            # Берём МАКСИМАЛЬНОЕ — при плохом OCR теряются цифры,
+            # минимум может быть в 10 раз меньше реального.
+            price = max(prices_found)
+            log(f"Аук: OCR цена ИТОГ = {price} (из {len(prices_found)} попыток: {prices_found})",
+                self.window_id)
             return price
         except Exception as e:
-            log(f"Аук: OCR цена не удался: {e}", self.window_id, level="WARNING")
+            log(f"Аук: OCR цена не удалась: {e}", self.window_id, level="WARNING")
             return None
 
     async def _type_price(self, price_str: str) -> None:
@@ -1428,14 +1472,20 @@ class Auction(GameAction):
         min_price = self._ocr_price()
         MAX_REASONABLE_PRICE = 10_000_000  # 10M — верхняя граница sanity
         if min_price is None or min_price < 10 or min_price > MAX_REASONABLE_PRICE:
-            log("Аук: не удалось прочитать мин. цену — СТОП, не выставляю "
-                "(защита от продажи за бесценок)", self.window_id, level="ERROR")
+            log("Аук: не удалось прочитать мин. цену — закрываю окно, предмет "
+                "остаётся в инвентаре (НЕ выставлен). Не повторяю цикл.",
+                self.window_id, level="WARNING")
             self.profile.notify("error",
                                "Аук: OCR цены не сработал — предмет НЕ выставлен")
             # Закрыть окно цены крестиком (выйти без выставления)
             await self._click(*BTN_CLOSE)
             await asyncio.sleep(1)
-            return 'error'
+            # ВАЖНО: возвращаем 'ok' а не 'error'!
+            # 'error' привёл бы к ПОВТОРЕНИЮ цикла — бот опять кликнул бы
+            # «Отмена лота» на той же строке (лот уже снят, но в строке
+            # остался следующий предмет) и снимал бы его ЕЩЁ РАЗ.
+            # 'ok' = «цикл завершён, идём к следующему лоту».
+            return 'ok'
 
         my_price = max(min_price - 1, 10)  # не ниже 10 (игровой минимум)
         log(f"Аук: моя цена = {my_price} (мин={min_price})", self.window_id)
