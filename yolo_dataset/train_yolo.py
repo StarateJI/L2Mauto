@@ -114,8 +114,8 @@ def train():
         epochs=50,          # 50 эпох (хватит для 1 класса)
         imgsz=640,          # размер входа
         batch=8,            # batch size (уменьшить если мало RAM)
-        device="cpu",       # "cpu" или "0" для GPU
-        patience=10,        # ранняя остановка если нет улучшения 10 эпох
+        device=0,            # GPU (0 = первый GPU, "cpu" для CPU)
+        epochs=100,          # 100 эпох на GPU (быстро)
         save=True,
         project=os.path.join(DATASET_DIR, "runs"),
         name="train",
