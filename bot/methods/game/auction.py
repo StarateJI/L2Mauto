@@ -1683,12 +1683,51 @@ class Auction(GameAction):
 
         # 5. ОДИН клик по найденному предмету — открывает окно цены.
         # Пользователь: «там не нужен двойной клик, открывается одним кликом»
-        # Раньше был двойной клик — мог ломать открытие окна цены.
         # _click_snap: кликаем + полный скрин экрана для диагностики
+        log(f"Аук: >>> КЛИК ПО ПРЕДМЕТУ item_pos={item_pos} <<<",
+            self.window_id)
+        # Скрин ДО клика
+        before_click = self._grab(INV_SCAN)
+        await self._save_debug("au_before_item_click.png", before_click)
+
         await self._click_snap('item', item_pos[0], item_pos[1], wait=T_ITEM_WINDOW)
-        # Дополнительно: скрин зоны INV_SCAN — видно открылось ли окно цены
+        log(f"Аук: кликнули, ждём прогрузки окна цены...", self.window_id)
+
+        # Скрин после клика
         after_item_click = self._grab(INV_SCAN)
         await self._save_debug("au_after_item_click.png", after_item_click)
+
+        # ПРОВЕРКА: изменился ли INV_SCAN после клика?
+        # Если окно цены открылось — справа от инвентаря появляется панель цены.
+        # INV_SCAN может стать темнее/светлее.
+        diff = cv2.absdiff(before_click, after_item_click)
+        diff_mean = float(diff.mean())
+        log(f"Аук: diff после клика = {diff_mean:.1f} "
+            f"({'изменился — клик сработал' if diff_mean > 5 else 'НЕ изменился — клик НЕ сработал!'})",
+            self.window_id)
+
+        if diff_mean < 5:
+            # Клик не сработал — окно цены не открылось
+            log(f"Аук: КЛИК НЕ СРАБОТАЛ! diff={diff_mean:.1f} < 5 — "
+                f"окно цены не открылось. Пропускаю предмет.",
+                self.window_id, level="ERROR")
+            self.profile.notify("error",
+                               f"Аук: клик по предмету не сработал — окно цены не открылось")
+            # Попробуем ещё раз — может фокус потерян
+            log(f"Аук: повтор клика...", self.window_id)
+            await self._click_snap('item_retry', item_pos[0], item_pos[1],
+                                    wait=T_ITEM_WINDOW)
+            after_retry = self._grab(INV_SCAN)
+            diff2 = cv2.absdiff(before_click, after_retry)
+            diff2_mean = float(diff2.mean())
+            log(f"Аук: diff после повтора = {diff2_mean:.1f}",
+                self.window_id)
+            if diff2_mean < 5:
+                log(f"Аук: повтор тоже не сработал — пропускаю предмет",
+                    self.window_id, level="ERROR")
+                return 'error'
+            # Повтор сработал — используем новый скрин
+            after_item_click = after_retry
 
         # 6. OCR "Текущая минимальная цена"
         # ⚠️ КРИТИЧНО: если OCR не смог прочитать цену — СТОП, не выставлять!
