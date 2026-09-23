@@ -1585,7 +1585,7 @@ class Auction(GameAction):
         # Юзер попросил не игнорировать «Продаётся» чтобы проверить цикл.
         # Потом вернём обратно.
         try:
-            if False:  # self._is_status_prodano():
+            if self._is_status_prodano():
                 log("Аук: первый лот в статусе «Продаётся» — пропускаю",
                     self.window_id)
                 return 'empty'
