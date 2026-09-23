@@ -1398,11 +1398,16 @@ class Auction(GameAction):
 
         # 2. Защита от вечного цикла: если первый лот в статусе «Продаётся» —
         # значит он только что выставлен, снимать/переставлять его НЕ НАДО.
-        # Пропускаем. (TEST_MODE выключен — проверка возвращена.)
-        if self._is_status_prodano():
-            log("Аук: первый лот в статусе «Продаётся» — пропускаю",
-                self.window_id)
-            return 'empty'
+        # Пропускаем. Обёрнуто в try/except — RapidOCR может крашнуть процесс
+        # при первом вызове (скачивание моделей).
+        try:
+            if self._is_status_prodano():
+                log("Аук: первый лот в статусе «Продаётся» — пропускаю",
+                    self.window_id)
+                return 'empty'
+        except Exception as e:
+            log(f"Аук: _is_status_prodano упал: {e} — продолжаю",
+                self.window_id, level="WARNING")
 
         # 2b. Если образец пустой (0 SIFT точек) и статус не «Продаётся» —
         # значит строка лота пустая (нет лотов на продаже вообще).
@@ -1434,11 +1439,16 @@ class Auction(GameAction):
 
         log("Аук: лот снят, предмет упал в конец инвентаря", self.window_id)
 
-        # 4. Найти предмет в инвентаре (SIFT, 5 страниц)
+        # 4. Найти предмет в инвентаре (YOLOv8 + matchTemplate, 5 страниц)
         await self._save_debug("au_after_click.png", self._grab(INV_SCAN))
-        log("Аук: ищу предмет (SIFT)...", self.window_id)
+        log("Аук: ищу предмет (YOLOv8 + matchTemplate)...", self.window_id)
 
-        item_pos = await self._find_item(sample_gray)
+        try:
+            item_pos = await self._find_item(sample_gray)
+        except Exception as e:
+            log(f"Аук: _find_item упал: {e} — пропускаю предмет",
+                self.window_id, level="ERROR")
+            return 'error'
         if item_pos is None:
             self.profile.notify("error",
                                f"Аук: ПРЕДМЕТ НЕ НАЙДЕН (SIFT, {SCAN_PAGES} стр)")
