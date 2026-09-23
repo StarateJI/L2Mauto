@@ -87,15 +87,15 @@ def detect_items(img_bgr: np.ndarray, conf_threshold: float = 0.3) -> List[Tuple
 
 def compare_icons(icon1: np.ndarray, icon2: np.ndarray) -> float:
     """
-    Сравнить две иконки через histogram correlation.
+    Сравнить две иконки попиксельно.
     Возвращает score 0.0-1.0 (1.0 = идентичные).
     
     Как это работает:
     1. Resize обе иконки к одному размеру (60x53)
-    2. Считаем цветовые гистограммы
-    3. Сравниваем гистограммы через correlation
+    2. Считаем среднюю разницу между пикселями (MSE)
+    3. Конвертируем в score: 1.0 - (разница / макс_разница)
     
-    Это надёжнее ORB — работает как человек: "та же картинка или нет".
+    Это простейшее "та же картинка или нет" — пиксель за пикселем.
     """
     if icon1 is None or icon2 is None:
         return 0.0
@@ -105,22 +105,16 @@ def compare_icons(icon1: np.ndarray, icon2: np.ndarray) -> float:
     img1 = cv2.resize(icon1, (w, h), interpolation=cv2.INTER_AREA)
     img2 = cv2.resize(icon2, (w, h), interpolation=cv2.INTER_AREA)
     
-    # Гистограммы по каждому каналу (HSV — устойчивее к освещению)
-    hsv1 = cv2.cvtColor(img1, cv2.COLOR_BGR2HSV)
-    hsv2 = cv2.cvtColor(img2, cv2.COLOR_BGR2HSV)
+    # Прямое попиксельное сравнение — средняя абсолютная разница
+    diff = cv2.absdiff(img1, img2)
+    mean_diff = diff.mean()
     
-    # H: 0-180, S: 0-256, V: 0-256
-    channels = [0, 1, 2]
-    hist_size = [50, 50, 50]
-    ranges = [0, 180, 0, 256, 0, 256]
-    
-    hist1 = cv2.calcHist([hsv1], channels, None, hist_size, ranges)
-    hist2 = cv2.calcHist([hsv2], channels, None, hist_size, ranges)
-    
-    cv2.normalize(hist1, hist1, 0, 1, cv2.NORM_MINMAX)
-    cv2.normalize(hist2, hist2, 0, 1, cv2.NORM_MINMAX)
-    
-    score = cv2.compareHist(hist1, hist2, cv2.HISTCMP_CORREL)
+    # 0 = идентичные, 255 = полностью разные
+    # Конвертируем: score = 1.0 - (mean_diff / 50.0)
+    # mean_diff < 50 → score > 0.0
+    # mean_diff = 0 → score = 1.0 (идентичные)
+    # mean_diff = 50 → score = 0.0 (разные)
+    score = max(0.0, 1.0 - (mean_diff / 50.0))
     return float(score)
 
 
