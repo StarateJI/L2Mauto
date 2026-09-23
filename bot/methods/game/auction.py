@@ -934,9 +934,17 @@ class Auction(GameAction):
             if pt is not None:
                 text = pt.image_to_string(gray, lang="rus+eng", config="--psm 7").strip().lower()
                 log(f"Аук: статус лота Tesseract: '{text}'", self.window_id, level="DEBUG")
+                # Кириллицей (если rus.traineddata установлен)
                 ocr_match = any(kw in text for kw in
                                 ("продаёт", "продает", "продаю", "продажа",
                                  "продаё", "продае", "прода", "продаетс"))
+                # Латиницей — Tesseract без rus.traineddata читает кириллицу
+                # как латиницу: "продаётся" → "pnpodaetca" / "mpogaetca" и т.п.
+                # Поэтому ищем латинские варианты:
+                if not ocr_match:
+                    ocr_match = any(kw in text for kw in
+                                    ("proda", "poda", "npoda", "mpoda",
+                                     "prodaj", "podaj"))
                 if ocr_match:
                     log("Аук: статус = «Продаётся» (Tesseract)", self.window_id)
                     return True
