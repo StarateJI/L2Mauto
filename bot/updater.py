@@ -333,6 +333,22 @@ for /d %%D in ("{root_dir}\\*") do (
 )
 echo Step 3b done. >> "{root_dir}\\apply_update.log"
 
+REM ---- Шаг 3c: Проверяем что YOLOv8 модель на месте ----
+echo Step 3c: check YOLOv8 model... >> "{root_dir}\\apply_update.log"
+if not exist "{root_dir}\\bot\\models\\item_detector.pt" (
+    echo WARNING: item_detector.pt not found! >> "{root_dir}\\apply_update.log"
+    if not exist "{root_dir}\\bot\\models" mkdir "{root_dir}\\bot\\models"
+    REM Пробуем скачать с GitHub
+    powershell -Command "Invoke-WebRequest -Uri 'https://github.com/StarateJI/L2Mauto/raw/main/bot/models/item_detector.pt' -OutFile '{root_dir}\\bot\\models\\item_detector.pt'" >> "{root_dir}\\apply_update.log" 2>&1
+    if exist "{root_dir}\\bot\\models\\item_detector.pt" (
+        echo item_detector.pt downloaded successfully. >> "{root_dir}\\apply_update.log"
+    ) else (
+        echo ERROR: Failed to download item_detector.pt! >> "{root_dir}\\apply_update.log"
+    )
+) else (
+    echo item_detector.pt OK. >> "{root_dir}\\apply_update.log"
+)
+
 REM ---- Шаг 4: cleanup ----
 echo Step 4: cleanup temp_dir... >> "{root_dir}\\apply_update.log"
 rd /s /q "{temp_dir}" 2>nul
