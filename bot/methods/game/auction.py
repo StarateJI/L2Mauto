@@ -1373,14 +1373,51 @@ class Auction(GameAction):
 
             # Сортируем красные точки по позиции: берём ПОСЛЕДНЮЮ
             # (самый нижний-правый слот = свежедобавленный)
+            # НО! ЧБ (привязанные) предметы серые — пропускаем их.
+            # Наш предмет = последний ЦВЕТНОЙ слот с красной точкой.
             red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
-            chosen_dot = red_dots_sorted[-1]  # последний
+
+            # Идём с конца, ищем первый ЦВЕТНОЙ слот
+            chosen_dot = None
+            for dot in reversed(red_dots_sorted):
+                dot_x, dot_y = dot
+                # Вырезаем слот вокруг точки (50×50)
+                x1 = max(0, dot_x - 40)
+                y1 = max(0, dot_y - 10)
+                x2 = min(img.shape[1], dot_x + 10)
+                y2 = min(img.shape[0], dot_y + 40)
+                slot = img[y1:y2, x1:x2]
+                if slot.size == 0:
+                    continue
+                # Проверка цветности: ЧБ предметы серые (R≈G≈B)
+                # Цветные — разница между каналами > 20
+                b_ch, g_ch, r_ch = cv2.split(slot)
+                cd = np.maximum(np.maximum(
+                    np.abs(b_ch.astype(int) - g_ch.astype(int)),
+                    np.abs(g_ch.astype(int) - r_ch.astype(int))),
+                    np.abs(b_ch.astype(int) - r_ch.astype(int)))
+                color_score = float(cd.mean())
+                log(f"Аук:   точка ({dot_x},{dot_y}) color_score={color_score:.0f} "
+                    f"({'ЦВЕТНОЙ' if color_score > 20 else 'ЧБ-серый'})",
+                    self.window_id, level="DEBUG")
+                if color_score > 20:  # цветной — наш!
+                    chosen_dot = dot
+                    break
+
+            if chosen_dot is None:
+                # Все слоты с красной точкой — ЧБ. Свайп дальше.
+                log(f"Аук: стр {page} — все {len(red_dots)} красных точек на "
+                    f"ЧБ предметах, свайп дальше", self.window_id, level="DEBUG")
+                if page < SCAN_PAGES:
+                    await self._swipe_inventory('down')
+                continue
+
             # Кликаем прямо в красную точку
             chosen_cx = chosen_dot[0]
             chosen_cy = chosen_dot[1]
 
             log(f"Аук: стр {page} — красных точек: {len(red_dots)}, "
-                f"берём ПОСЛЕДНЮЮ ({chosen_dot[0]},{chosen_dot[1]}) → "
+                f"берём ПОСЛЕДНИЙ ЦВЕТНОЙ ({chosen_dot[0]},{chosen_dot[1]}) → "
                 f"слот ({chosen_cx},{chosen_cy})",
                 self.window_id)
 
