@@ -11,18 +11,22 @@ from bot.clogger import log
 
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
 
-# Список URL для проверки версии (пробуем по очереди):
-# 1. raw.githubusercontent.com с cache-buster — оригинал, свежая версия
-# 2. GitHub API — JSON, no cache, всегда свежая (rate limit 60/час анонимно)
-# 3. cdn.jsdelivr.net — ОСТОРОЖНО: кеширует 7 дней (max-age=604800),
-#    используем только как последний fallback
-#    (для РФ где raw может быть недоступен)
+# Список URL для проверки версии:
+# 1. raw.githubusercontent.com — оригинал, свежая версия
+# 2. cdn.jsdelivr.net — CDN (не лимитируется)
+# api.github.com УБРАН — давал 403 rate limit
 REPO_VERSION_URLS = [
-    "https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main",
     "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt",
     "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/bot/version.txt",
 ]
 REPO_ZIP = "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip"
+
+# Зеркала ZIP — если github.com не отвечает, пробуем другие.
+REPO_ZIP_MIRRORS = [
+    "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip",
+    "https://codeload.github.com/StarateJI/L2Mauto/zip/refs/heads/main",
+    "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main",
+]
 
 def get_my_version():
     try:
@@ -85,29 +89,17 @@ def _fetch_remote_version() -> str | None:
 
     for url in REPO_VERSION_URLS:
         try:
-            # Для API GitHub — другой формат ответа (JSON с base64)
-            if "api.github.com" in url:
-                r = requests.get(url, timeout=8, headers=headers)
-                r.raise_for_status()
-                import base64
-                data = r.json()
-                content = base64.b64decode(data["content"]).decode().strip()
-                if content and content[0].isdigit():
-                    versions_found.append((len(versions_found), "API", content))
-                    log(f"needs_update: API GitHub → {content}", level="DEBUG")
-            else:
-                # raw / jsdelivr — простой текст
-                full_url = url + cache_buster
-                r = requests.get(full_url, timeout=8, headers=headers)
-                r.raise_for_status()
-                content = r.text.strip()
-                if content and content[0].isdigit():
-                    src = "jsdelivr" if "jsdelivr" in url else "raw"
-                    versions_found.append((len(versions_found), src, content))
-                    log(f"needs_update: {src} → {content}", level="DEBUG")
+            # raw / jsdelivr — простой текст (api.github.com убран)
+            full_url = url + cache_buster
+            r = requests.get(full_url, timeout=5, headers=headers)
+            r.raise_for_status()
+            content = r.text.strip()
+            if content and content[0].isdigit():
+                src = "jsdelivr" if "jsdelivr" in url else "raw"
+                versions_found.append((len(versions_found), src, content))
+                log(f"needs_update: {src} → {content}", level="DEBUG")
         except Exception as e:
-            src = "API" if "api.github.com" in url else (
-                "jsdelivr" if "jsdelivr" in url else "raw")
+            src = "jsdelivr" if "jsdelivr" in url else "raw"
             log(f"needs_update: {src} failed: {type(e).__name__}: {e}",
                 level="DEBUG")
             continue
@@ -158,16 +150,24 @@ def backup():
     os.makedirs(backups_dir, exist_ok=True)
     archive_path = os.path.join(backups_dir, f"update_backup_{version}.zip")
 
+    # ЛЁГКИЙ backup — только .py файлы (без скринов, temp_update, .git, debug)
     with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(root_dir):
-            if any(skip in root for skip in ("backups", "logs")):
-                continue
+            dirs[:] = [d for d in dirs if d not in
+                       ("backups", "logs", "temp_update", ".git",
+                        "debug", "__pycache__", "screenshots")]
             for file in files:
+                if not file.endswith((".py", ".txt", ".ini", ".bat",
+                                       ".json", ".toml", ".md")):
+                    continue
                 path = os.path.join(root, file)
                 rel_path = os.path.relpath(path, root_dir)
-                zipf.write(path, rel_path)
+                try:
+                    zipf.write(path, rel_path)
+                except Exception:
+                    pass
 
-    log(f"Сделан бэкап текущей версии в {archive_path}")
+    log(f"Сделан лёгкий бэкап .py в {archive_path}")
     return archive_path
 
 def _cleanup(root_dir: str) -> None:
@@ -364,41 +364,37 @@ def update():
     try:
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         backup()
-        log("Обнова: бэкап сделан, качаю ZIP с GitHub...", level="INFO")
+        log("Обнова: бэкап сделан, качаю ZIP...", level="INFO")
 
-        # Качаем ZIP с stream=True и connect/read timeout — иначе requests.get
-        # может зависнуть намертво если GitHub долго отдаёт большой файл.
-        # connect=10 сек (дозвон), read=60 сек (между пакетами).
-        try:
-            r = requests.get(REPO_ZIP, timeout=(10, 60), stream=True)
-            r.raise_for_status()
-            # Читаем чанками с ограничением скорости — НЕ ложим инет.
-            # Пауза 50ms между чанками = ~1.2 MB/сек max (не забивает канал).
-            import time as _time
-            buf = io.BytesIO()
-            total = 0
-            last_log = 0
-            for chunk in r.iter_content(chunk_size=65536):
-                if chunk:
-                    buf.write(chunk)
-                    total += len(chunk)
-                    if total - last_log >= 1024 * 1024:
-                        log(f"Обнова: скачано {total // 1024} КБ...", level="DEBUG")
-                        last_log = total
-                    _time.sleep(0.05)  # 50ms пауза — не забиваем канал
-            log(f"Обнова: ZIP скачан ({total // 1024} КБ), распаковываю...", level="INFO")
-            z = zipfile.ZipFile(buf)
-        except requests.exceptions.ConnectTimeout:
-            log("Обнова: connect timeout — не смог дозвониться до GitHub за 10с",
-                level="ERROR")
+        # Качаем ZIP с зеркал — пробуем по очереди с коротким timeout.
+        import time as _time
+        buf = None
+        total = 0
+        for url in REPO_ZIP_MIRRORS:
+            try:
+                log(f"Обнова: пробую зеркало: {url}", level="DEBUG")
+                r = requests.get(url, timeout=(8, 60), stream=True)
+                r.raise_for_status()
+                buf = io.BytesIO()
+                total = 0
+                for chunk in r.iter_content(chunk_size=65536):
+                    if chunk:
+                        buf.write(chunk)
+                        total += len(chunk)
+                        _time.sleep(0.05)  # 50ms — не забиваем канал
+                buf.seek(0)
+                log(f"Обнова: ZIP скачан ({total // 1024} КБ) с {url}", level="INFO")
+                break
+            except Exception as e:
+                log(f"Обнова: зеркало {url} упало: {type(e).__name__}: {e}",
+                    level="WARNING")
+                continue
+
+        if buf is None or total < 1000:
+            log("Обнова: все зеркала упали", level="ERROR")
             sys.exit(1)
-        except requests.exceptions.ReadTimeout:
-            log("Обнова: read timeout — GitHub перестал слать данные (60с без пакетов)",
-                level="ERROR")
-            sys.exit(1)
-        except requests.exceptions.RequestException as e:
-            log(f"Обнова: сетевая ошибка: {type(e).__name__}: {e}", level="ERROR")
-            sys.exit(1)
+
+        z = zipfile.ZipFile(buf)
 
         temp_dir = os.path.join(root_dir, "temp_update")
         if os.path.exists(temp_dir):

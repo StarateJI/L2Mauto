@@ -58,8 +58,8 @@ class UpdateChecker(QThread):
                     log(f"Установлена последняя версия бота | {get_my_version()}")
             except Exception:
                 pass
-            # Проверка раз в 30 секунд (было 60) — пользователь видит кнопку быстрее
-            for _ in range(30):
+            # Раз в 10 минут (было 30 сек) — НЕ ложим инет частыми запросами
+            for _ in range(600):
                 if not self._running:
                     break
                 time.sleep(1)
@@ -71,7 +71,7 @@ class UpdateChecker(QThread):
 
 class LogUploader(QThread):
     """
-    Периодически (раз в 60 сек) загружает logs/log.log + debug PNG в ветку
+    Периодически (раз в 5 мин) загружает logs/log.log + debug PNG в ветку
     bot-logs. Даже если бот упал и finally не сработал — логи всё равно уйдут.
     """
     def __init__(self, parent=None):
@@ -81,8 +81,8 @@ class LogUploader(QThread):
     def run(self):
         import traceback
         log("Запустил периодический загрузчик логов")
-        # Первая загрузка через 30 сек (даём боту время стартовать)
-        for _ in range(30):
+        # Первая загрузка через 2 мин (даём боту стартовать)
+        for _ in range(120):
             if not self._running:
                 return
             time.sleep(1)
@@ -95,8 +95,8 @@ class LogUploader(QThread):
             except Exception as e:
                 tb = traceback.format_exc()
                 log(f"LogUploader: ошибка: {e}\n{tb}", level="ERROR")
-            # Раз в 60 секунд
-            for _ in range(60):
+            # Раз в 5 минут (было 60 сек)
+            for _ in range(300):
                 if not self._running:
                     return
                 time.sleep(1)
