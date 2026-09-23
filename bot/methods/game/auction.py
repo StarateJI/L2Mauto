@@ -697,6 +697,35 @@ class Auction(GameAction):
         except Exception as e:
             log(f"Аук: не удалось сохранить {name}: {e}", self.window_id, level="WARNING")
 
+    async def _click_snap(self, label: str, x: int, y: int,
+                          wait: float = 0.8) -> None:
+        """
+        Кликнуть в (x, y) и сделать ПОЛНЫЙ скрин экрана после клика.
+
+        Скрин сохраняется как au_step_<label>_<timestamp>.png —
+        видны все окна игры в момент клика, можно увидеть попал ли бот
+        в нужную кнопку. Это для полной диагностики — юзер не должен
+        слать скрины руками.
+
+        Args:
+            label: короткое имя шага (cancel, ok, digit_5, add и т.п.)
+            x, y: координаты клика
+            wait: сколько ждать после клика (анимация/появление окна)
+        """
+        await self._click(x, y)
+        if wait > 0:
+            await asyncio.sleep(wait)
+        # Полный скрин экрана (всё что видит игрок)
+        ts = int(asyncio.get_event_loop().time() * 10) % 100000
+        fname = f"au_step_{label}_{ts}.png"
+        try:
+            # Делаем скрин через _take_fullscreen (синхронный, быстрый)
+            self._take_fullscreen(fname)
+            log(f"Аук: клик {label} ({x},{y}) → скрин {fname}", self.window_id)
+        except Exception as e:
+            log(f"Аук: клик {label} ({x},{y}) — скрин не удался: {e}",
+                self.window_id, level="DEBUG")
+
     def _take_fullscreen(self, name: str = "au_fullscreen.png") -> None:
         """
         Сделать скриншот ВСЕГО монитора (не отдельного окна) и сохранить
@@ -997,9 +1026,10 @@ class Auction(GameAction):
     async def _cancel_lot(self) -> bool:
         """Клик 'Отмена лота' и ожидание окна подтверждения."""
         for attempt in range(1, 3):
-            await self._click(*BTN_CANCEL_LOT)
+            # _click_snap — клик + полный скрин после
+            await self._click_snap(f'cancel_{attempt}', BTN_CANCEL_LOT[0],
+                                   BTN_CANCEL_LOT[1], wait=1.5)
             log(f"Аук: клик Отмена лота ({attempt}/2) {BTN_CANCEL_LOT}", self.window_id)
-            await asyncio.sleep(1.5)
             if self._confirm_window_visible():
                 log("Аук: окно подтверждения появилось", self.window_id)
                 return True
@@ -1009,7 +1039,9 @@ class Auction(GameAction):
     async def _click_ok_cancel(self) -> bool:
         """Клик ОК в окне подтверждения. До 4 попыток."""
         for attempt in range(1, MAX_OK_RETRIES + 1):
-            await self._click(*BTN_OK_CANCEL)
+            # _click_snap — клик + полный скрин после
+            await self._click_snap(f'ok_cancel_{attempt}', BTN_OK_CANCEL[0],
+                                   BTN_OK_CANCEL[1], wait=1.0)
             log(f"Аук: клик ОК отмены ({attempt}/{MAX_OK_RETRIES}) {BTN_OK_CANCEL}",
                 self.window_id)
             await asyncio.sleep(T_CONFIRM_SETTLE)
@@ -1469,10 +1501,9 @@ class Auction(GameAction):
         # 5. ОДИН клик по найденному предмету — открывает окно цены.
         # Пользователь: «там не нужен двойной клик, открывается одним кликом»
         # Раньше был двойной клик — мог ломать открытие окна цены.
-        await self._click(*item_pos)
-        log(f"Аук: клик по предмету {item_pos}", self.window_id)
-        await asyncio.sleep(T_ITEM_WINDOW)
-        # Скрин после клика — видно открылось ли окно цены
+        # _click_snap: кликаем + полный скрин экрана для диагностики
+        await self._click_snap('item', item_pos[0], item_pos[1], wait=T_ITEM_WINDOW)
+        # Дополнительно: скрин зоны INV_SCAN — видно открылось ли окно цены
         after_item_click = self._grab(INV_SCAN)
         await self._save_debug("au_after_item_click.png", after_item_click)
 
@@ -1495,24 +1526,38 @@ class Auction(GameAction):
         log(f"Аук: моя цена = {my_price} (мин={min_price}) — ВВОЖУ",
             self.window_id)
 
-        # 7. Ввести цену
-        await self._type_price(str(my_price))
+        # 7. Ввести цену (каждый клик по цифре = отдельный скрин)
+        # _click_snap делает скрин после каждого клика — видно что в поле
+        await self._click_snap('field_price', BTN_FIELD_PRICE[0],
+                               BTN_FIELD_PRICE[1], wait=0.5)
+        log(f"Аук: ВВОД ЦЕНЫ '{my_price}' — клик по цифрам:", self.window_id)
+        for digit in str(my_price):
+            coord = CALC_DIGITS.get(digit)
+            if coord is None:
+                log(f"Аук: неизвестная цифра '{digit}' — пропускаю",
+                    self.window_id, level="WARNING")
+                continue
+            await self._click_snap(f'digit_{digit}', coord[0], coord[1], wait=0.3)
+            log(f"Аук:   клик '{digit}' → {coord}", self.window_id, level="DEBUG")
+        log(f"Аук: введена цена {my_price}", self.window_id)
 
-        # 7b. Пауза дать цене записаться в поле, потом скрин для проверки
-        await asyncio.sleep(0.8)
+        # 7b. Скрин INV_SCAN после ввода — видно какая цена в поле
+        await asyncio.sleep(0.5)
         try:
             after_price_typed = self._grab(INV_SCAN)
             await self._save_debug("au_after_price_typed.png", after_price_typed)
         except Exception:
             pass
 
-        # 8. Клик "ОК" в окне цены
-        await self._click(*BTN_OK_PRICE)
-        await asyncio.sleep(1)
+        # 8. Клик "ОК" в окне цены + скрин
+        await self._click_snap('ok_price', BTN_OK_PRICE[0],
+                               BTN_OK_PRICE[1], wait=1.5)
 
-        # 9. Клик "Добавить"
-        await self._click(*BTN_ADD)
-        await asyncio.sleep(LONG_PAUSE)
+        # 9. Клик "Добавить" + скрин
+        await self._click_snap('add', BTN_ADD[0], BTN_ADD[1], wait=LONG_PAUSE)
         log("Аук: лот выставлен на продажу", self.window_id)
+
+        # 9b. Финальный полный скрин — видно статус лота (Продается/Отмена)
+        self._take_fullscreen("au_final_fullscreen.png")
 
         return 'ok'
