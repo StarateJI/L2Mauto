@@ -24,7 +24,7 @@ SWP_NOACTIVATE = 0x0010
 SetWindowPos = ctypes.windll.user32.SetWindowPos
 
 class BaseProfile(ABC):
-    def __init__(self, window_info: Dict[str, Dict], settings: BaseSettings | None = None):
+    def __init__(self, window_info: Dict[str, Dict], settings: BaseSettings | None = None, **kwargs):
         from bot.events.checker import EventsChecker
         from bot.methods.other import MouseEvents
 

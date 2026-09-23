@@ -11,6 +11,10 @@ class Dungeon(EventDrivenProfile):
         "death": "_handle_death",
     }
 
+    def __init__(self, window_info, settings=None, **kwargs):
+        self.dungeon_type = kwargs.pop("dungeon_type", "Пати данж")
+        super().__init__(window_info, settings=settings, **kwargs)
+
     def profile_version(self):
         return "1.0.0"
 
