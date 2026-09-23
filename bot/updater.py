@@ -379,63 +379,107 @@ def update():
     try:
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         backup()
-        log("Обнова: бэкап сделан, качаю ZIP...", level="INFO")
+        log("Обнова: бэкап сделан, качаю файлы по отдельности...", level="INFO")
 
-        # Качаем ZIP с зеркал — пробуем по очереди с коротким timeout.
+        # GitHub кеширует ZIP (194MB из-за старой истории).
+        # Вместо ZIP — скачиваем только изменённые файлы через raw URLs.
         import time as _time
-        buf = None
-        total = 0
-        for url in REPO_ZIP_MIRRORS:
-            try:
-                log(f"Обнова: пробую зеркало: {url}", level="DEBUG")
-                r = requests.get(url, timeout=(8, 60), stream=True)
-                r.raise_for_status()
-                buf = io.BytesIO()
-                total = 0
-                for chunk in r.iter_content(chunk_size=65536):
-                    if chunk:
-                        buf.write(chunk)
-                        total += len(chunk)
-                        _time.sleep(0.05)  # 50ms — не забиваем канал
-                buf.seek(0)
-                log(f"Обнова: ZIP скачан ({total // 1024} КБ) с {url}", level="INFO")
-                break
-            except Exception as e:
-                log(f"Обнова: зеркало {url} упало: {type(e).__name__}: {e}",
-                    level="WARNING")
-                continue
-
-        if buf is None or total < 1000:
-            log("Обнова: все зеркала упали", level="ERROR")
-            sys.exit(1)
-
-        z = zipfile.ZipFile(buf)
+        
+        # Список файлов для скачивания (относительно корня репо)
+        FILES_TO_DOWNLOAD = [
+            "bot/version.txt",
+            "bot/updater.py",
+            "bot/clogger.py",
+            "bot/constans.py",
+            "bot/controller.py",
+            "bot/delays.py",
+            "bot/limits.py",
+            "bot/log_uploader.py",
+            "bot/manager.py",
+            "bot/misc.py",
+            "bot/utils.py",
+            "bot/windows_memory.py",
+            "bot/yolo_detector.py",
+            "bot/ocr.py",
+            "bot/vlm.py",
+            "bot/methods/game/__init__.py",
+            "bot/methods/game/_base.py",
+            "bot/methods/game/auction.py",
+            "bot/methods/game/claims.py",
+            "bot/methods/game/combat.py",
+            "bot/methods/game/energo.py",
+            "bot/methods/game/errors.py",
+            "bot/methods/game/party_dungeon.py",
+            "bot/methods/game/scheduler.py",
+            "bot/methods/game/teleport.py",
+            "bot/methods/game/town.py",
+            "bot/methods/base.py",
+            "bot/methods/other.py",
+            "bot/cbt/cbt.py",
+            "bot/events/checker.py",
+            "bot/events/enums.py",
+            "bot/events/events.py",
+            "bot/capture/__init__.py",
+            "bot/capture/backend.py",
+            "bot/capture/hwnd.py",
+            "bot/capture/mss_backend.py",
+            "bot/capture/rust_backend.py",
+            "bot/alchemy/alch_cons.py",
+            "bot/alchemy/alch_utils.py",
+            "bot/alchemy/main_alch.py",
+            "bot/alchemy/mini_alch.py",
+            "profiles/base.py",
+            "profiles/event_driven.py",
+            "profiles/Auction/auction.py",
+            "profiles/Dungeon/dungeon.py",
+            "profiles/PvPDodge/pvp.py",
+            "profiles/Rewards/rewards.py",
+            "profiles/Scheduler/scheduler.py",
+            "profiles/Buyer/buyer.py",
+            "profiles/MainAlchemy/main_alch.py",
+            "gui/maingui.py",
+            "gui/single.py",
+            "gui/cache.py",
+            "main.py",
+            "requirements.txt",
+        ]
 
         temp_dir = os.path.join(root_dir, "temp_update")
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
         os.makedirs(temp_dir, exist_ok=True)
 
-        z.extractall(temp_dir)
-        main_repo = os.path.join(temp_dir, "L2Mauto-main")
+        raw_base = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/"
+        downloaded = 0
+        failed = []
 
-        # Раскрываем содержимое L2Mauto-main/ в корень temp_dir
-        if os.path.isdir(main_repo):
-            for item in os.listdir(main_repo):
-                src = os.path.join(main_repo, item)
-                dst = os.path.join(temp_dir, item)
-                if os.path.exists(dst):
-                    if os.path.isdir(dst):
-                        shutil.rmtree(dst)
-                    else:
-                        os.remove(dst)
-                shutil.move(src, dst)
+        for filepath in FILES_TO_DOWNLOAD:
+            url = raw_base + filepath
+            local_path = os.path.join(temp_dir, filepath.replace("/", os.sep))
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
             try:
-                os.rmdir(main_repo)
-            except OSError:
-                pass  # папка может быть непустой если были скрытые файлы
+                r = requests.get(url, timeout=(8, 30))
+                if r.status_code == 200:
+                    with open(local_path, "wb") as f:
+                        f.write(r.content)
+                    downloaded += 1
+                    if downloaded % 10 == 0:
+                        log(f"Обнова: скачано {downloaded}/{len(FILES_TO_DOWNLOAD)} файлов", level="DEBUG")
+                else:
+                    failed.append(filepath)
+            except Exception as e:
+                failed.append(filepath)
+                log(f"Обнова: не скачал {filepath}: {e}", level="WARNING")
+            _time.sleep(0.1)  # не забиваем канал
 
-        # Очистка старых .pyd.old / .dll.old от прошлых обнов
+        log(f"Обнова: скачано {downloaded}/{len(FILES_TO_DOWNLOAD)} файлов, "
+            f"ошибок: {len(failed)}", level="INFO")
+        if failed:
+            log(f"Обнова: НЕ скачаны: {failed}", level="WARNING")
+
+        # _write_apply_bat + запуск
+
+        # Очистка старых .pyd.old / .dll.old
         _cleanup(root_dir)
 
         # ── НОВЫЙ ПОДХОД: apply_update.bat ──────────────────────────────
