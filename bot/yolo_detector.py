@@ -157,6 +157,7 @@ def find_item(img_bgr: np.ndarray, sample_bgr: np.ndarray,
         level="DEBUG")
     
     best_match = None
+    best_score = 0.0
     
     for (cx, cy, w, h, conf) in items:
         # Вырезаем иконку из слота
@@ -172,11 +173,20 @@ def find_item(img_bgr: np.ndarray, sample_bgr: np.ndarray,
         # Сравниваем с образцом
         score = compare_icons(slot_img, sample_bgr)
         
-        if score >= match_threshold:
-            if best_match is None or score > best_match[2]:
+        # Логируем ВСЕ слоты — видим какие score
+        if score > 0.3:
+            log(f"YOLO: слот ({cx},{cy}) score={score:.3f} conf={conf:.2f}",
+                level="DEBUG")
+        
+        if score > best_score:
+            best_score = score
+            if score >= match_threshold:
                 best_match = (cx, cy, score)
-                log(f"YOLO: слот ({cx},{cy}) — score={score:.3f}",
+                log(f"YOLO: СОВПАДЕНИЕ ({cx},{cy}) score={score:.3f}",
                     level="DEBUG")
+    
+    log(f"YOLO: лучший score={best_score:.3f} (порог {match_threshold})",
+        level="DEBUG")
     
     if best_match is not None:
         return best_match
