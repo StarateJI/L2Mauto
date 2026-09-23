@@ -454,6 +454,20 @@ def update():
             "requirements.txt",
             "profiles/Dungeon/blessed_zemlya.png",
             "profiles/Dungeon/blessed_land_text.png",
+            "bot/__init__.py",
+            "bot/methods/__init__.py",
+            "bot/events/__init__.py",
+            "bot/alchemy/__init__.py",
+            "bot/windows/__init__.py",
+            "profiles/__init__.py",
+            "profiles/Auction/__init__.py",
+            "profiles/Dungeon/__init__.py",
+            "profiles/BuyerProfile/__init__.py",
+            "profiles/PvpProfile/__init__.py",
+            "profiles/RewardsProfile/__init__.py",
+            "profiles/Scheduler/__init__.py",
+            "profiles/MainAlch/__init__.py",
+            "gui/__init__.py",
         ]
 
         temp_dir = os.path.join(root_dir, "temp_update")
