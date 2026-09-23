@@ -1,201 +1,201 @@
-=== Log tail 2026-09-23T15:31:54.835753 | last 200 lines ===
-2026-09-23 15:26:26,442 - DEBUG - [global] YOLO: найдено 14 слотов, сравниваю с образцом
-2026-09-23 15:26:26,444 - DEBUG - [global] YOLO: образец имеет мало ORB точек (0)
-2026-09-23 15:26:46,851 - INFO - [global] Проверяю обновы...
-2026-09-23 15:26:47,889 - DEBUG - [global] needs_update: API GitHub → 5.11.65
-2026-09-23 15:26:48,787 - DEBUG - [global] needs_update: raw → 5.11.65
-2026-09-23 15:26:49,578 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
-2026-09-23 15:26:49,578 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
-2026-09-23 15:26:49,582 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
-2026-09-23 15:26:49,584 - INFO - [global] Установлена последняя версия бота | 5.11.65
-2026-09-23 15:26:58,902 - INFO - [global] LogUploader: запускаю upload_run_logs...
-2026-09-23 15:26:58,904 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
-2026-09-23 15:26:59,977 - DEBUG - [global] _api_put: GET runs/20260923_152658_fail_periodic.log -> 404
-2026-09-23 15:27:01,701 - DEBUG - [global] _api_put: PUT runs/20260923_152658_fail_periodic.log -> 201 (507 bytes)
-2026-09-23 15:27:01,703 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152658_fail_periodic.log
-2026-09-23 15:27:01,824 - DEBUG - [global] log_uploader: START window=Чипинкос made=0 token=...Rjnfq
-2026-09-23 15:27:03,027 - DEBUG - [global] _api_put: GET runs/20260923_152701_fail_Чипинкос.log -> 404
-2026-09-23 15:27:03,142 - DEBUG - [global] _api_put: GET debug/periodic/au_after_click.png -> 200
-2026-09-23 15:27:05,132 - DEBUG - [global] _api_put: PUT debug/periodic/au_after_click.png -> 200 (98667 bytes)
-2026-09-23 15:27:05,185 - DEBUG - [global] _api_put: PUT runs/20260923_152701_fail_Чипинкос.log -> 409 (56992 bytes)
-2026-09-23 15:27:05,185 - WARNING - [global] _api_put: PUT failed body: {"message":"is at a9257da844a419c7cf5dba09acd7f5044fb37cc5 but expected 50fc403e04243a754be5f10520c58b4043f48fb9","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
-2026-09-23 15:27:05,189 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
-2026-09-23 15:27:06,298 - DEBUG - [global] _api_put: GET debug/periodic/au_lot_zone.png -> 200
-2026-09-23 15:27:06,371 - DEBUG - [global] _api_put: GET debug/Чипинкос/au_lot_zone.png -> 200
-2026-09-23 15:27:07,135 - INFO - [global] Ошибка отправки в тг | 380371690 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
-2026-09-23 15:27:08,127 - DEBUG - [global] _api_put: PUT debug/periodic/au_lot_zone.png -> 409 (2724 bytes)
-2026-09-23 15:27:08,127 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 64e0d76f8fe66b0b9ab9570d679e18ba8a4e70c2 but expected 61c26140e3e9ddee3830963ccb7a7333afc3b144","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
-2026-09-23 15:27:08,189 - DEBUG - [global] _api_put: PUT debug/Чипинкос/au_lot_zone.png -> 200 (2724 bytes)
-2026-09-23 15:27:08,961 - INFO - [global] [-BaseProfile-] Остановил слушалку
-2026-09-23 15:27:09,202 - INFO - [global] Пачка 10/12: завершена за 90с
-2026-09-23 15:27:09,335 - DEBUG - [global] _api_put: GET debug/Чипинкос/au_page_1.png -> 404
-2026-09-23 15:27:09,471 - DEBUG - [global] _api_put: GET debug/periodic/au_page_1.png -> 200
-2026-09-23 15:27:10,202 - INFO - [global] Пачка 11/12: старт (1 окон: ['Валупа'])
-2026-09-23 15:27:10,203 - INFO - [global] Запуск через 3 сек. | ['Валупа']
-2026-09-23 15:27:11,375 - DEBUG - [global] _api_put: PUT debug/Чипинкос/au_page_1.png -> 409 (98776 bytes)
-2026-09-23 15:27:11,375 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 6b52d1919ea493f3baafe35b49b39c6fbb7cf035 but expected 12382ed0fc9c29854cfcfad43252df70496cd888","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
-2026-09-23 15:27:11,525 - DEBUG - [global] _api_put: PUT debug/periodic/au_page_1.png -> 409 (98776 bytes)
-2026-09-23 15:27:11,526 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 6b52d1919ea493f3baafe35b49b39c6fbb7cf035 but expected 12382ed0fc9c29854cfcfad43252df70496cd888","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
-2026-09-23 15:27:12,770 - DEBUG - [global] _api_put: GET debug/Чипинкос/au_page_2.png -> 200
-2026-09-23 15:27:12,893 - DEBUG - [global] _api_put: GET debug/periodic/au_page_2.png -> 200
-2026-09-23 15:27:14,995 - DEBUG - [global] _api_put: PUT debug/Чипинкос/au_page_2.png -> 200 (103947 bytes)
-2026-09-23 15:27:15,044 - DEBUG - [global] _api_put: PUT debug/periodic/au_page_2.png -> 409 (103947 bytes)
-2026-09-23 15:27:15,044 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 2430f97b93817f2478d895cb15728db7d45300ea but expected a1acc822f6ffc5180e67c92c91dcbbf9e2b67acf","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
-2026-09-23 15:27:16,491 - DEBUG - [global] _api_put: GET debug/Чипинкос/au_page_3.png -> 200
-2026-09-23 15:27:16,602 - DEBUG - [global] _api_put: GET debug/periodic/au_page_3.png -> 200
-2026-09-23 15:27:18,668 - DEBUG - [global] _api_put: PUT debug/Чипинкос/au_page_3.png -> 200 (102742 bytes)
-2026-09-23 15:27:18,675 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 3/6 (удалено с диска: 3)
-2026-09-23 15:27:18,793 - DEBUG - [global] _api_put: PUT debug/periodic/au_page_3.png -> 409 (102742 bytes)
-2026-09-23 15:27:18,793 - WARNING - [global] _api_put: PUT failed body: {"message":"is at e0e43d37233eab806097c9e65007ac6013ce769b but expected 89bf7657ceae61433bff7d81eff98b2318b704d7","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
-2026-09-23 15:27:18,801 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 1/7 (удалено с диска: 1)
-2026-09-23 15:27:19,602 - INFO - [global] Проверяю обновы...
-2026-09-23 15:27:20,101 - DEBUG - [global] _api_put: GET runs/20260923_152701_fail_global.log -> 404
-2026-09-23 15:27:20,180 - DEBUG - [global] _api_put: GET runs/20260923_152658_fail_global.log -> 404
-2026-09-23 15:27:20,854 - DEBUG - [global] needs_update: API GitHub → 5.11.65
-2026-09-23 15:27:21,893 - DEBUG - [global] needs_update: raw → 5.11.65
-2026-09-23 15:27:22,268 - DEBUG - [global] _api_put: PUT runs/20260923_152701_fail_global.log -> 201 (22710 bytes)
-2026-09-23 15:27:22,271 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152701_fail_global.log
-2026-09-23 15:27:22,271 - DEBUG - [global] log_uploader: END window=Чипинкос
-2026-09-23 15:27:22,350 - DEBUG - [global] _api_put: PUT runs/20260923_152658_fail_global.log -> 409 (22877 bytes)
-2026-09-23 15:27:22,350 - WARNING - [global] _api_put: PUT failed body: {"message":"is at e2b7c09ef7d05552f825342e848545291d868eb1 but expected e0e43d37233eab806097c9e65007ac6013ce769b","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
-2026-09-23 15:27:22,354 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
-2026-09-23 15:27:22,354 - DEBUG - [global] log_uploader: END window=periodic
-2026-09-23 15:27:22,354 - INFO - [global] LogUploader: upload_run_logs завершён
-2026-09-23 15:27:22,811 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
-2026-09-23 15:27:22,811 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
-2026-09-23 15:27:22,816 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
-2026-09-23 15:27:22,817 - INFO - [global] Установлена последняя версия бота | 5.11.65
-2026-09-23 15:27:28,191 - INFO - [global] Ошибка отправки в тг | 5225806782 | HTTP Client says - ClientConnectorError: Cannot connect to host api.telegram.org:443 ssl:default [Превышен таймаут семафора]
-2026-09-23 15:27:47,500 - DEBUG - [global] log_uploader: START window=Валупа made=0 token=...Rjnfq
-2026-09-23 15:27:48,674 - DEBUG - [global] _api_put: GET runs/20260923_152747_fail_Валупа.log -> 404
-2026-09-23 15:27:51,059 - DEBUG - [global] _api_put: PUT runs/20260923_152747_fail_Валупа.log -> 409 (53571 bytes)
-2026-09-23 15:27:51,059 - WARNING - [global] _api_put: PUT failed body: {"message":"is at f19133b4b8bf130ac14d33220ec519c151ddd9a3 but expected fed8393a378af0ee4a97ea0fefa1260d101cf895","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
-2026-09-23 15:27:51,063 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
-2026-09-23 15:27:52,195 - DEBUG - [global] _api_put: GET debug/Валупа/au_lot_zone.png -> 200
-2026-09-23 15:27:52,834 - INFO - [global] Проверяю обновы...
-2026-09-23 15:27:53,859 - DEBUG - [global] needs_update: API GitHub → 5.11.65
-2026-09-23 15:27:53,890 - DEBUG - [global] _api_put: PUT debug/Валупа/au_lot_zone.png -> 200 (1146 bytes)
-2026-09-23 15:27:54,583 - INFO - [global] [-BaseProfile-] Остановил слушалку
-2026-09-23 15:27:54,735 - INFO - [global] Пачка 11/12: завершена за 45с
-2026-09-23 15:27:54,900 - DEBUG - [global] needs_update: raw → 5.11.65
-2026-09-23 15:27:55,314 - DEBUG - [global] _api_put: GET debug/Валупа/au_sample.png -> 200
-2026-09-23 15:27:55,736 - INFO - [global] Пачка 12/12: старт (1 окон: ['JoePeach'])
-2026-09-23 15:27:55,736 - INFO - [global] Запуск через 3 сек. | ['JoePeach']
-2026-09-23 15:27:55,784 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
-2026-09-23 15:27:55,784 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
-2026-09-23 15:27:55,787 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
-2026-09-23 15:27:55,788 - INFO - [global] Установлена последняя версия бота | 5.11.65
-2026-09-23 15:27:56,925 - DEBUG - [global] _api_put: PUT debug/Валупа/au_sample.png -> 200 (1146 bytes)
-2026-09-23 15:27:57,987 - DEBUG - [global] _api_put: GET debug/Валупа/au_status.png -> 200
-2026-09-23 15:27:59,611 - DEBUG - [global] _api_put: PUT debug/Валупа/au_status.png -> 200 (815 bytes)
-2026-09-23 15:27:59,613 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 3/3 (удалено с диска: 3)
-2026-09-23 15:28:00,905 - DEBUG - [global] _api_put: GET runs/20260923_152747_fail_global.log -> 404
-2026-09-23 15:28:02,868 - DEBUG - [global] _api_put: PUT runs/20260923_152747_fail_global.log -> 201 (23109 bytes)
-2026-09-23 15:28:02,872 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152747_fail_global.log
-2026-09-23 15:28:02,872 - DEBUG - [global] log_uploader: END window=Валупа
-2026-09-23 15:28:22,387 - INFO - [global] LogUploader: запускаю upload_run_logs...
-2026-09-23 15:28:22,388 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
-2026-09-23 15:28:23,428 - DEBUG - [global] _api_put: GET runs/20260923_152822_fail_periodic.log -> 404
-2026-09-23 15:28:25,279 - DEBUG - [global] _api_put: PUT runs/20260923_152822_fail_periodic.log -> 201 (923 bytes)
-2026-09-23 15:28:25,281 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152822_fail_periodic.log
-2026-09-23 15:28:25,805 - INFO - [global] Проверяю обновы...
-2026-09-23 15:28:26,406 - DEBUG - [global] _api_put: GET debug/periodic/au_lot_zone.png -> 200
-2026-09-23 15:28:26,986 - DEBUG - [global] needs_update: API GitHub → 5.11.65
-2026-09-23 15:28:27,927 - DEBUG - [global] needs_update: raw → 5.11.65
-2026-09-23 15:28:28,031 - DEBUG - [global] _api_put: PUT debug/periodic/au_lot_zone.png -> 200 (852 bytes)
-2026-09-23 15:28:29,010 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
-2026-09-23 15:28:29,011 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
-2026-09-23 15:28:29,015 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
-2026-09-23 15:28:29,015 - INFO - [global] Установлена последняя версия бота | 5.11.65
-2026-09-23 15:28:29,249 - DEBUG - [global] _api_put: GET debug/periodic/au_sample.png -> 200
-2026-09-23 15:28:31,610 - DEBUG - [global] _api_put: PUT debug/periodic/au_sample.png -> 200 (852 bytes)
-2026-09-23 15:28:32,692 - DEBUG - [global] _api_put: GET debug/periodic/au_status.png -> 200
-2026-09-23 15:28:34,316 - DEBUG - [global] _api_put: PUT debug/periodic/au_status.png -> 200 (664 bytes)
-2026-09-23 15:28:34,320 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 3/3 (удалено с диска: 3)
-2026-09-23 15:28:35,117 - DEBUG - [global] log_uploader: START window=JoePeach made=0 token=...Rjnfq
-2026-09-23 15:28:35,479 - DEBUG - [global] _api_put: GET runs/20260923_152822_fail_global.log -> 404
-2026-09-23 15:28:36,297 - DEBUG - [global] _api_put: GET runs/20260923_152835_fail_JoePeach.log -> 404
-2026-09-23 15:28:37,427 - DEBUG - [global] _api_put: PUT runs/20260923_152822_fail_global.log -> 201 (22997 bytes)
-2026-09-23 15:28:37,431 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152822_fail_global.log
-2026-09-23 15:28:37,431 - DEBUG - [global] log_uploader: END window=periodic
-2026-09-23 15:28:37,431 - INFO - [global] LogUploader: upload_run_logs завершён
-2026-09-23 15:28:38,395 - DEBUG - [global] _api_put: PUT runs/20260923_152835_fail_JoePeach.log -> 201 (51774 bytes)
-2026-09-23 15:28:38,398 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152835_fail_JoePeach.log
-2026-09-23 15:28:38,399 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
-2026-09-23 15:28:39,806 - DEBUG - [global] _api_put: GET runs/20260923_152835_fail_global.log -> 404
-2026-09-23 15:28:41,818 - DEBUG - [global] _api_put: PUT runs/20260923_152835_fail_global.log -> 201 (22854 bytes)
-2026-09-23 15:28:41,821 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152835_fail_global.log
-2026-09-23 15:28:41,821 - DEBUG - [global] log_uploader: END window=JoePeach
-2026-09-23 15:28:44,236 - INFO - [global] [-BaseProfile-] Остановил слушалку
-2026-09-23 15:28:44,279 - INFO - [global] Пачка 12/12: завершена за 49с
-2026-09-23 15:28:45,280 - INFO - [global] Прогон завершён за 745с (12.4 мин). Пачек: 12.
-2026-09-23 15:28:59,032 - INFO - [global] Проверяю обновы...
-2026-09-23 15:29:00,132 - DEBUG - [global] needs_update: API GitHub → 5.11.65
-2026-09-23 15:29:00,985 - DEBUG - [global] needs_update: raw → 5.11.65
-2026-09-23 15:29:01,825 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
-2026-09-23 15:29:01,825 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
-2026-09-23 15:29:01,829 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
-2026-09-23 15:29:01,830 - INFO - [global] Установлена последняя версия бота | 5.11.65
-2026-09-23 15:29:31,846 - INFO - [global] Проверяю обновы...
-2026-09-23 15:29:32,944 - DEBUG - [global] needs_update: API GitHub → 5.11.65
-2026-09-23 15:29:33,750 - DEBUG - [global] needs_update: raw → 5.11.65
-2026-09-23 15:29:34,602 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
-2026-09-23 15:29:34,602 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
-2026-09-23 15:29:34,606 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
-2026-09-23 15:29:34,607 - INFO - [global] Установлена последняя версия бота | 5.11.65
-2026-09-23 15:29:37,465 - INFO - [global] LogUploader: запускаю upload_run_logs...
-2026-09-23 15:29:37,466 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
-2026-09-23 15:29:38,549 - DEBUG - [global] _api_put: GET runs/20260923_152937_fail_periodic.log -> 404
-2026-09-23 15:29:40,526 - DEBUG - [global] _api_put: PUT runs/20260923_152937_fail_periodic.log -> 201 (923 bytes)
-2026-09-23 15:29:40,529 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152937_fail_periodic.log
-2026-09-23 15:29:40,529 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
-2026-09-23 15:29:41,699 - DEBUG - [global] _api_put: GET runs/20260923_152937_fail_global.log -> 404
-2026-09-23 15:29:43,734 - DEBUG - [global] _api_put: PUT runs/20260923_152937_fail_global.log -> 201 (22557 bytes)
-2026-09-23 15:29:43,738 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152937_fail_global.log
-2026-09-23 15:29:43,738 - DEBUG - [global] log_uploader: END window=periodic
-2026-09-23 15:29:43,738 - INFO - [global] LogUploader: upload_run_logs завершён
-2026-09-23 15:30:04,627 - INFO - [global] Проверяю обновы...
-2026-09-23 15:30:05,816 - DEBUG - [global] needs_update: API GitHub → 5.11.65
-2026-09-23 15:30:06,761 - DEBUG - [global] needs_update: raw → 5.11.65
-2026-09-23 15:30:07,848 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
-2026-09-23 15:30:07,848 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
-2026-09-23 15:30:07,854 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
-2026-09-23 15:30:07,855 - INFO - [global] Установлена последняя версия бота | 5.11.65
-2026-09-23 15:30:37,876 - INFO - [global] Проверяю обновы...
-2026-09-23 15:30:39,039 - DEBUG - [global] needs_update: API GitHub → 5.11.65
-2026-09-23 15:30:40,012 - DEBUG - [global] needs_update: raw → 5.11.65
-2026-09-23 15:30:41,051 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
-2026-09-23 15:30:41,051 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
-2026-09-23 15:30:41,057 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
-2026-09-23 15:30:41,058 - INFO - [global] Установлена последняя версия бота | 5.11.65
-2026-09-23 15:30:43,774 - INFO - [global] LogUploader: запускаю upload_run_logs...
-2026-09-23 15:30:43,778 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
-2026-09-23 15:30:45,285 - DEBUG - [global] _api_put: GET runs/20260923_153043_fail_periodic.log -> 404
-2026-09-23 15:30:47,518 - DEBUG - [global] _api_put: PUT runs/20260923_153043_fail_periodic.log -> 201 (923 bytes)
-2026-09-23 15:30:47,524 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_153043_fail_periodic.log
-2026-09-23 15:30:47,525 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
-2026-09-23 15:30:48,842 - DEBUG - [global] _api_put: GET runs/20260923_153043_fail_global.log -> 404
-2026-09-23 15:30:50,824 - DEBUG - [global] _api_put: PUT runs/20260923_153043_fail_global.log -> 201 (22259 bytes)
-2026-09-23 15:30:50,829 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_153043_fail_global.log
-2026-09-23 15:30:50,830 - DEBUG - [global] log_uploader: END window=periodic
-2026-09-23 15:30:50,830 - INFO - [global] LogUploader: upload_run_logs завершён
-2026-09-23 15:31:11,083 - INFO - [global] Проверяю обновы...
-2026-09-23 15:31:12,270 - DEBUG - [global] needs_update: API GitHub → 5.11.65
-2026-09-23 15:31:13,286 - DEBUG - [global] needs_update: raw → 5.11.65
-2026-09-23 15:31:14,301 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
-2026-09-23 15:31:14,302 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
-2026-09-23 15:31:14,309 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
-2026-09-23 15:31:14,312 - INFO - [global] Установлена последняя версия бота | 5.11.65
-2026-09-23 15:31:44,332 - INFO - [global] Проверяю обновы...
-2026-09-23 15:31:45,581 - DEBUG - [global] needs_update: API GitHub → 5.11.65
-2026-09-23 15:31:46,565 - DEBUG - [global] needs_update: raw → 5.11.65
-2026-09-23 15:31:47,867 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
-2026-09-23 15:31:47,867 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
-2026-09-23 15:31:47,875 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
-2026-09-23 15:31:47,877 - INFO - [global] Установлена последняя версия бота | 5.11.65
-2026-09-23 15:31:50,870 - INFO - [global] LogUploader: запускаю upload_run_logs...
-2026-09-23 15:31:50,873 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
-2026-09-23 15:31:52,358 - DEBUG - [global] _api_put: GET runs/20260923_153150_fail_periodic.log -> 404
-2026-09-23 15:31:54,689 - DEBUG - [global] _api_put: PUT runs/20260923_153150_fail_periodic.log -> 201 (923 bytes)
-2026-09-23 15:31:54,695 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_153150_fail_periodic.log
-2026-09-23 15:31:54,697 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+=== Log tail 2026-09-23T15:32:00.484262 | last 200 lines ===
+2026-09-23 15:28:05,273 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
+2026-09-23 15:28:05,274 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
+2026-09-23 15:28:05,275 - INFO - [global] Установлена последняя версия бота | 5.11.65
+2026-09-23 15:28:05,686 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-23 15:28:05,687 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-23 15:28:06,580 - DEBUG - [global] _api_put: GET runs/20260923_152805_fail_periodic.log -> 404
+2026-09-23 15:28:08,122 - DEBUG - [global] _api_put: PUT runs/20260923_152805_fail_periodic.log -> 201 (9065 bytes)
+2026-09-23 15:28:08,123 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152805_fail_periodic.log
+2026-09-23 15:28:09,027 - DEBUG - [global] _api_put: GET debug/periodic/au_lot_zone.png -> 200
+2026-09-23 15:28:10,134 - DEBUG - [global] log_uploader: START window=СержантМаака made=0 token=...Rjnfq
+2026-09-23 15:28:10,831 - DEBUG - [global] _api_put: PUT debug/periodic/au_lot_zone.png -> 200 (1146 bytes)
+2026-09-23 15:28:11,084 - DEBUG - [global] _api_put: GET runs/20260923_152810_fail_СержантМаака.log -> 404
+2026-09-23 15:28:11,870 - DEBUG - [global] _api_put: GET debug/periodic/au_sample.png -> 200
+2026-09-23 15:28:13,434 - DEBUG - [global] _api_put: PUT debug/periodic/au_sample.png -> 200 (1146 bytes)
+2026-09-23 15:28:13,445 - DEBUG - [global] _api_put: PUT runs/20260923_152810_fail_СержантМаака.log -> 409 (61605 bytes)
+2026-09-23 15:28:13,445 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 909c083b0c071b353a6f974958d80231efcaef93 but expected ce643849eef8ecdd895d73e291b8bbd2f797f567","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:28:13,447 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-09-23 15:28:14,490 - DEBUG - [global] _api_put: GET debug/СержантМаака/au_status.png -> 404
+2026-09-23 15:28:14,495 - DEBUG - [global] _api_put: GET debug/periodic/au_status.png -> 200
+2026-09-23 15:28:16,197 - DEBUG - [global] _api_put: PUT debug/periodic/au_status.png -> 409 (815 bytes)
+2026-09-23 15:28:16,197 - WARNING - [global] _api_put: PUT failed body: {"message":"is at a6fe7a4a06f0360af5f918b031c0716a2e22000a but expected b174ebcbdfd9bd0e839216cbe49cf026806bfaef","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:28:16,199 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 2/3 (удалено с диска: 2)
+2026-09-23 15:28:16,351 - DEBUG - [global] _api_put: PUT debug/СержантМаака/au_status.png -> 409 (815 bytes)
+2026-09-23 15:28:16,351 - WARNING - [global] _api_put: PUT failed body: {"message":"is at a6fe7a4a06f0360af5f918b031c0716a2e22000a but expected b174ebcbdfd9bd0e839216cbe49cf026806bfaef","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:28:16,353 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 0/1 (удалено с диска: 0)
+2026-09-23 15:28:17,300 - DEBUG - [global] _api_put: GET runs/20260923_152805_fail_global.log -> 404
+2026-09-23 15:28:17,419 - DEBUG - [global] _api_put: GET runs/20260923_152810_fail_global.log -> 404
+2026-09-23 15:28:18,270 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-23 15:28:18,425 - INFO - [global] Пачка 12/20: завершена за 46с
+2026-09-23 15:28:19,384 - DEBUG - [global] _api_put: PUT runs/20260923_152805_fail_global.log -> 201 (22227 bytes)
+2026-09-23 15:28:19,386 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152805_fail_global.log
+2026-09-23 15:28:19,386 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-23 15:28:19,386 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-23 15:28:19,427 - INFO - [global] Пачка 13/20: старт (1 окон: ['Коммуняка'])
+2026-09-23 15:28:19,427 - INFO - [global] Запуск через 3 сек. | ['Коммуняка']
+2026-09-23 15:28:19,469 - DEBUG - [global] _api_put: PUT runs/20260923_152810_fail_global.log -> 409 (22452 bytes)
+2026-09-23 15:28:19,469 - WARNING - [global] _api_put: PUT failed body: {"message":"is at ae88e7ab3ba81b2e39dfe3ba0b5a56a838335c20 but expected e839738450d83675d7ac2c3df4f7cd03e27228e6","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:28:19,470 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-09-23 15:28:19,470 - DEBUG - [global] log_uploader: END window=СержантМаака
+2026-09-23 15:28:35,290 - INFO - [global] Проверяю обновы...
+2026-09-23 15:28:36,203 - DEBUG - [global] needs_update: API GitHub → 5.11.65
+2026-09-23 15:28:36,888 - DEBUG - [global] needs_update: raw → 5.11.65
+2026-09-23 15:28:37,602 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
+2026-09-23 15:28:37,602 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
+2026-09-23 15:28:37,605 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
+2026-09-23 15:28:37,605 - INFO - [global] Установлена последняя версия бота | 5.11.65
+2026-09-23 15:28:53,038 - DEBUG - [global] YOLO: предметов не найдено
+2026-09-23 15:28:59,210 - DEBUG - [global] YOLO: предметов не найдено
+2026-09-23 15:29:05,391 - DEBUG - [global] YOLO: предметов не найдено
+2026-09-23 15:29:07,624 - INFO - [global] Проверяю обновы...
+2026-09-23 15:29:08,534 - DEBUG - [global] needs_update: API GitHub → 5.11.65
+2026-09-23 15:29:09,198 - DEBUG - [global] needs_update: raw → 5.11.65
+2026-09-23 15:29:09,916 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
+2026-09-23 15:29:09,916 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
+2026-09-23 15:29:09,919 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
+2026-09-23 15:29:09,919 - INFO - [global] Установлена последняя версия бота | 5.11.65
+2026-09-23 15:29:19,421 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-23 15:29:19,422 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-23 15:29:20,396 - DEBUG - [global] _api_put: GET runs/20260923_152919_fail_periodic.log -> 404
+2026-09-23 15:29:22,014 - DEBUG - [global] _api_put: PUT runs/20260923_152919_fail_periodic.log -> 201 (9065 bytes)
+2026-09-23 15:29:22,017 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152919_fail_periodic.log
+2026-09-23 15:29:23,233 - DEBUG - [global] _api_put: GET debug/periodic/au_after_click.png -> 200
+2026-09-23 15:29:25,302 - DEBUG - [global] _api_put: PUT debug/periodic/au_after_click.png -> 200 (94436 bytes)
+2026-09-23 15:29:26,211 - DEBUG - [global] _api_put: GET debug/periodic/au_lot_zone.png -> 200
+2026-09-23 15:29:27,797 - DEBUG - [global] _api_put: PUT debug/periodic/au_lot_zone.png -> 200 (1146 bytes)
+2026-09-23 15:29:28,957 - DEBUG - [global] _api_put: GET debug/periodic/au_page_1.png -> 200
+2026-09-23 15:29:30,795 - DEBUG - [global] _api_put: PUT debug/periodic/au_page_1.png -> 200 (94412 bytes)
+2026-09-23 15:29:31,991 - DEBUG - [global] _api_put: GET debug/periodic/au_page_2.png -> 200
+2026-09-23 15:29:33,605 - DEBUG - [global] _api_put: PUT debug/periodic/au_page_2.png -> 409 (94611 bytes)
+2026-09-23 15:29:33,606 - WARNING - [global] _api_put: PUT failed body: {"message":"is at d359bbaf92b1e54254062d48766cc5dfb6e461e7 but expected adb5fc6d1f6a9785554b0b7f96dccbcfd52fcda8","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:29:34,795 - DEBUG - [global] _api_put: GET debug/periodic/au_page_3.png -> 200
+2026-09-23 15:29:36,888 - DEBUG - [global] _api_put: PUT debug/periodic/au_page_3.png -> 200 (93510 bytes)
+2026-09-23 15:29:37,121 - DEBUG - [global] log_uploader: START window=Коммуняка made=0 token=...Rjnfq
+2026-09-23 15:29:38,061 - DEBUG - [global] _api_put: GET debug/periodic/au_sample.png -> 200
+2026-09-23 15:29:38,105 - DEBUG - [global] _api_put: GET runs/20260923_152937_fail_Коммуняка.log -> 404
+2026-09-23 15:29:39,708 - DEBUG - [global] _api_put: PUT debug/periodic/au_sample.png -> 200 (1146 bytes)
+2026-09-23 15:29:39,937 - INFO - [global] Проверяю обновы...
+2026-09-23 15:29:40,055 - DEBUG - [global] _api_put: PUT runs/20260923_152937_fail_Коммуняка.log -> 409 (59846 bytes)
+2026-09-23 15:29:40,055 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 600e639833ef57cda34f0d222837c0b55e8d5fc8 but expected 44f6a4ebb6ee244dd5444ae43b9f539ec75b5bfe","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:29:40,057 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-09-23 15:29:40,792 - DEBUG - [global] _api_put: GET debug/periodic/au_status.png -> 200
+2026-09-23 15:29:41,033 - DEBUG - [global] needs_update: API GitHub → 5.11.65
+2026-09-23 15:29:41,153 - DEBUG - [global] _api_put: GET debug/Коммуняка/au_page_2.png -> 404
+2026-09-23 15:29:41,952 - DEBUG - [global] needs_update: raw → 5.11.65
+2026-09-23 15:29:42,377 - DEBUG - [global] _api_put: PUT debug/periodic/au_status.png -> 200 (2547 bytes)
+2026-09-23 15:29:42,380 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 6/7 (удалено с диска: 6)
+2026-09-23 15:29:42,638 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
+2026-09-23 15:29:42,638 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
+2026-09-23 15:29:42,640 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
+2026-09-23 15:29:42,640 - INFO - [global] Установлена последняя версия бота | 5.11.65
+2026-09-23 15:29:43,175 - DEBUG - [global] _api_put: PUT debug/Коммуняка/au_page_2.png -> 201 (94611 bytes)
+2026-09-23 15:29:43,177 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 1/2 (удалено с диска: 1)
+2026-09-23 15:29:43,360 - DEBUG - [global] _api_put: GET runs/20260923_152919_fail_global.log -> 404
+2026-09-23 15:29:44,387 - DEBUG - [global] _api_put: GET runs/20260923_152937_fail_global.log -> 200
+2026-09-23 15:29:45,266 - DEBUG - [global] _api_put: PUT runs/20260923_152919_fail_global.log -> 201 (22429 bytes)
+2026-09-23 15:29:45,268 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152919_fail_global.log
+2026-09-23 15:29:45,268 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-23 15:29:45,268 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-23 15:29:46,087 - DEBUG - [global] _api_put: PUT runs/20260923_152937_fail_global.log -> 200 (22342 bytes)
+2026-09-23 15:29:46,089 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_152937_fail_global.log
+2026-09-23 15:29:46,089 - DEBUG - [global] log_uploader: END window=Коммуняка
+2026-09-23 15:29:47,250 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-23 15:29:47,999 - INFO - [global] Пачка 13/20: завершена за 89с
+2026-09-23 15:29:49,000 - INFO - [global] Пачка 14/20: старт (1 окон: ['Коллектор'])
+2026-09-23 15:29:49,000 - INFO - [global] Запуск через 3 сек. | ['Коллектор']
+2026-09-23 15:30:12,657 - INFO - [global] Проверяю обновы...
+2026-09-23 15:30:13,561 - DEBUG - [global] needs_update: API GitHub → 5.11.65
+2026-09-23 15:30:14,253 - DEBUG - [global] needs_update: raw → 5.11.65
+2026-09-23 15:30:14,978 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
+2026-09-23 15:30:14,978 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
+2026-09-23 15:30:14,980 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
+2026-09-23 15:30:14,981 - INFO - [global] Установлена последняя версия бота | 5.11.65
+2026-09-23 15:30:29,787 - DEBUG - [global] log_uploader: START window=Коллектор made=0 token=...Rjnfq
+2026-09-23 15:30:30,696 - DEBUG - [global] _api_put: GET runs/20260923_153029_fail_Коллектор.log -> 404
+2026-09-23 15:30:32,654 - DEBUG - [global] _api_put: PUT runs/20260923_153029_fail_Коллектор.log -> 409 (60248 bytes)
+2026-09-23 15:30:32,654 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 60bf4101b279c93f1ea2326d767571024517e553 but expected 594163b68a2cd828b312d2a3f568245ec8680798","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:30:32,656 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-09-23 15:30:33,569 - DEBUG - [global] _api_put: GET debug/Коллектор/au_lot_zone.png -> 404
+2026-09-23 15:30:35,614 - DEBUG - [global] _api_put: PUT debug/Коллектор/au_lot_zone.png -> 201 (2295 bytes)
+2026-09-23 15:30:36,493 - DEBUG - [global] _api_put: GET debug/Коллектор/au_sample.png -> 404
+2026-09-23 15:30:38,121 - DEBUG - [global] _api_put: PUT debug/Коллектор/au_sample.png -> 201 (2295 bytes)
+2026-09-23 15:30:38,917 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-23 15:30:39,036 - DEBUG - [global] _api_put: GET debug/Коллектор/au_status.png -> 404
+2026-09-23 15:30:39,537 - INFO - [global] Пачка 14/20: завершена за 51с
+2026-09-23 15:30:40,538 - INFO - [global] Пачка 15/20: старт (1 окон: ['GameStop'])
+2026-09-23 15:30:40,538 - INFO - [global] Запуск через 3 сек. | ['GameStop']
+2026-09-23 15:30:40,612 - DEBUG - [global] _api_put: PUT debug/Коллектор/au_status.png -> 409 (3308 bytes)
+2026-09-23 15:30:40,612 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 9ca4842afcd8db3c630b0c8e249507fe4c19fe0d but expected 6cb00cb52e8b1d1a98aa1fd8a6f8a539d54b598a","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:30:40,614 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 2/3 (удалено с диска: 2)
+2026-09-23 15:30:41,603 - DEBUG - [global] _api_put: GET runs/20260923_153029_fail_global.log -> 404
+2026-09-23 15:30:43,377 - DEBUG - [global] _api_put: PUT runs/20260923_153029_fail_global.log -> 409 (22624 bytes)
+2026-09-23 15:30:43,377 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 12686575dd26eaacde88d7cc6d639732e3ec83ff but expected da7208c1f2d2fed5baf06e08a5bae58e5ef7fd3b","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:30:43,379 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-09-23 15:30:43,379 - DEBUG - [global] log_uploader: END window=Коллектор
+2026-09-23 15:30:44,999 - INFO - [global] Проверяю обновы...
+2026-09-23 15:30:45,302 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-23 15:30:45,303 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-23 15:30:46,036 - DEBUG - [global] needs_update: API GitHub → 5.11.65
+2026-09-23 15:30:46,259 - DEBUG - [global] _api_put: GET runs/20260923_153045_fail_periodic.log -> 404
+2026-09-23 15:30:47,015 - DEBUG - [global] needs_update: raw → 5.11.65
+2026-09-23 15:30:47,687 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
+2026-09-23 15:30:47,687 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
+2026-09-23 15:30:47,690 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
+2026-09-23 15:30:47,690 - INFO - [global] Установлена последняя версия бота | 5.11.65
+2026-09-23 15:30:47,844 - DEBUG - [global] _api_put: PUT runs/20260923_153045_fail_periodic.log -> 201 (9065 bytes)
+2026-09-23 15:30:47,847 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_153045_fail_periodic.log
+2026-09-23 15:30:47,847 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-23 15:30:48,850 - DEBUG - [global] _api_put: GET runs/20260923_153045_fail_global.log -> 404
+2026-09-23 15:30:50,448 - DEBUG - [global] _api_put: PUT runs/20260923_153045_fail_global.log -> 409 (22515 bytes)
+2026-09-23 15:30:50,449 - WARNING - [global] _api_put: PUT failed body: {"message":"is at a3c813865b7270ac72cbf115792a89488d19bea1 but expected 87afd59d02f540bf29dc26c87d53bf0b98cf80d5","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:30:50,451 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-09-23 15:30:50,451 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-23 15:30:50,451 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-23 15:31:17,689 - DEBUG - [global] log_uploader: START window=GameStop made=0 token=...Rjnfq
+2026-09-23 15:31:17,708 - INFO - [global] Проверяю обновы...
+2026-09-23 15:31:18,804 - DEBUG - [global] _api_put: GET runs/20260923_153117_fail_GameStop.log -> 404
+2026-09-23 15:31:18,845 - DEBUG - [global] needs_update: API GitHub → 5.11.65
+2026-09-23 15:31:19,690 - DEBUG - [global] needs_update: raw → 5.11.65
+2026-09-23 15:31:20,411 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
+2026-09-23 15:31:20,411 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
+2026-09-23 15:31:20,413 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
+2026-09-23 15:31:20,413 - INFO - [global] Установлена последняя версия бота | 5.11.65
+2026-09-23 15:31:20,807 - DEBUG - [global] _api_put: PUT runs/20260923_153117_fail_GameStop.log -> 201 (53601 bytes)
+2026-09-23 15:31:20,808 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_153117_fail_GameStop.log
+2026-09-23 15:31:21,709 - DEBUG - [global] _api_put: GET debug/GameStop/au_lot_zone.png -> 404
+2026-09-23 15:31:23,349 - DEBUG - [global] _api_put: PUT debug/GameStop/au_lot_zone.png -> 201 (1146 bytes)
+2026-09-23 15:31:23,830 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-23 15:31:24,065 - INFO - [global] Пачка 15/20: завершена за 44с
+2026-09-23 15:31:24,249 - DEBUG - [global] _api_put: GET debug/GameStop/au_sample.png -> 404
+2026-09-23 15:31:25,065 - INFO - [global] Пачка 16/20: старт (1 окон: ['СУ57'])
+2026-09-23 15:31:25,065 - INFO - [global] Запуск через 3 сек. | ['СУ57']
+2026-09-23 15:31:25,843 - DEBUG - [global] _api_put: PUT debug/GameStop/au_sample.png -> 201 (1146 bytes)
+2026-09-23 15:31:26,753 - DEBUG - [global] _api_put: GET debug/GameStop/au_status.png -> 404
+2026-09-23 15:31:28,264 - DEBUG - [global] _api_put: PUT debug/GameStop/au_status.png -> 201 (815 bytes)
+2026-09-23 15:31:28,267 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 3/3 (удалено с диска: 3)
+2026-09-23 15:31:29,260 - DEBUG - [global] _api_put: GET runs/20260923_153117_fail_global.log -> 404
+2026-09-23 15:31:31,118 - DEBUG - [global] _api_put: PUT runs/20260923_153117_fail_global.log -> 201 (22277 bytes)
+2026-09-23 15:31:31,120 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260923_153117_fail_global.log
+2026-09-23 15:31:31,120 - DEBUG - [global] log_uploader: END window=GameStop
+2026-09-23 15:31:50,433 - INFO - [global] Проверяю обновы...
+2026-09-23 15:31:50,486 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-23 15:31:50,486 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-23 15:31:51,493 - DEBUG - [global] needs_update: API GitHub → 5.11.65
+2026-09-23 15:31:51,588 - DEBUG - [global] _api_put: GET runs/20260923_153150_fail_periodic.log -> 200
+2026-09-23 15:31:52,279 - DEBUG - [global] needs_update: raw → 5.11.65
+2026-09-23 15:31:53,024 - DEBUG - [global] needs_update: jsdelivr → 5.11.59
+2026-09-23 15:31:53,024 - DEBUG - [global] needs_update: лучший источник API → 5.11.65 (из 3)
+2026-09-23 15:31:53,026 - INFO - [global] needs_update: local=(5, 11, 65) remote=(5, 11, 65) -> has_update=False
+2026-09-23 15:31:53,027 - INFO - [global] Установлена последняя версия бота | 5.11.65
+2026-09-23 15:31:53,445 - DEBUG - [global] _api_put: PUT runs/20260923_153150_fail_periodic.log -> 409 (9065 bytes)
+2026-09-23 15:31:53,446 - WARNING - [global] _api_put: PUT failed body: {"message":"is at aa33f36cdbc40bb91f55ca63b63e6a7a8ddc497a but expected 7dc1653e57ba58dc565cc30e37fd96191bd2a8a3","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:31:53,448 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-09-23 15:31:54,367 - DEBUG - [global] _api_put: GET debug/periodic/au_lot_zone.png -> 200
+2026-09-23 15:31:55,721 - DEBUG - [global] _api_put: PUT debug/periodic/au_lot_zone.png -> 409 (1146 bytes)
+2026-09-23 15:31:55,721 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 74460acb9a1daf5c4bb615d9c9f7c5742a507fa3 but expected aa33f36cdbc40bb91f55ca63b63e6a7a8ddc497a","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-09-23 15:31:56,678 - DEBUG - [global] _api_put: GET debug/periodic/au_sample.png -> 200
+2026-09-23 15:31:58,111 - DEBUG - [global] _api_put: PUT debug/periodic/au_sample.png -> 200 (1146 bytes)
+2026-09-23 15:31:59,025 - DEBUG - [global] _api_put: GET debug/periodic/au_status.png -> 200
+2026-09-23 15:32:00,410 - DEBUG - [global] _api_put: PUT debug/periodic/au_status.png -> 200 (815 bytes)
+2026-09-23 15:32:00,412 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 2/3 (удалено с диска: 2)
