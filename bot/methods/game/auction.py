@@ -82,13 +82,11 @@ BTN_CLOSE = (914, 35)            # крестик (было 1218,46)
 BTN_FIELD_PRICE = (432, 410)     # "Общая цена" (было 576,547)
 
 # ── Зоны захвата (window-relative, 960×540) ──────────────────────────────
-LOT_SEARCH = (56, 143, 60, 53)   # иконка лота
-INV_SCAN = (686, 130, 259, 318)  # инвентарь
-ZONE_PRICE = (651, 230, 60, 15)  # OCR цены
-STATUS_ZONE = (598, 143, 105, 26) # статус лота
-OK_CHECK_ZONE = (525, 360, 45, 45) # оранжевая ОК
-# Зона иконки в окне подтверждения 'Отмена лота'
-CONFIRM_ICON = (115, 240, 60, 60)
+LOT_SEARCH = (56, 143, 60, 53)   # иконка лота (было 75,190,80,70)
+INV_SCAN = (686, 130, 259, 318)  # инвентарь (было 915,173,345,424)
+ZONE_PRICE = (651, 230, 60, 15)  # OCR цены (было 868,306,80,20)
+STATUS_ZONE = (598, 143, 105, 26) # статус лота (было 797,190,140,35)
+OK_CHECK_ZONE = (525, 360, 45, 45) # оранжевая ОК (было 700,480,60,60)
 
 # ── Калькулятор (3x4 numpad, 960×540) ────────────────────────────────────
 # База: "5" на (584, 391) при 960×540 (было 778,521 при 1280×720)
@@ -110,13 +108,13 @@ CALC_DIGITS = {
 INV_CX = 890      # X центра свайпа (было 1187, ×0.75 = 890)
 SWIPE_STEP = 98   # px за один свайп (было 130, ×0.75 = 97.5 ≈ 98)
 
-# ── Тайминги (секунды) — вернул как было в v5.11.83 (когда 12/20 работало)
-T_CONFIRM_SETTLE = 3.0    # анимация окна подтверждения
-T_ITEM_WINDOW = 4.0       # прогрузка окна цены после клика по предмету
-T_PAGE_LOAD = 3.0         # пауза после свайпа страницы
-LONG_PAUSE = 4.0          # после выставления лота
-T_TAB_SELL_OPEN = 4.0     # пауза после клика по вкладке Продажа
-T_AUCTION_CLOSE = 3.0     # пауза после клика по крестику (закрыть аук)
+# ── Тайминги (секунды) — v5.3.1: увеличены для надёжности на лагающих ПК ──
+T_CONFIRM_SETTLE = 3.0    # 2.0 → 3.0 — анимация окна подтверждения
+T_ITEM_WINDOW = 4.0       # 3.0 → 4.0 — прогрузка окна цены после клика по предмету
+T_PAGE_LOAD = 3.0         # 2.0 → 3.0 — пауза после свайпа страницы
+LONG_PAUSE = 4.0          # 3.0 → 4.0 — после выставления лота
+T_TAB_SELL_OPEN = 4.0     # 3.0 → 4.0 — пауза после клика по вкладке Продажа
+T_AUCTION_CLOSE = 3.0     # 2.5 → 3.0 — пауза после клика по крестику (закрыть аук)
 T_AFTER_ENERGY_OFF = 2.0  # пауза после выхода из энерго (до открытия меню)
 T_AFTER_RESIZE = 1.5      # пауза после resize (до клика вкладка Продажа)
 
@@ -699,35 +697,6 @@ class Auction(GameAction):
         except Exception as e:
             log(f"Аук: не удалось сохранить {name}: {e}", self.window_id, level="WARNING")
 
-    async def _click_snap(self, label: str, x: int, y: int,
-                          wait: float = 0.8) -> None:
-        """
-        Кликнуть в (x, y) и сделать ПОЛНЫЙ скрин экрана после клика.
-
-        Скрин сохраняется как au_step_<label>_<timestamp>.png —
-        видны все окна игры в момент клика, можно увидеть попал ли бот
-        в нужную кнопку. Это для полной диагностики — юзер не должен
-        слать скрины руками.
-
-        Args:
-            label: короткое имя шага (cancel, ok, digit_5, add и т.п.)
-            x, y: координаты клика
-            wait: сколько ждать после клика (анимация/появление окна)
-        """
-        await self._click(x, y)
-        if wait > 0:
-            await asyncio.sleep(wait)
-        # Полный скрин экрана (всё что видит игрок)
-        ts = int(asyncio.get_event_loop().time() * 10) % 100000
-        fname = f"au_step_{label}_{ts}.png"
-        try:
-            # Делаем скрин через _take_fullscreen (синхронный, быстрый)
-            self._take_fullscreen(fname)
-            log(f"Аук: клик {label} ({x},{y}) → скрин {fname}", self.window_id)
-        except Exception as e:
-            log(f"Аук: клик {label} ({x},{y}) — скрин не удался: {e}",
-                self.window_id, level="DEBUG")
-
     def _take_fullscreen(self, name: str = "au_fullscreen.png") -> None:
         """
         Сделать скриншот ВСЕГО монитора (не отдельного окна) и сохранить
@@ -736,11 +705,6 @@ class Auction(GameAction):
 
         Использует singleton _sct (тот же что и _grab) — НЕ создаёт новый mss.
         Синхронный (быстрый ~50ms) — не блокирует event loop надолго.
-
-        ВНИМАНИЕ: mss использует thread-local handles. При вызове из
-        потока QThread/asyncio _sct.grab падает с
-        AttributeError '_thread._local' object has no attribute 'srcdc'.
-        Ловим и пересоздаём локально (как в _grab).
         """
         try:
             out_dir = os.path.dirname(os.path.abspath(__file__))
@@ -753,22 +717,7 @@ class Auction(GameAction):
                 monitor = monitors[1]
             else:
                 monitor = monitors[0]
-            try:
-                shot = _sct.grab(monitor)
-            except Exception as e:
-                # srcdc/memdc thread-local crash — пересоздаём локально
-                if 'srcdc' in str(e) or 'memdc' in str(e):
-                    try:
-                        local_sct = mss.mss()
-                    except Exception:
-                        local_sct = mss.MSS()
-                    shot = local_sct.grab(monitor)
-                    try:
-                        local_sct.close()
-                    except Exception:
-                        pass
-                else:
-                    raise
+            shot = _sct.grab(monitor)
             arr = np.array(shot)  # BGRA
             img = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
             cv2.imwrite(path, img)
@@ -797,7 +746,6 @@ class Auction(GameAction):
             from ctypes import wintypes
 
             user32 = ctypes.windll.user32
-            kernel32 = ctypes.windll.kernel32
             hwnd_val = self.window_info[self.window_id].get("ID")
             if not hwnd_val:
                 return False
@@ -810,11 +758,7 @@ class Auction(GameAction):
 
             # Трюк с AttachThreadInput: позволяет «украсть» foreground
             fg_thread = user32.GetWindowThreadProcessId(fg_now, None)
-            # GetCurrentThreadId находится в kernel32.dll, НЕ в user32!
-            # Раньше вызывали user32.GetCurrentThreadId() → падало с
-            # 'function GetCurrentThreadId not found' → foreground не
-            # ставился → клики уходили мимо окна.
-            my_thread = kernel32.GetCurrentThreadId()
+            my_thread = user32.GetCurrentThreadId()
 
             attached = False
             if fg_thread and fg_thread != my_thread:
@@ -990,7 +934,6 @@ class Auction(GameAction):
             if pt is not None:
                 text = pt.image_to_string(gray, lang="rus+eng", config="--psm 7").strip().lower()
                 log(f"Аук: статус лота Tesseract: '{text}'", self.window_id, level="DEBUG")
-                # Кириллицей — игра на русском, статус «Продаётся»
                 ocr_match = any(kw in text for kw in
                                 ("продаёт", "продает", "продаю", "продажа",
                                  "продаё", "продае", "прода", "продаетс"))
@@ -1043,42 +986,22 @@ class Auction(GameAction):
                 self.window_id, level="WARNING")
             return True  # Если проверка упала — лучше не трогать
 
-    async def _cancel_lot(self) -> Tuple[bool, Optional[np.ndarray]]:
-        """
-        Клик 'Отмена лота' и ожидание окна подтверждения.
-        Возвращает (success, confirm_sample_bgr).
-        confirm_sample — иконка из окна подтверждения (если появилась).
-        Эта иконка ЧИЩЕ чем из вкладки Продажа (тёмная).
-        """
+    async def _cancel_lot(self) -> bool:
+        """Клик 'Отмена лота' и ожидание окна подтверждения."""
         for attempt in range(1, 3):
-            # _click_snap — клик + полный скрин после
-            await self._click_snap(f'cancel_{attempt}', BTN_CANCEL_LOT[0],
-                                   BTN_CANCEL_LOT[1], wait=1.5)
+            await self._click(*BTN_CANCEL_LOT)
             log(f"Аук: клик Отмена лота ({attempt}/2) {BTN_CANCEL_LOT}", self.window_id)
+            await asyncio.sleep(1.5)
             if self._confirm_window_visible():
                 log("Аук: окно подтверждения появилось", self.window_id)
-                # Берём sample из окна подтверждения (чище чем из вкладки)
-                confirm_sample = None
-                try:
-                    confirm_sample = self._grab(CONFIRM_ICON)
-                    gray = cv2.cvtColor(confirm_sample, cv2.COLOR_BGR2GRAY)
-                    mean_v = float(gray.mean())
-                    log(f"Аук: sample из окна подтверждения — mean={mean_v:.0f}",
-                        self.window_id, level="DEBUG")
-                    await self._save_debug("au_confirm_sample.png", confirm_sample)
-                except Exception as e:
-                    log(f"Аук: не удалось взять sample из подтверждения: {e}",
-                        self.window_id, level="DEBUG")
-                return True, confirm_sample
+                return True
         log("Аук: окно подтверждения НЕ появилось", self.window_id, level="WARNING")
-        return False, None
+        return False
 
     async def _click_ok_cancel(self) -> bool:
         """Клик ОК в окне подтверждения. До 4 попыток."""
         for attempt in range(1, MAX_OK_RETRIES + 1):
-            # _click_snap — клик + полный скрин после
-            await self._click_snap(f'ok_cancel_{attempt}', BTN_OK_CANCEL[0],
-                                   BTN_OK_CANCEL[1], wait=1.0)
+            await self._click(*BTN_OK_CANCEL)
             log(f"Аук: клик ОК отмены ({attempt}/{MAX_OK_RETRIES}) {BTN_OK_CANCEL}",
                 self.window_id)
             await asyncio.sleep(T_CONFIRM_SETTLE)
@@ -1095,84 +1018,40 @@ class Auction(GameAction):
         """
         OCR 'Текущая минимальная цена' из ZONE_PRICE.
         Возвращает int или None.
-
-        Делаем 4 попытки с разными порогами бинаризации — Tesseract капризный
-        к контрасту мелкого шрифта L2M. Берём МАКСИМАЛЬНОЕ значение из
-        успешных попыток (макс обычно самый точный — мелкие части стираются
-        при низком пороге).
         """
         try:
             img = self._grab(ZONE_PRICE)
 
-            # Сохраняем сырой скрин зоны цены для диагностики
-            try:
-                import os
-                debug_dir = os.path.join(os.path.dirname(os.path.dirname(
-                    os.path.dirname(os.path.abspath(__file__)))), "debug_latest")
-                os.makedirs(debug_dir, exist_ok=True)
-                cv2.imwrite(os.path.join(debug_dir,
-                            f"au_price_zone_{self.window_id}.png"), img)
-            except Exception:
-                pass
-
-            pt = _get_pytesseract()
-            if pt is None:
-                log("Аук: pytesseract не установлен — OCR цены невозможен",
-                    self.window_id, level="ERROR")
-                return None
-
-            # Увеличиваем x6 — OCR любит крупные буквы (было x4, мало)
+            # ── Tesseract (основной) ───────────────────────────────────────
+            # Увеличиваем x4 — OCR любит крупные буквы
             h, w = img.shape[:2]
-            big = cv2.resize(img, (w * 6, h * 6), interpolation=cv2.INTER_CUBIC)
+            big = cv2.resize(img, (w * 4, h * 4), interpolation=cv2.INTER_CUBIC)
+            # Ч/б + инверсия (tesseract лучше читает чёрный текст на белом)
             gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
             inv = cv2.bitwise_not(gray)
+            # Жёсткий контраст
+            _, thr = cv2.threshold(inv, 128, 255, cv2.THRESH_BINARY)
 
-            prices_found = []
-
-            # 3 порога бинаризации на инвертированном
-            for thresh_val in (100, 128, 160):
-                _, thr = cv2.threshold(inv, thresh_val, 255, cv2.THRESH_BINARY)
-                text = pt.image_to_string(
-                    thr,
-                    config="--psm 7 -c tessedit_char_whitelist=0123456789",
-                ).strip()
-                digits = text.replace(",", "").replace(" ", "").replace(".", "")
-                digits = digits.lstrip('0') or '0'
-                if digits.isdigit():
-                    p = int(digits)
-                    if 10 <= p <= 10_000_000:
-                        prices_found.append(p)
-                        log(f"Аук: OCR цена = {p} (thresh={thresh_val} raw='{text}')",
-                            self.window_id, level="DEBUG")
-
-            # 4-я попытка — grayscale без инверсии (тёмный текст на светлом)
-            if not prices_found:
-                _, thr2 = cv2.threshold(gray, 100, 255, cv2.THRESH_BINARY)
-                text2 = pt.image_to_string(
-                    thr2, config="--psm 7 -c tessedit_char_whitelist=0123456789"
-                ).strip()
-                digits2 = text2.replace(",", "").replace(" ", "").replace(".", "")
-                digits2 = digits2.lstrip('0') or '0'
-                if digits2.isdigit():
-                    p2 = int(digits2)
-                    if 10 <= p2 <= 10_000_000:
-                        prices_found.append(p2)
-                        log(f"Аук: OCR цена = {p2} (gray-no-inv raw='{text2}')",
-                            self.window_id, level="DEBUG")
-
-            if not prices_found:
-                log("Аук: OCR цена не удался (ни одна попытка не сработала)",
-                    self.window_id, level="WARNING")
+            # PSM 7 = одна строка, whitelist = цифры
+            pt = _get_pytesseract()
+            if pt is None:
                 return None
-
-            # Берём МАКСИМАЛЬНОЕ — при плохом OCR теряются цифры,
-            # минимум может быть в 10 раз меньше реального.
-            price = max(prices_found)
-            log(f"Аук: OCR цена ИТОГ = {price} (из {len(prices_found)} попыток: {prices_found})",
-                self.window_id)
+            text = pt.image_to_string(
+                thr,
+                config="--psm 7 -c tessedit_char_whitelist=0123456789",
+            ).strip()
+            # Убираем запятые/пробелы (12,500 -> 12500)
+            digits = text.replace(",", "").replace(" ", "").replace(".", "")
+            # Срезаем ведущие нули (00181 -> 181, но "0" оставляем как 0)
+            digits = digits.lstrip('0') or '0'
+            if not digits.isdigit():
+                log(f"Аук: OCR вернул не цифры: '{text}'", self.window_id, level="WARNING")
+                return None
+            price = int(digits)
+            log(f"Аук: OCR цена = {price} (raw='{text}')", self.window_id)
             return price
         except Exception as e:
-            log(f"Аук: OCR цена не удалась: {e}", self.window_id, level="WARNING")
+            log(f"Аук: OCR цена не удался: {e}", self.window_id, level="WARNING")
             return None
 
     async def _type_price(self, price_str: str) -> None:
@@ -1184,7 +1063,6 @@ class Auction(GameAction):
         await self._click(*BTN_FIELD_PRICE)
         await asyncio.sleep(0.4)
 
-        log(f"Аук: ВВОД ЦЕНЫ '{price_str}' — клик по цифрам:", self.window_id)
         for digit in price_str:
             coord = CALC_DIGITS.get(digit)
             if coord is None:
@@ -1192,7 +1070,6 @@ class Auction(GameAction):
                     self.window_id, level="WARNING")
                 continue
             await self._click(*coord)
-            log(f"Аук:   клик '{digit}' → {coord}", self.window_id, level="DEBUG")
             await asyncio.sleep(0.15)
         log(f"Аук: введена цена {price_str}", self.window_id)
 
@@ -1310,203 +1187,76 @@ class Auction(GameAction):
             log(f"Аук: _find_red_dots exception: {e}", self.window_id, level="WARNING")
             return []
 
-    async def _find_item(self, sample_gray: np.ndarray,
-                         sample_bgr: np.ndarray = None) -> Optional[Tuple[int, int]]:
+    async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет в инвентаре.
+        Искать предмет в инвентаре через КРАСНУЮ ТОЧКУ.
 
-        НОВАЯ стратегия (по идее юзера):
-        1. У нас есть sample иконки (из вкладки Продажа или из окна подтверждения)
-        2. После снятия предмет падает в инвентарь с КРАСНОЙ ТОЧКОЙ
-           сверху-справа (значок 'новое')
-        3. Сканируем инвентарь, находим красные точки
-        4. Для каждого слота с красной точкой — сравниваем иконку с sample
-           через matchTemplate multi-scale
-        5. Игнорируем слоты БЕЗ красной точки — наш предмет 100% с точкой
-
-        Если на странице нет красных точек → свайп дальше (не тратим время).
-        Если красная точка есть, но matchTemplate не совпал → всё равно свайп,
-        может предмет на следующей странице.
-
-        Args:
-            sample_gray: grayscale иконка из вкладки Продажа
-            sample_bgr: BGR версия (для pHash проверки)
+        Логика (по идее юзера):
+        - БЕЗ красной точки → точно НЕ наш, пропускаем
+        - С красной точкой → один из наших
+        - Если точек несколько → наш ПОСЛЕДНИЙ (свежедобавленный в конец)
+        - Если точка одна → она и есть наш
+        - Кликаем прямо в красную точку
         """
         best_result = None
-
-        if sample_bgr is None:
-            sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
 
         for page in range(1, SCAN_PAGES + 1):
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
 
-            # ── ШАГ 1: найти красные точки на странице ────────────────────
+            # ── ШАГ 1: найти красные точки на странице ────────────────
             red_dots = self._find_red_dots(img)
             log(f"Аук: стр {page} — красных точек: {len(red_dots)}",
                 self.window_id, level="DEBUG")
 
             if not red_dots:
-                # Нет красных точек — наш предмет точно не на этой странице
                 log(f"Аук: стр {page} — нет красных точек, свайп дальше",
                     self.window_id, level="DEBUG")
                 if page < SCAN_PAGES:
                     await self._swipe_inventory('down')
                 continue
 
-            # ── ШАГ 2: выбрать слот с красной точкой ──────────────────────
-            # Логика юзера:
-            # - БЕЗ красной точки → точно НЕ наш, пропускаем
-            # - С красной точкой → один из наших
-            # - Если красных точек несколько → наш ПОСЛЕДНИЙ (свежедобавленный
-            #   падает в конец списка)
-            # - Если красная одна → она и есть наш
-            #
-            # Sample (из вкладки или подтверждения) — дополнительная проверка.
-            # Если sample валидный — сравниваем, но КРАСНАЯ ТОЧКА главная.
-            sample_std = float(sample_gray.std()) if sample_gray is not None else 0.0
-            sample_is_valid = sample_std > 5.0
-            log(f"Аук: sample std={sample_std:.1f} → "
-                f"{'валидный' if sample_is_valid else 'битый'}",
-                self.window_id, level="DEBUG")
-
-            # Сортируем красные точки по позиции: берём ПОСЛЕДНЮЮ
-            # (самый нижний-правый слот = свежедобавленный)
-            # НО! ЧБ (привязанные) предметы серые — пропускаем их.
-            # Наш предмет = последний ЦВЕТНОЙ слот с красной точкой.
+            # ── ШАГ 2: сортируем, берём ПОСЛЕДНЮЮ (нижнюю правую) ──────
             red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
-
-            # Идём с конца, ищем первый ЦВЕТНОЙ слот
-            chosen_dot = None
-            for dot in reversed(red_dots_sorted):
-                dot_x, dot_y = dot
-                # Вырезаем слот вокруг точки (50×50)
-                x1 = max(0, dot_x - 40)
-                y1 = max(0, dot_y - 10)
-                x2 = min(img.shape[1], dot_x + 10)
-                y2 = min(img.shape[0], dot_y + 40)
-                slot = img[y1:y2, x1:x2]
-                if slot.size == 0:
-                    continue
-                # Проверка цветности: ЧБ предметы серые (R≈G≈B)
-                # Цветные — разница между каналами > 20
-                b_ch, g_ch, r_ch = cv2.split(slot)
-                cd = np.maximum(np.maximum(
-                    np.abs(b_ch.astype(int) - g_ch.astype(int)),
-                    np.abs(g_ch.astype(int) - r_ch.astype(int))),
-                    np.abs(b_ch.astype(int) - r_ch.astype(int)))
-                color_score = float(cd.mean())
-                log(f"Аук:   точка ({dot_x},{dot_y}) color_score={color_score:.0f} "
-                    f"({'ЦВЕТНОЙ' if color_score > 20 else 'ЧБ-серый'})",
-                    self.window_id, level="DEBUG")
-                if color_score > 20:  # цветной — наш!
-                    chosen_dot = dot
-                    break
-
-            if chosen_dot is None:
-                # Все слоты с красной точкой — ЧБ. Свайп дальше.
-                log(f"Аук: стр {page} — все {len(red_dots)} красных точек на "
-                    f"ЧБ предметах, свайп дальше", self.window_id, level="DEBUG")
-                if page < SCAN_PAGES:
-                    await self._swipe_inventory('down')
-                continue
-
-            # Кликаем прямо в красную точку
+            chosen_dot = red_dots_sorted[-1]
             chosen_cx = chosen_dot[0]
             chosen_cy = chosen_dot[1]
 
             log(f"Аук: стр {page} — красных точек: {len(red_dots)}, "
-                f"берём ПОСЛЕДНИЙ ЦВЕТНОЙ ({chosen_dot[0]},{chosen_dot[1]}) → "
-                f"слот ({chosen_cx},{chosen_cy})",
+                f"берём ПОСЛЕДНЮЮ ({chosen_dot[0]},{chosen_dot[1]})",
                 self.window_id)
 
-            best_dot = (chosen_cx, chosen_cy, 1.0)
-            best_score_on_page = 1.0
+            # Перевод в координаты окна
+            win_cx = chosen_cx + INV_SCAN[0]
+            win_cy = chosen_cy + INV_SCAN[1]
+            best_result = (win_cx, win_cy, 1.0, page)
+            break
 
-            # Если sample валидный — логируем сравнение для диагностики
-            # (но не меняем выбор — красная точка главная)
-            if sample_is_valid:
-                for (dot_x, dot_y) in red_dots:
-                    slot_cx = dot_x - 25
-                    slot_cy = dot_y + 25
-                    slot_w, slot_h = 50, 50
-                    x1 = max(0, slot_cx - slot_w // 2)
-                    y1 = max(0, slot_cy - slot_h // 2)
-                    x2 = min(img.shape[1], slot_cx + slot_w // 2)
-                    y2 = min(img.shape[0], slot_cy + slot_h // 2)
-                    slot_img = img[y1:y2, x1:x2]
-                    if slot_img.size == 0:
-                        continue
-
-                    # Попиксельное сравнение
-                    slot_resized = cv2.resize(slot_img, (50, 50),
-                                              interpolation=cv2.INTER_AREA)
-                    sample_resized = cv2.resize(sample_bgr, (50, 50),
-                                                 interpolation=cv2.INTER_AREA)
-                    diff = cv2.absdiff(slot_resized, sample_resized)
-                    mse = float(diff.mean())
-                    pixel_score = max(0.0, 1.0 - (mse / 80.0))
-
-                    log(f"Аук:   слот ({slot_cx},{slot_cy}) pixel={pixel_score:.3f} "
-                        f"mse={mse:.0f}",
-                        self.window_id, level="DEBUG")
-
-            # ── ШАГ 3: если нашли слот с score > 0.5 — это наш предмет ─
-            # Порог 0.5 (не 0.65) — красная точка уже подтверждает что предмет наш,
-            # score нужен только чтобы выбрать лучший из нескольких с точкой.
-            if best_dot is not None and best_dot[2] >= 0.5:
-                slot_cx, slot_cy, score = best_dot
-                win_cx = slot_cx + INV_SCAN[0]
-                win_cy = slot_cy + INV_SCAN[1]
-                log(f"Аук: НАШЁЛ через красную точку — стр {page} "
-                    f"({slot_cx},{slot_cy}) score={score:.3f}", self.window_id)
-                best_result = (win_cx, win_cy, score, page)
-                break
-
-            # Если красные точки были, но ни один не совпал →
-            # возможно наш предмет уже без точки (старый) или
-            # matchTemplate не сработал. Продолжаем свайп.
-            log(f"Аук: стр {page} — красные точки есть, но предмет не найден "
-                f"(лучший score={best_score_on_page:.3f})", self.window_id,
-                level="DEBUG")
-
-            if page < SCAN_PAGES:
-                await self._swipe_inventory('down')
-
-        # ВСЕГДА возвращаемся в начало — SCAN_PAGES свайпов up
+        # ВСЕГДА возвращаемся в начало
         for _ in range(SCAN_PAGES):
             await self._swipe_inventory('up')
         await asyncio.sleep(1.0)
         if best_result is not None:
-            # Свайпаем down до нужной страницы
             pages_to_go = best_result[3] - 1
             for _ in range(pages_to_go):
                 await self._swipe_inventory('down')
             log(f"Аук: предмет найден через красную точку! стр {best_result[3]} "
-                f"({best_result[0]},{best_result[1]}) score={best_result[2]:.3f}",
+                f"({best_result[0]},{best_result[1]})",
                 self.window_id)
             return (best_result[0], best_result[1])
 
         log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
-            f"(нет красной точки с совпадением)", self.window_id,
-            level="ERROR")
+            f"(нет красной точки)", self.window_id, level="ERROR")
         return None
 
     def _match_template_multiscale(self, img_gray: np.ndarray,
                                     sample_gray: np.ndarray,
-                                    threshold: float = 0.75,
-                                    img_bgr: np.ndarray = None,
-                                    sample_bgr: np.ndarray = None) -> Optional[Tuple[int, int, float]]:
+                                    threshold: float = 0.70) -> Optional[Tuple[int, int, float]]:
         """
-        matchTemplate multi-scale на grayscale + ДОПОЛНИТЕЛЬНАЯ проверка pHash.
-
+        matchTemplate multi-scale на grayscale.
         Пробует 5 масштабов sample (0.7, 0.85, 1.0, 1.15, 1.3) чтобы
         компенсировать разный размер иконок (sample 60×53 vs slot ~48×48).
-
-        После matchTemplate находит лучший слот и ДОПОЛНИТЕЛЬНО проверяет
-        через pHash — если pHash < 0.5, значит matchTemplate совпал на
-        тёмном фоне (ложное срабатывание), отклоняем.
 
         Возвращает (cx, cy, score) или None.
         """
@@ -1519,7 +1269,7 @@ class Auction(GameAction):
         sample_f = np.float32(sample_gray)
 
         scales = [1.3, 1.15, 1.0, 0.85, 0.7]
-        best = None  # (score, cx, cy, w, h)
+        best = None  # (score, cx, cy)
 
         for scale in scales:
             new_w = max(8, int(sample_gray.shape[1] * scale))
@@ -1533,47 +1283,17 @@ class Auction(GameAction):
                 _, max_val, _, max_loc = cv2.minMaxLoc(res)
                 if best is None or max_val > best[0]:
                     best = (float(max_val), max_loc[0] + new_w // 2,
-                            max_loc[1] + new_h // 2, new_w, new_h)
+                            max_loc[1] + new_h // 2)
             except cv2.error:
                 continue
 
         if best is None:
             return None
-        score, cx, cy, w, h = best
-
+        score, cx, cy = best
         if score < threshold:
-            log(f"Аук: TM score={score:.3f} < {threshold}",
+            log(f"Аук: TM лучший score={score:.3f} < {threshold}",
                 self.window_id, level="DEBUG")
             return None
-
-        # ДОПОЛНИТЕЛЬНАЯ проверка через pHash — отсеивает ложные срабатывания
-        # matchTemplate на тёмных иконках. Если sample_bgr и img_bgr переданы —
-        # вырезаем найденный слот и сравниваем с sample через pHash.
-        if img_bgr is not None and sample_bgr is not None:
-            try:
-                from bot.yolo_detector import compare_icons
-                x1 = max(0, cx - w // 2)
-                y1 = max(0, cy - h // 2)
-                x2 = min(img_bgr.shape[1], cx + w // 2)
-                y2 = min(img_bgr.shape[0], cy + h // 2)
-                slot_img = img_bgr[y1:y2, x1:x2]
-                if slot_img.size > 0:
-                    phash_score = compare_icons(slot_img, sample_bgr)
-                    log(f"Аук: TM score={score:.3f}, pHash проверка={phash_score:.3f}",
-                        self.window_id, level="DEBUG")
-                    # Если matchTemplate уверен (>0.85) НО pHash низкий (<0.5)
-                    # — это ложное срабатывание на тёмном фоне. Отклоняем.
-                    if score > 0.85 and phash_score < 0.5:
-                        log(f"Аук: TM отклонён — pHash={phash_score:.3f} низкий "
-                            f"(ложное совпадение на тёмном)",
-                            self.window_id, level="DEBUG")
-                        return None
-                    # Если оба согласны — берём средний score
-                    score = (score + phash_score) / 2.0
-            except Exception as e:
-                log(f"Аук: pHash проверка упала: {e}", self.window_id,
-                    level="DEBUG")
-
         return (cx, cy, score)
 
     # ──────────────────────────────────────────────────────────────────────
@@ -1584,16 +1304,13 @@ class Auction(GameAction):
         Обработка одного предмета: снять -> найти -> поставить.
         Возвращает 'ok' / 'empty' / 'error'.
         """
-        # 1. Снять образец лота
-        # НЕ проверяем яркость — тёмный sample это норма (предметы бывают тёмные)
+        # 1. Снять образец лота (вся зона целиком, без обрезки)
         sample = self._grab(LOT_SEARCH)
         await self._save_debug("au_lot_zone.png", sample)
         await self._save_debug("au_sample.png", sample)
 
         # Считаем SIFT keypoints образца — если 0, значит строка пустая
         # (нет иконки/лота на продаже). Это НЕ ошибка — просто нечего переставлять.
-        # НЕ проверяем mean<20 — юзер сказал что тёмный sample это НОРМА,
-        # в инвентаре предмет точно такой же тёмный.
         kp_count = 0
         try:
             sift = cv2.SIFT_create()
@@ -1609,10 +1326,6 @@ class Auction(GameAction):
         # значит он только что выставлен, снимать/переставлять его НЕ НАДО.
         # Пропускаем. Обёрнуто в try/except — RapidOCR может крашнуть процесс
         # при первом вызове (скачивание моделей).
-        #
-        # ⚠️ ВРЕМЕННО ОТКЛЮЧЕНО ДЛЯ ТЕСТА (v5.11.90)
-        # Юзер попросил не игнорировать «Продаётся» чтобы проверить цикл.
-        # Потом вернём обратно.
         try:
             if self._is_status_prodano():
                 log("Аук: первый лот в статусе «Продаётся» — пропускаю",
@@ -1631,30 +1344,17 @@ class Auction(GameAction):
                 self.window_id, level="INFO")
             return 'empty'
 
-        # 3. Клик "Отмена лота" — берём sample из окна подтверждения
-        cancel_ok, confirm_sample = await self._cancel_lot()
-        if not cancel_ok:
+        # 3. Клик "Отмена лота"
+        if not await self._cancel_lot():
             # Окно подтверждения НЕ появилось после 2 кликов по «Отмена лота».
             # Это значит список лотов ПУСТОЙ — кнопка серая/неактивная, клик
             # по ней ничего не делает. Это НЕ ошибка — просто нечего снимать.
+            # Раньше тут было return 'error' → бот стопал весь прогон.
+            # Правильно: return 'empty' — завершить как «нечего переставлять».
             log("Аук: окно подтверждения не появилось — список лотов пуст "
                 "(кнопка «Отмена» серая). Завершаю прогон (не ошибка).",
                 self.window_id, level="INFO")
             return 'empty'
-
-        # 3b. Если есть sample из окна подтверждения — используем его
-        # (он чище чем из вкладки Продажа, где часто тёмный фон)
-        if confirm_sample is not None:
-            log("Аук: используем sample из окна подтверждения (чище)",
-                self.window_id, level="DEBUG")
-            sample = confirm_sample
-            sample_gray = cv2.cvtColor(sample, cv2.COLOR_BGR2GRAY)
-            sample_mean = float(sample_gray.mean())
-            log(f"Аук: sample из подтверждения mean={sample_mean:.0f}",
-                self.window_id)
-        else:
-            log("Аук: sample из подтверждения не получен — используем из вкладки",
-                self.window_id, level="DEBUG")
 
         # 4. Подождать анимацию и кликнуть ОК
         await asyncio.sleep(T_CONFIRM_SETTLE)
@@ -1667,11 +1367,10 @@ class Auction(GameAction):
 
         # 4. Найти предмет в инвентаре (YOLOv8, 5 страниц)
         await self._save_debug("au_after_click.png", self._grab(INV_SCAN))
-        log("Аук: ищу предмет (красная точка + matchTemplate)...", self.window_id)
+        log("Аук: ищу предмет (YOLOv8)...", self.window_id)
 
         try:
-            sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
-            item_pos = await self._find_item(sample_gray, sample_bgr)
+            item_pos = await self._find_item(sample_gray)
         except Exception as e:
             log(f"Аук: _find_item упал: {e} — пропускаю предмет",
                 self.window_id, level="ERROR")
@@ -1683,51 +1382,13 @@ class Auction(GameAction):
 
         # 5. ОДИН клик по найденному предмету — открывает окно цены.
         # Пользователь: «там не нужен двойной клик, открывается одним кликом»
-        # _click_snap: кликаем + полный скрин экрана для диагностики
-        log(f"Аук: >>> КЛИК ПО ПРЕДМЕТУ item_pos={item_pos} <<<",
-            self.window_id)
-        # Скрин ДО клика
-        before_click = self._grab(INV_SCAN)
-        await self._save_debug("au_before_item_click.png", before_click)
-
-        await self._click_snap('item', item_pos[0], item_pos[1], wait=T_ITEM_WINDOW)
-        log(f"Аук: кликнули, ждём прогрузки окна цены...", self.window_id)
-
-        # Скрин после клика
+        # Раньше был двойной клик — мог ломать открытие окна цены.
+        await self._click(*item_pos)
+        log(f"Аук: клик по предмету {item_pos}", self.window_id)
+        await asyncio.sleep(T_ITEM_WINDOW)
+        # Скрин после клика — видно открылось ли окно цены
         after_item_click = self._grab(INV_SCAN)
         await self._save_debug("au_after_item_click.png", after_item_click)
-
-        # ПРОВЕРКА: изменился ли INV_SCAN после клика?
-        # Если окно цены открылось — справа от инвентаря появляется панель цены.
-        # INV_SCAN может стать темнее/светлее.
-        diff = cv2.absdiff(before_click, after_item_click)
-        diff_mean = float(diff.mean())
-        log(f"Аук: diff после клика = {diff_mean:.1f} "
-            f"({'изменился — клик сработал' if diff_mean > 5 else 'НЕ изменился — клик НЕ сработал!'})",
-            self.window_id)
-
-        if diff_mean < 5:
-            # Клик не сработал — окно цены не открылось
-            log(f"Аук: КЛИК НЕ СРАБОТАЛ! diff={diff_mean:.1f} < 5 — "
-                f"окно цены не открылось. Пропускаю предмет.",
-                self.window_id, level="ERROR")
-            self.profile.notify("error",
-                               f"Аук: клик по предмету не сработал — окно цены не открылось")
-            # Попробуем ещё раз — может фокус потерян
-            log(f"Аук: повтор клика...", self.window_id)
-            await self._click_snap('item_retry', item_pos[0], item_pos[1],
-                                    wait=T_ITEM_WINDOW)
-            after_retry = self._grab(INV_SCAN)
-            diff2 = cv2.absdiff(before_click, after_retry)
-            diff2_mean = float(diff2.mean())
-            log(f"Аук: diff после повтора = {diff2_mean:.1f}",
-                self.window_id)
-            if diff2_mean < 5:
-                log(f"Аук: повтор тоже не сработал — пропускаю предмет",
-                    self.window_id, level="ERROR")
-                return 'error'
-            # Повтор сработал — используем новый скрин
-            after_item_click = after_retry
 
         # 6. OCR "Текущая минимальная цена"
         # ⚠️ КРИТИЧНО: если OCR не смог прочитать цену — СТОП, не выставлять!
@@ -1745,41 +1406,18 @@ class Auction(GameAction):
             return 'error'
 
         my_price = max(min_price - 1, 10)  # не ниже 10 (игровой минимум)
-        log(f"Аук: моя цена = {my_price} (мин={min_price}) — ВВОЖУ",
-            self.window_id)
+        log(f"Аук: моя цена = {my_price} (мин={min_price})", self.window_id)
 
-        # 7. Ввести цену (каждый клик по цифре = отдельный скрин)
-        # _click_snap делает скрин после каждого клика — видно что в поле
-        await self._click_snap('field_price', BTN_FIELD_PRICE[0],
-                               BTN_FIELD_PRICE[1], wait=0.5)
-        log(f"Аук: ВВОД ЦЕНЫ '{my_price}' — клик по цифрам:", self.window_id)
-        for digit in str(my_price):
-            coord = CALC_DIGITS.get(digit)
-            if coord is None:
-                log(f"Аук: неизвестная цифра '{digit}' — пропускаю",
-                    self.window_id, level="WARNING")
-                continue
-            await self._click_snap(f'digit_{digit}', coord[0], coord[1], wait=0.3)
-            log(f"Аук:   клик '{digit}' → {coord}", self.window_id, level="DEBUG")
-        log(f"Аук: введена цена {my_price}", self.window_id)
+        # 7. Ввести цену
+        await self._type_price(str(my_price))
 
-        # 7b. Скрин INV_SCAN после ввода — видно какая цена в поле
-        await asyncio.sleep(0.5)
-        try:
-            after_price_typed = self._grab(INV_SCAN)
-            await self._save_debug("au_after_price_typed.png", after_price_typed)
-        except Exception:
-            pass
+        # 8. Клик "ОК" в окне цены
+        await self._click(*BTN_OK_PRICE)
+        await asyncio.sleep(1)
 
-        # 8. Клик "ОК" в окне цены + скрин
-        await self._click_snap('ok_price', BTN_OK_PRICE[0],
-                               BTN_OK_PRICE[1], wait=1.5)
-
-        # 9. Клик "Добавить" + скрин
-        await self._click_snap('add', BTN_ADD[0], BTN_ADD[1], wait=LONG_PAUSE)
+        # 9. Клик "Добавить"
+        await self._click(*BTN_ADD)
+        await asyncio.sleep(LONG_PAUSE)
         log("Аук: лот выставлен на продажу", self.window_id)
-
-        # 9b. Финальный полный скрин — видно статус лота (Продается/Отмена)
-        self._take_fullscreen("au_final_fullscreen.png")
 
         return 'ok'
