@@ -119,8 +119,8 @@ def compare_icons(icon1: np.ndarray, icon2: np.ndarray) -> float:
 
 
 def find_item(img_bgr: np.ndarray, sample_bgr: np.ndarray,
-              conf_threshold: float = 0.3,
-              match_threshold: float = 0.7) -> Optional[Tuple[int, int, float]]:
+              conf_threshold: float = 0.1,
+              match_threshold: float = 0.5) -> Optional[Tuple[int, int, float]]:
     """
     Найти конкретный предмет в инвентаре.
     
@@ -167,10 +167,9 @@ def find_item(img_bgr: np.ndarray, sample_bgr: np.ndarray,
         # Сравниваем с образцом
         score = compare_icons(slot_img, sample_bgr)
         
-        # Логируем ВСЕ слоты — видим какие score
-        if score > 0.3:
-            log(f"YOLO: слот ({cx},{cy}) score={score:.3f} conf={conf:.2f}",
-                level="DEBUG")
+        # Логируем ВСЕ слоты
+        log(f"YOLO: слот ({cx},{cy}) score={score:.3f} conf={conf:.2f} size={w}x{h}",
+            level="DEBUG")
         
         if score > best_score:
             best_score = score
