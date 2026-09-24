@@ -96,6 +96,61 @@ class Dungeon(EventDrivenProfile):
             return True
         except Exception as e:
             log(f"Данги: не удалось сохранить {name}: {e}", self.window_id, level="WARNING")
+
+    def _take_fullscreen_dungeon(self, name: str = "dungeon_full.png") -> None:
+        """Сделать ПОЛНЫЙ скрин монитора и сохранить рядом с dungeon.py."""
+        try:
+            out_dir = os.path.dirname(os.path.abspath(__file__))
+            path = os.path.join(out_dir, name)
+            monitors = _sct.monitors
+            if len(monitors) > 1:
+                monitor = monitors[1]
+            else:
+                monitor = monitors[0]
+            try:
+                shot = _sct.grab(monitor)
+            except Exception as e:
+                if 'srcdc' in str(e) or 'memdc' in str(e):
+                    try:
+                        local_sct = mss.mss()
+                    except Exception:
+                        local_sct = mss.MSS()
+                    shot = local_sct.grab(monitor)
+                    try:
+                        local_sct.close()
+                    except Exception:
+                        pass
+                else:
+                    raise
+            arr = np.array(shot)
+            img = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
+            ok, buf = cv2.imencode(".png", img)
+            if ok:
+                with open(path, "wb") as f:
+                    f.write(buf.tobytes())
+                log(f"Данги: фуллскрин {name} ({monitor['width']}x{monitor['height']})",
+                    self.window_id)
+        except Exception as e:
+            log(f"Данги: фуллскрин {name} не удался: {e}", self.window_id, level="WARNING")
+
+    async def _click_snap_dungeon(self, label: str, x: int, y: int,
+                                   wait: float = 1.0) -> None:
+        """Кликнуть в (x, y) и сделать полный скрин экрана после клика.
+        Скрин сохраняется как dun_step_<label>_<ts>.png — видно все окна
+        в момент клика, для диагностики."""
+        await self.mouse.click(self.window_info, x, y)
+        if wait > 0:
+            await asyncio.sleep(wait)
+        # ts = миллисекунды текущего времени
+        import time as _t
+        ts = int(_t.time() * 100) % 100000
+        fname = f"dun_step_{label}_{ts}.png"
+        try:
+            self._take_fullscreen_dungeon(fname)
+            log(f"Данги: клик {label} ({x},{y}) → скрин {fname}", self.window_id)
+        except Exception as e:
+            log(f"Данги: клик {label} ({x},{y}) — скрин не удался: {e}",
+                self.window_id, level="DEBUG")
             return False
 
     def _ocr_find_text(self, gray_img, needles):
@@ -258,7 +313,7 @@ class Dungeon(EventDrivenProfile):
                                                        int(ww * 0.50), 0,
                                                        int(ww * 0.50), wh)
 
-                await self.mouse.click(self.window_info, click_x_rel, click_y_rel)
+                await self._click_snap_dungeon('dungeon_row', click_x_rel, click_y_rel, wait=1.5)
                 await asyncio.sleep(1.5)
 
                 # Скрин правой панели ПОСЛЕ клика
@@ -345,7 +400,7 @@ class Dungeon(EventDrivenProfile):
 
             # 5. Нажать "Вход"
             await asyncio.sleep(1)
-            await self.mouse.click(self.window_info, int(ww * 0.85), int(wh * 0.90))
+            await self._click_snap_dungeon('vhod', int(ww * 0.85), int(wh * 0.90), wait=2.0)
             await asyncio.sleep(2)
             log("Данги: нажал Вход", window_id)
 
@@ -375,7 +430,7 @@ class Dungeon(EventDrivenProfile):
                 await asyncio.sleep(0.3)
 
                 log(f"Данги: пробую {level_name} — клик ({arrow_x},{arrow_y})", window_id)
-                await self.mouse.click(self.window_info, arrow_x, arrow_y)
+                await self._click_snap_dungeon('arrow', arrow_x, arrow_y, wait=2.0)
                 await asyncio.sleep(2)
 
                 after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
@@ -506,7 +561,7 @@ class Dungeon(EventDrivenProfile):
                     await asyncio.sleep(1)
                     self.notify_screenshot("Закачал пати данжик, закуплюсь и оффнусь =)")
 
-                await self.mouse.click(self.window_info, 200, 188)
+                await self._click_snap_dungeon('energo_sleep', 200, 188, wait=2.0)
                 await dungeon.to_start()
                 await dungeon.party_leave()
 
