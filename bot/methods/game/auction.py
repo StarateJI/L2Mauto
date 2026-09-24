@@ -1195,27 +1195,50 @@ class Auction(GameAction):
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
 
-            # ── VLM: найти предмет по иконке ───────────────────────────
+            # ── VLM + фильтр: Ollama подтверждает, фильтр наводит ──────
+            # VLM видит как человек — сравнивает иконку sample с инвентарём.
+            # Но VLM не может дать точные пиксели — поэтому:
+            # 1. VLM отвечает да/нет — есть ли предмет?
+            # 2. Если да — _find_red_dots даёт точные координаты
+            # 3. Кликаем по последней красной точке
             try:
                 from bot.ollama_vlm import vlm_find_item_by_icon
-                dot = vlm_find_item_by_icon(img, sample_bgr)
-                if dot is not None:
-                    cx, cy = dot
-                    log(f"Аук: VLM нашёл предмет по иконке ({cx},{cy}) на стр {page}",
-                        self.window_id)
-                    win_cx = cx + INV_SCAN[0]
-                    win_cy = cy + INV_SCAN[1]
-                    best_result = (win_cx, win_cy, 1.0, page)
-                    break
-                else:
-                    log(f"Аук: VLM не нашёл предмет по иконке на стр {page}",
+                vlm_result = vlm_find_item_by_icon(img, sample_bgr)
+                if vlm_result is True:
+                    # VLM подтвердил — предмет есть. Берём координаты через фильтр.
+                    red_dots = self._find_red_dots(img)
+                    if red_dots:
+                        red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
+                        chosen_dot = red_dots_sorted[-1]
+                        cx, cy = chosen_dot[0], chosen_dot[1]
+                        log(f"Аук: VLM подтвердил + фильтр навёл "
+                            f"({cx},{cy}) на стр {page}", self.window_id)
+                        win_cx = cx + INV_SCAN[0]
+                        win_cy = cy + INV_SCAN[1]
+                        best_result = (win_cx, win_cy, 1.0, page)
+                        break
+                    else:
+                        log(f"Аук: VLM подтвердил но фильтр не нашёл точку "
+                            f"на стр {page}", self.window_id, level="WARNING")
+                elif vlm_result is False:
+                    log(f"Аук: VLM не нашёл предмет на стр {page}",
                         self.window_id, level="DEBUG")
+                else:
+                    # VLM ошибка — fallback на фильтр напрямую
+                    log(f"Аук: VLM недоступен, фильтр напрямую стр {page}",
+                        self.window_id, level="DEBUG")
+                    red_dots = self._find_red_dots(img)
+                    if red_dots:
+                        red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
+                        chosen_dot = red_dots_sorted[-1]
+                        win_cx = chosen_dot[0] + INV_SCAN[0]
+                        win_cy = chosen_dot[1] + INV_SCAN[1]
+                        best_result = (win_cx, win_cy, 1.0, page)
+                        break
             except Exception as e:
                 log(f"Аук: VLM ошибка: {e}", self.window_id, level="WARNING")
-                # Fallback на старый фильтр красной точки
+                # Fallback на старый фильтр
                 red_dots = self._find_red_dots(img)
-                log(f"Аук: fallback фильтр — {len(red_dots)} точек",
-                    self.window_id, level="DEBUG")
                 if red_dots:
                     red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
                     chosen_dot = red_dots_sorted[-1]

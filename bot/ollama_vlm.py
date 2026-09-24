@@ -101,37 +101,31 @@ def vlm_find_red_dot(img_bgr: np.ndarray) -> Optional[tuple]:
     return None
 
 
-def vlm_find_item_by_icon(inventory_img: np.ndarray, sample_img: np.ndarray) -> Optional[tuple]:
+def vlm_find_item_by_icon(inventory_img: np.ndarray, sample_img: np.ndarray) -> Optional[bool]:
     """
-    Найти предмет в инвентаре по иконке через VLM.
-    Отправляем скрин инвентаря + иконку-образец.
-    Ollama сравнивает и находит такой же предмет.
-
-    Возвращает (cx, cy) центра иконки в координатах инвентаря, или None.
+    Проверить через VLM — есть ли предмет с такой иконкой в инвентаре.
+    Возвращает True/False/None(ошибка).
+    Не возвращает координаты — VLM не может дать точные пиксели.
+    Координаты берём через _find_red_dots (точный фильтр).
     """
-    h, w = inventory_img.shape[:2]
-
-    # Кодируем обе картинки
-    ok1, buf1 = cv2.imencode('.png', inventory_img)
-    ok2, buf2 = cv2.imencode('.png', sample_img)
-    if not ok1 or not ok2:
-        return None
-    inv_b64 = base64.b64encode(buf1.tobytes()).decode()
-    sample_b64 = base64.b64encode(buf2.tobytes()).decode()
-
     try:
+        ok1, buf1 = cv2.imencode('.png', inventory_img)
+        ok2, buf2 = cv2.imencode('.png', sample_img)
+        if not ok1 or not ok2:
+            return None
+        inv_b64 = base64.b64encode(buf1.tobytes()).decode()
+        sample_b64 = base64.b64encode(buf2.tobytes()).decode()
+
         payload = {
             "model": OLLAMA_MODEL,
             "messages": [
                 {
                     "role": "user",
                     "content": (
-                        f"Первое изображение — инвентарь (размер {w}x{h} пикселей). "
-                        f"Второе изображение — иконка предмета который нужно найти. "
-                        f"Найди в инвентаре предмет с ТАКОЙ ЖЕ иконкой. "
-                        f"Назови координаты ЦЕНТРА этой иконки в пикселях. "
-                        f"Формат: X,Y (X от 0 до {w}, Y от 0 до {h}). "
-                        f"Если такого предмета нет — скажи 'нет'."
+                        "Первое изображение — инвентарь. "
+                        "Второе изображение — иконка предмета. "
+                        "Есть ли в инвентаре предмет с ТАКОЙ ЖЕ или ПОХОЖЕЙ иконкой? "
+                        "Ответь только 'да' или 'нет'."
                     ),
                     "images": [inv_b64, sample_b64]
                 }
@@ -145,20 +139,13 @@ def vlm_find_item_by_icon(inventory_img: np.ndarray, sample_img: np.ndarray) -> 
             return None
 
         data = resp.json()
-        answer = data.get("message", {}).get("content", "").strip()
-        if not answer or answer.lower().startswith("нет"):
-            return None
-
-        # Парсим координаты
-        import re
-        numbers = re.findall(r'\d+', answer)
-        if len(numbers) >= 2:
-            cx, cy = int(numbers[0]), int(numbers[1])
-            # Ограничиваем в пределах картинки
-            cx = max(0, min(cx, w - 1))
-            cy = max(0, min(cy, h - 1))
-            log(f"VLM: предмет найден по иконке ({cx},{cy})", level="DEBUG")
-            return (cx, cy)
+        answer = data.get("message", {}).get("content", "").strip().lower()
+        if "да" in answer:
+            log(f"VLM: предмет найден по иконке", level="DEBUG")
+            return True
+        elif "нет" in answer:
+            log(f"VLM: предмет не найден по иконке", level="DEBUG")
+            return False
         return None
 
     except Exception as e:
