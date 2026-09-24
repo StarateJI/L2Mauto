@@ -1180,11 +1180,9 @@ class Auction(GameAction):
 
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет в инвентаре через pyautogui.locateCenterOnScreen().
-
-        pyautogui ищет картинку на ВСЁМ экране и возвращает ЭКРАННЫЕ
-        координаты — без перевода INV_SCAN → окно → экран.
-        Клик попадает точно.
+        Искать предмет через pyautogui.locateCenterOnScreen с region.
+        Ограничиваем поиск зоной окна бота — быстро (~1 сек).
+        Возвращает экранные координаты центра иконки.
         """
         best_result = None
 
@@ -1194,18 +1192,24 @@ class Auction(GameAction):
         sample_path = os.path.join(tempfile.gettempdir(), "au_sample_template.png")
         cv2.imwrite(sample_path, sample_bgr)
 
+        # Окно бота — region для pyautogui (ограничивает область поиска)
+        win = self.window_info[self.window_id]
+        wx, wy = win["Position"]
+        ww, wh = win["Width"], win["Height"]
+        # Region = (left, top, width, height) — только окно бота
+        region = (wx, wy, ww, wh)
+
         for page in range(1, SCAN_PAGES + 1):
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
 
-            # ── pyautogui.locateCenterOnScreen ──────────────────────────
-            # Ищет sample на всём экране. Возвращает экранные координаты.
+            # ── pyautogui с region — ищет только в окне бота ───────────
             try:
                 import pyautogui
-                # confidence=0.8 — допуск 80% совпадения
-                # pyautogui нужен opencv-python для confidence
-                pos = pyautogui.locateCenterOnScreen(sample_path, confidence=0.8)
+                pos = pyautogui.locateCenterOnScreen(sample_path,
+                                                     confidence=0.8,
+                                                     region=region)
                 if pos is not None:
                     log(f"Аук: pyautogui НАШЁЛ — стр {page} "
                         f"экр=({pos.x},{pos.y})", self.window_id)
@@ -1217,7 +1221,7 @@ class Auction(GameAction):
             except Exception as e:
                 log(f"Аук: pyautogui ошибка: {e}", self.window_id, level="WARNING")
 
-            # ── Fallback: matchTemplate multi-scale ─────────────────────
+            # ── Fallback: matchTemplate ─────────────────────────────────
             img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             tm_match = self._match_template_multiscale(img_gray, sample_gray,
                                                         threshold=0.70)
@@ -1246,8 +1250,8 @@ class Auction(GameAction):
                 self.window_id)
             return (best_result[0], best_result[1])
 
-        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
-            f"(pyautogui + matchTemplate)", self.window_id, level="ERROR")
+        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц",
+            self.window_id, level="ERROR")
         return None
 
     def _match_template_multiscale(self, img_gray: np.ndarray,
