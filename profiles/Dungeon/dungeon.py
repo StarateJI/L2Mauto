@@ -122,32 +122,6 @@ class Dungeon(EventDrivenProfile):
             log(f"Данги: OCR ошибка: {e}", level="DEBUG")
         return False, 0
 
-    def _match_icon_multiscale(self, gray_scene, icon_gray,
-                              scales=(0.95, 1.0, 1.05),
-                              threshold=0.65):
-        """Мульти-скейл matchTemplate для поиска шаблона."""
-        best_score = 0.0
-        best_loc = None
-        if gray_scene is None or icon_gray is None:
-            return best_score, best_loc
-        for scale in scales:
-            new_w = int(icon_gray.shape[1] * scale)
-            new_h = int(icon_gray.shape[0] * scale)
-            if new_w <= 5 or new_h <= 5:
-                continue
-            if new_w > gray_scene.shape[1] or new_h > gray_scene.shape[0]:
-                continue
-            scaled = cv2.resize(icon_gray, (new_w, new_h), interpolation=cv2.INTER_AREA)
-            try:
-                result = cv2.matchTemplate(gray_scene, scaled, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, max_loc = cv2.minMaxLoc(result)
-                if max_val > best_score:
-                    best_score = max_val
-                    best_loc = max_loc
-            except cv2.error:
-                continue
-        return best_score, best_loc
-
     async def _blessed_land_loop(self):
         """
         Благословенная Земля — одиночный данж.
@@ -190,19 +164,6 @@ class Dungeon(EventDrivenProfile):
             if menu_shot is not None:
                 self._save_debug("blessed_menu_opened.png", menu_shot)
 
-            # Загрузить шаблон для matchTemplate
-            icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                     "blessed_zemlya.png")
-            if not os.path.exists(icon_path):
-                icon_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                         "blessed_land_text.png")
-            icon_gray = None
-            if os.path.exists(icon_path):
-                icon_bgr = cv2.imread(icon_path)
-                if icon_bgr is not None:
-                    icon_gray = cv2.cvtColor(icon_bgr, cv2.COLOR_BGR2GRAY)
-                    log(f"Данги: шаблон {icon_gray.shape[1]}x{icon_gray.shape[0]} загружен", window_id)
-
             # 3. Зона списка данжей
             list_x_rel = 0
             list_y_rel = int(wh * 0.20)
@@ -214,15 +175,12 @@ class Dungeon(EventDrivenProfile):
             click_x_rel, click_y_rel = 0, 0
             scene_bgr = None
 
-            # OCR слова для поиска "Благословенная Земля"
-            # Оставляем только ДЛИННЫЕ слова (10+ символов) чтобы не было
-            # ложных срабатываний на ивентовых данжах типа "Родник Лунных
-            # Кроликов". Короткие типа "благ" могли совпасть с мусором OCR.
             ocr_needles = [
-                "благословенная", "благословенн", "благословен",
+                "земля", "земл", "благословенн", "благословен",
+                "благослов", "благ", "blessed", "bless",
             ]
 
-            MAX_SCROLL_ATTEMPTS = 30
+            MAX_SCROLL_ATTEMPTS = 15
             for scroll_attempt in range(MAX_SCROLL_ATTEMPTS):
                 scene_bgr = self._grab_window_rect(wx, wy, list_x_rel, list_y_rel, list_w, list_h)
                 if scene_bgr is None:
@@ -238,73 +196,41 @@ class Dungeon(EventDrivenProfile):
 
                 ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
 
-                # matchTemplate — поиск по шаблону
-                tm_score, tm_loc = (0.0, None)
-                if icon_gray is not None:
-                    tm_score, tm_loc = self._match_icon_multiscale(
-                        scene_gray, icon_gray,
-                        scales=(0.95, 1.0, 1.05),
-                        threshold=0.65)
-
                 log(f"Данги: попытка {scroll_attempt+1}/{MAX_SCROLL_ATTEMPTS} — "
-                    f"TM={tm_score:.3f} OCR={'да' if ocr_found else 'нет'}",
-                    window_id, level="DEBUG")
+                    f"OCR={'да' if ocr_found else 'нет'}", window_id, level="DEBUG")
 
-                # НАШЛИ — только если matchTemplate нашёл И иконка СВЕТЛАЯ
-                # (Благословенная Земля — светлая/день, gray mean > 80)
-                # Кролики и другие ивентовые данжи — ТЁМНЫЕ (gray mean < 80)
-                # Это защищает от ложных срабатываний на ивентовых данжах
-                # которые визуально похожи но тёмные (ночь/вечер).
-                if tm_score >= 0.65 and tm_loc is not None:
-                    # Вырезаем найденную иконку
-                    ix1 = max(0, tm_loc[0])
-                    iy1 = max(0, tm_loc[1])
-                    ix2 = min(scene_bgr.shape[1], tm_loc[0] + icon_gray.shape[1])
-                    iy2 = min(scene_bgr.shape[0], tm_loc[1] + icon_gray.shape[0])
-                    icon_found = scene_bgr[iy1:iy2, ix1:ix2]
-                    if icon_found.size > 0:
-                        icon_gray_found = cv2.cvtColor(icon_found, cv2.COLOR_BGR2GRAY)
-                        icon_brightness = float(icon_gray_found.mean())
-                        log(f"Данги: найдена иконка TM={tm_score:.3f}, "
-                            f"яркость={icon_brightness:.0f} "
-                            f"({'СВЕТЛАЯ — Благ Земля' if icon_brightness > 80 else 'ТЁМНАЯ — не Благ Земля'})",
-                            window_id, level="DEBUG")
-                        if icon_brightness > 80:
-                            click_x_rel = list_x_rel + tm_loc[0] + icon_gray.shape[1] // 2
-                            click_y_rel = list_y_rel + tm_loc[1] + icon_gray.shape[0] // 2
-                            found = True
-                            log(f"Данги: НАШЁЛ Благословенную Землю "
-                                f"({click_x_rel},{click_y_rel}) score={tm_score:.3f} "
-                                f"brightness={icon_brightness:.0f}",
-                                window_id)
-                            self._save_debug("blessed_found_tm.png", scene_bgr)
-                            break
-                        else:
-                            log(f"Данги: matchTemplate нашёл (score={tm_score:.3f}) "
-                                f"НО иконка ТЁМНАЯ (brightness={icon_brightness:.0f}<80) — "
-                                f"это НЕ Благ Земля (вероятно Кролики или ивент). "
-                                f"Пропускаю.", window_id, level="DEBUG")
-                    else:
-                        log(f"Данги: иконка пустая после вырезки", window_id,
-                            level="DEBUG")
-
-                # Fallback: только OCR (без matchTemplate) — если matchTemplate
-                # почему-то не сработал но OCR нашёл "земля"
                 if ocr_found:
-                    click_x_rel = list_x_rel + int(list_w * 0.15)
-                    click_y_rel = list_y_rel + min(max(ocr_y, 10), list_h - 10)
-                    found = True
-                    log(f"Данги: найден через OCR ({click_x_rel},{click_y_rel})",
-                        window_id)
-                    self._save_debug("blessed_found_ocr.png", scene_bgr)
-                    break
-
-                # Логируем если matchTemplate нашёл но OCR не подтвердил —
-                # возможно ивентовый данж с похожей иконкой
-                if tm_score >= 0.65 and tm_loc is not None and not ocr_found:
-                    log(f"Данги: matchTemplate нашёл (score={tm_score:.3f}) "
-                        f"НО OCR не подтвердил 'земля' — пропускаю "
-                        f"(возможно ивентовый данж)", window_id, level="DEBUG")
+                    # Проверка яркости иконки — Благ Земля СВЕТЛАЯ (day),
+                    # Кролики/ивенты ТЁМНЫЕ (night). Измерили на скрине юзера:
+                    # Кролики gray mean=62, Благ Земля gray mean=101.
+                    # Если иконка тёмная — это не Благ Земля, пропускаем.
+                    # Берём зону иконки — слева от текста (~10-40% ширины списка)
+                    icon_zone = scene_bgr[:, :int(scene_bgr.shape[1] * 0.4)]
+                    if icon_zone.size > 0:
+                        icon_gray_zone = cv2.cvtColor(icon_zone, cv2.COLOR_BGR2GRAY)
+                        # Берём самую светлую строку — там где иконка
+                        row_means = icon_gray_zone.mean(axis=1)
+                        brightest_y = int(np.argmax(row_means))
+                        icon_brightness = float(row_means[brightest_y])
+                        log(f"Данги: OCR нашёл, проверка яркости иконки: "
+                            f"brightness={icon_brightness:.0f} "
+                            f"({'СВЕТЛАЯ — Благ Земля' if icon_brightness > 80 else 'ТЁМНАЯ — Кролики?'})",
+                            window_id, level="DEBUG")
+                        if icon_brightness < 80:
+                            # Тёмная иконка — это не Благ Земля
+                            log(f"Данги: OCR нашёл текст НО иконка ТЁМНАЯ "
+                                f"(brightness={icon_brightness:.0f}<80) — "
+                                f"пропускаю (вероятно Кролики)", window_id, level="DEBUG")
+                            ocr_found = False
+                    if ocr_found:
+                        click_x_rel = list_x_rel + int(list_w * 0.15)
+                        click_y_rel = list_y_rel + min(max(ocr_y, 10), list_h - 10)
+                        found = True
+                        log(f"Данги: найден через OCR+яркость "
+                            f"({click_x_rel},{click_y_rel}) brightness={icon_brightness:.0f}",
+                            window_id)
+                        self._save_debug("blessed_found_ocr.png", scene_bgr)
+                        break
 
                 await self.mouse.wheel(self.window_info, [scroll_center],
                                        direction="down", times=5)
