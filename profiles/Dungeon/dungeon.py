@@ -223,56 +223,94 @@ class Dungeon(EventDrivenProfile):
                     await asyncio.sleep(1)
                 return False
 
-            # 4. Кликнуть по строке → проверить время доступа
+            # 4. Кликнуть по строке → проверить что правая панель изменилась
             # ВАЖНО: клик может не сработать с 1 раза (50/50).
-            # Если после клика время доступа не появилось — повторяем.
-            # Если не появилось за 3 попытки — пропускаем (клик промахивается).
+            # Если после клика правая панель НЕ изменилась — повторяем.
+            # Если не изменилась за 3 попытки — пропускаем (клик промахивается).
+            # Правая панель = зона справа от списка данжей (50-100% ширины).
+            # Если клик сработал → панель обновилась (другой данж выбран).
+            # Без проверки OCR — просто сравниваем картинки до/после.
             for click_attempt in range(3):
                 log(f"Данги: клик по строке ({click_x_rel},{click_y_rel}) "
                     f"попытка {click_attempt+1}/3", window_id)
+
+                # Скрин правой панели ДО клика
+                panel_before = self._grab_window_rect(wx, wy,
+                                                       int(ww * 0.50), 0,
+                                                       int(ww * 0.50), wh)
+
                 await self.mouse.click(self.window_info, click_x_rel, click_y_rel)
                 await asyncio.sleep(1.5)
 
-                # Проверка времени доступа
-                time_zone = self._grab_window_rect(wx, wy,
-                                                    int(ww * 0.45), int(wh * 0.55),
-                                                    int(ww * 0.50), int(wh * 0.13))
-                if time_zone is None:
-                    log("Данги: не удалось снять зону времени доступа",
+                # Скрин правой панели ПОСЛЕ клика
+                panel_after = self._grab_window_rect(wx, wy,
+                                                      int(ww * 0.50), 0,
+                                                      int(ww * 0.50), wh)
+
+                # Проверка: изменилась ли правая панель
+                if panel_before is None or panel_after is None:
+                    log("Данги: не удалось снять правую панель",
                         window_id, level="WARNING")
                     continue
 
-                self._save_debug("blessed_time_check.png", time_zone)
-                b_tz, g_tz, r_tz = cv2.split(time_zone)
-                red_mask = (r_tz > 180) & (g_tz < 80) & (b_tz < 80)
-                red_count = int(np.sum(red_mask))
-                white_mask = (r_tz > 180) & (g_tz > 180) & (b_tz > 180)
-                white_count = int(np.sum(white_mask))
+                # Сохраняем для диагностики
+                self._save_debug(f"blessed_panel_before_{click_attempt+1}.png", panel_before)
+                self._save_debug(f"blessed_panel_after_{click_attempt+1}.png", panel_after)
 
-                # Время появилось = есть и красные и белые пиксели
-                # Если оба 0 — клик не сработал, время не появилось
-                if red_count == 0 and white_count == 0:
-                    log(f"Данги: клик не сработал — время не появилось "
-                        f"(red=0, white=0). Повтор клика.",
-                        window_id, level="WARNING")
-                    continue
+                # Сравнение: diff = средняя разница между кадрами
+                diff = cv2.absdiff(panel_before, panel_after)
+                diff_mean = float(diff.mean())
+                # Считаем сколько пикселей сильно изменилось (> 30)
+                gray_diff = cv2.cvtColor(diff, cv2.COLOR_BGR2GRAY)
+                changed_pixels = int(np.sum(gray_diff > 30))
+                total_pixels = gray_diff.shape[0] * gray_diff.shape[1]
+                changed_ratio = changed_pixels / max(total_pixels, 1)
 
-                if red_count > 20 and white_count < 10:
-                    log(f"Данги: время доступа = 0 — сегодня уже был, усыпляю",
-                        window_id, level="WARNING")
-                    await game.wait_and_click("npc_global_quit_button", timeout=2)
-                    await asyncio.sleep(1)
-                    if not await self.energo.is_on():
-                        await self.energo.turn_on()
-                        await asyncio.sleep(1)
-                    return True
+                log(f"Данги: попытка {click_attempt+1} — diff_mean={diff_mean:.1f} "
+                    f"changed={changed_ratio:.1%} "
+                    f"({'ИЗМЕНИЛОСЬ — клик сработал' if changed_ratio > 0.05 else 'НЕ изменилось — повтор'})",
+                    window_id, level="DEBUG")
 
-                log(f"Данги: время доступа есть (red={red_count}, white={white_count}) — иду в данж",
-                    window_id)
-                break
+                # Если >5% пикселей изменилось — клик сработал
+                if changed_ratio > 0.05:
+                    log(f"Данги: клик сработал (changed={changed_ratio:.1%}) — "
+                        f"проверяю время доступа", window_id)
+
+                    # Теперь проверяем время доступа (красный 0 = уже был)
+                    time_zone = self._grab_window_rect(wx, wy,
+                                                        int(ww * 0.45), int(wh * 0.55),
+                                                        int(ww * 0.50), int(wh * 0.13))
+                    if time_zone is not None:
+                        self._save_debug("blessed_time_check.png", time_zone)
+                        b_tz, g_tz, r_tz = cv2.split(time_zone)
+                        red_mask = (r_tz > 180) & (g_tz < 80) & (b_tz < 80)
+                        red_count = int(np.sum(red_mask))
+                        white_mask = (r_tz > 180) & (g_tz > 180) & (b_tz > 180)
+                        white_count = int(np.sum(white_mask))
+
+                        if red_count > 20 and white_count < 10:
+                            log(f"Данги: время доступа = 0 — сегодня уже был, усыпляю",
+                                window_id, level="WARNING")
+                            await game.wait_and_click("npc_global_quit_button", timeout=2)
+                            await asyncio.sleep(1)
+                            if not await self.energo.is_on():
+                                await self.energo.turn_on()
+                                await asyncio.sleep(1)
+                            return True
+
+                        log(f"Данги: время доступа есть (red={red_count}, white={white_count}) — иду в данж",
+                            window_id)
+                    else:
+                        log("Данги: не удалось снять зону времени доступа",
+                            window_id, level="WARNING")
+                    break
+
+                # Клик не сработал — повтор
+                log(f"Данги: клик НЕ сработал (changed={changed_ratio:.1%}) — повтор",
+                    window_id, level="WARNING")
             else:
                 # 3 попытки клика не сработали — пропускаем
-                log(f"Данги: 3 клика не сработали — время не появилось. "
+                log(f"Данги: 3 клика не сработали — правая панель не изменилась. "
                     f"Пропускаю данж.", window_id, level="ERROR")
                 await game.wait_and_click("npc_global_quit_button", timeout=2)
                 await asyncio.sleep(1)
