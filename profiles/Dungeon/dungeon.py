@@ -247,23 +247,37 @@ class Dungeon(EventDrivenProfile):
                     f"TM={tm_score:.3f} OCR={'да' if ocr_found else 'нет'}",
                     window_id, level="DEBUG")
 
-                # Нашли через matchTemplate
-                if tm_score >= 0.65 and tm_loc is not None:
+                # НАШЛИ — только если matchTemplate нашёл И OCR подтвердил "земля"
+                # Это защищает от ивентовых данжей (Родник Лунных Кроликов и др.)
+                # которые визуально похожи но имеют другое название.
+                # matchTemplate находит похожую иконку, OCR проверяет текст.
+                if tm_score >= 0.65 and tm_loc is not None and ocr_found:
                     click_x_rel = list_x_rel + tm_loc[0] + icon_gray.shape[1] // 2
                     click_y_rel = list_y_rel + tm_loc[1] + icon_gray.shape[0] // 2
                     found = True
-                    log(f"Данги: найден через matchTemplate "
-                        f"({click_x_rel},{click_y_rel}) score={tm_score:.3f}", window_id)
+                    log(f"Данги: найден через matchTemplate+OCR "
+                        f"({click_x_rel},{click_y_rel}) score={tm_score:.3f}",
+                        window_id)
                     self._save_debug("blessed_found_tm.png", scene_bgr)
                     break
 
+                # Fallback: только OCR (без matchTemplate) — если matchTemplate
+                # почему-то не сработал но OCR нашёл "земля"
                 if ocr_found:
                     click_x_rel = list_x_rel + int(list_w * 0.15)
                     click_y_rel = list_y_rel + min(max(ocr_y, 10), list_h - 10)
                     found = True
-                    log(f"Данги: найден через OCR ({click_x_rel},{click_y_rel})", window_id)
+                    log(f"Данги: найден через OCR ({click_x_rel},{click_y_rel})",
+                        window_id)
                     self._save_debug("blessed_found_ocr.png", scene_bgr)
                     break
+
+                # Логируем если matchTemplate нашёл но OCR не подтвердил —
+                # возможно ивентовый данж с похожей иконкой
+                if tm_score >= 0.65 and tm_loc is not None and not ocr_found:
+                    log(f"Данги: matchTemplate нашёл (score={tm_score:.3f}) "
+                        f"НО OCR не подтвердил 'земля' — пропускаю "
+                        f"(возможно ивентовый данж)", window_id, level="DEBUG")
 
                 await self.mouse.wheel(self.window_info, [scroll_center],
                                        direction="down", times=5)
