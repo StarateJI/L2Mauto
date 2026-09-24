@@ -222,12 +222,12 @@ class Dungeon(EventDrivenProfile):
                 "благословенная", "благословенн", "благословен",
             ]
 
-            MAX_SCROLL_ATTEMPTS = 30  # 15 → 30, но times=2 (было 5) — чаще проверяем
+            MAX_SCROLL_ATTEMPTS = 30
             for scroll_attempt in range(MAX_SCROLL_ATTEMPTS):
                 scene_bgr = self._grab_window_rect(wx, wy, list_x_rel, list_y_rel, list_w, list_h)
                 if scene_bgr is None:
                     await self.mouse.wheel(self.window_info, [scroll_center],
-                                           direction="down", times=2)
+                                           direction="down", times=5)
                     await asyncio.sleep(0.05)
                     continue
 
@@ -307,7 +307,7 @@ class Dungeon(EventDrivenProfile):
                         f"(возможно ивентовый данж)", window_id, level="DEBUG")
 
                 await self.mouse.wheel(self.window_info, [scroll_center],
-                                       direction="down", times=2)
+                                       direction="down", times=5)
                 await asyncio.sleep(0.05)
 
             if not found:
