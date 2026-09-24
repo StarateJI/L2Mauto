@@ -1,0 +1,201 @@
+=== Log tail 2026-09-24T13:29:53.280636 | last 200 lines ===
+2026-09-24 13:03:19,122 - DEBUG - [global] needs_update: raw → 5.12.18
+2026-09-24 13:03:19,243 - DEBUG - [global] needs_update: API → 5.12.19
+2026-09-24 13:03:19,289 - DEBUG - [global] needs_update: API → 5.12.19
+2026-09-24 13:03:19,336 - DEBUG - [global] needs_update: лучший источник API → 5.12.19 (из 2)
+2026-09-24 13:03:19,336 - INFO - [global] needs_update: local=(5, 12, 18) remote=(5, 12, 19) -> has_update=True
+2026-09-24 13:03:19,336 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-24 13:03:19,336 - DEBUG - [global] needs_update: лучший источник API → 5.12.19 (из 2)
+2026-09-24 13:03:19,336 - INFO - [global] needs_update: local=(5, 12, 18) remote=(5, 12, 19) -> has_update=True
+2026-09-24 13:03:22,281 - INFO - [global] show_update: юзер нажал Yes — запускаю update()
+2026-09-24 13:03:22,296 - INFO - [global] show_update: _UpdaterThread.run() стартовал
+2026-09-24 13:03:22,470 - INFO - [global] Сделан лёгкий бэкап .py в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.12.18.zip
+2026-09-24 13:03:22,470 - INFO - [global] Обнова: бэкап сделан, качаю файлы ПАРАЛЛЕЛЬНО (8 потоков)...
+2026-09-24 13:03:24,659 - DEBUG - [global] Обнова: скачано 20/71 (ok=20, fail=0)
+2026-09-24 13:03:26,018 - DEBUG - [global] Обнова: скачано 40/71 (ok=40, fail=0)
+2026-09-24 13:03:26,630 - DEBUG - [global] Обнова: скачано 60/71 (ok=56, fail=4)
+2026-09-24 13:03:27,035 - DEBUG - [global] Обнова: скачано 71/71 (ok=67, fail=4)
+2026-09-24 13:03:27,036 - INFO - [global] Обнова: скачано 67/71 файлов за 4.6с, ошибок: 4
+2026-09-24 13:03:27,036 - WARNING - [global] Обнова: НЕ скачаны (4): ['profiles/PvPDodge/pvp.py', 'profiles/Buyer/buyer.py', 'profiles/Rewards/rewards.py', 'profiles/MainAlchemy/main_alch.py']
+2026-09-24 13:03:27,036 - DEBUG - [global] Обнова: повтор неудачных (4)...
+2026-09-24 13:03:27,281 - WARNING - [global] Обнова: окончательно НЕ скачаны: ['profiles/PvPDodge/pvp.py', 'profiles/Buyer/buyer.py', 'profiles/Rewards/rewards.py', 'profiles/MainAlchemy/main_alch.py']
+2026-09-24 13:03:27,316 - INFO - [global] Создан apply_update.bat: C:\Users\PC\Desktop\L2Mauto\apply_update.bat
+2026-09-24 13:03:27,316 - INFO - [global] Накатил обнпату через apply_update.bat, закрываюсь для рестарта...
+2026-09-24 13:03:35,409 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-24 13:03:36,073 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-24 13:03:36,074 - INFO - [global] Запустил чекер обнов
+2026-09-24 13:03:36,074 - INFO - [global] Проверяю обновы...
+2026-09-24 13:03:37,231 - DEBUG - [global] needs_update: raw → 5.12.18
+2026-09-24 13:03:37,319 - DEBUG - [global] needs_update: raw → 5.12.18
+2026-09-24 13:03:37,533 - DEBUG - [global] needs_update: API → 5.12.19
+2026-09-24 13:03:37,579 - DEBUG - [global] needs_update: лучший источник API → 5.12.19 (из 2)
+2026-09-24 13:03:37,579 - INFO - [global] needs_update: local=(5, 12, 18) remote=(5, 12, 19) -> has_update=True
+2026-09-24 13:03:37,580 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-24 13:03:37,626 - DEBUG - [global] needs_update: API → 5.12.19
+2026-09-24 13:03:37,673 - DEBUG - [global] needs_update: лучший источник API → 5.12.19 (из 2)
+2026-09-24 13:03:37,673 - INFO - [global] needs_update: local=(5, 12, 18) remote=(5, 12, 19) -> has_update=True
+2026-09-24 13:05:36,177 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-24 13:05:36,179 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-24 13:05:37,088 - DEBUG - [global] _api_put: GET runs/20260924_130536_fail_periodic.log -> 404
+2026-09-24 13:05:38,848 - DEBUG - [global] _api_put: PUT runs/20260924_130536_fail_periodic.log -> 201 (1551 bytes)
+2026-09-24 13:05:38,850 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_130536_fail_periodic.log
+2026-09-24 13:05:38,851 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-24 13:05:39,822 - DEBUG - [global] _api_put: GET runs/20260924_130536_fail_global.log -> 404
+2026-09-24 13:05:41,517 - DEBUG - [global] _api_put: PUT runs/20260924_130536_fail_global.log -> 201 (21437 bytes)
+2026-09-24 13:05:41,519 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_130536_fail_global.log
+2026-09-24 13:05:41,519 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-24 13:05:41,519 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-24 13:06:38,786 - INFO - [global] show_update: юзер нажал Yes — запускаю update()
+2026-09-24 13:06:38,801 - INFO - [global] show_update: _UpdaterThread.run() стартовал
+2026-09-24 13:06:38,973 - INFO - [global] Сделан лёгкий бэкап .py в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.12.18.zip
+2026-09-24 13:06:38,974 - INFO - [global] Обнова: бэкап сделан, качаю файлы ПАРАЛЛЕЛЬНО (8 потоков)...
+2026-09-24 13:06:42,751 - DEBUG - [global] Обнова: скачано 20/71 (ok=20, fail=0)
+2026-09-24 13:06:44,156 - DEBUG - [global] Обнова: скачано 40/71 (ok=40, fail=0)
+2026-09-24 13:06:46,123 - DEBUG - [global] Обнова: скачано 60/71 (ok=56, fail=4)
+2026-09-24 13:06:50,987 - DEBUG - [global] Обнова: скачано 71/71 (ok=67, fail=4)
+2026-09-24 13:06:50,988 - INFO - [global] Обнова: скачано 67/71 файлов за 12.0с, ошибок: 4
+2026-09-24 13:06:50,988 - WARNING - [global] Обнова: НЕ скачаны (4): ['profiles/Rewards/rewards.py', 'profiles/Buyer/buyer.py', 'profiles/MainAlchemy/main_alch.py', 'profiles/PvPDodge/pvp.py']
+2026-09-24 13:06:50,988 - DEBUG - [global] Обнова: повтор неудачных (4)...
+2026-09-24 13:06:51,363 - WARNING - [global] Обнова: окончательно НЕ скачаны: ['profiles/Rewards/rewards.py', 'profiles/Buyer/buyer.py', 'profiles/MainAlchemy/main_alch.py', 'profiles/PvPDodge/pvp.py']
+2026-09-24 13:06:51,397 - INFO - [global] Создан apply_update.bat: C:\Users\PC\Desktop\L2Mauto\apply_update.bat
+2026-09-24 13:06:51,398 - INFO - [global] Накатил обнпату через apply_update.bat, закрываюсь для рестарта...
+2026-09-24 13:06:59,510 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-24 13:07:00,181 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-24 13:07:00,181 - INFO - [global] Запустил чекер обнов
+2026-09-24 13:07:00,182 - INFO - [global] Проверяю обновы...
+2026-09-24 13:07:01,592 - DEBUG - [global] needs_update: API → 5.12.19
+2026-09-24 13:07:01,642 - DEBUG - [global] needs_update: API → 5.12.19
+2026-09-24 13:07:01,642 - DEBUG - [global] needs_update: raw → 5.12.19
+2026-09-24 13:07:01,669 - DEBUG - [global] needs_update: raw → 5.12.19
+2026-09-24 13:07:01,729 - DEBUG - [global] needs_update: лучший источник API → 5.12.19 (из 2)
+2026-09-24 13:07:01,729 - INFO - [global] needs_update: local=(5, 12, 19) remote=(5, 12, 19) -> has_update=False
+2026-09-24 13:07:01,759 - DEBUG - [global] needs_update: лучший источник API → 5.12.19 (из 2)
+2026-09-24 13:07:01,759 - INFO - [global] needs_update: local=(5, 12, 19) remote=(5, 12, 19) -> has_update=False
+2026-09-24 13:07:01,835 - INFO - [global] Установлена последняя версия бота | 5.12.19
+2026-09-24 13:07:11,522 - INFO - [global] Пачка 1/6: старт (2 окон: ['Tommi', 'Чипинкос'])
+2026-09-24 13:07:11,522 - INFO - [global] Запуск через 3 сек. | ['Tommi', 'Чипинкос']
+2026-09-24 13:07:14,558 - INFO - [global] Создал мышь
+2026-09-24 13:07:14,558 - INFO - [global] Инициализировал созданную мышь!
+2026-09-24 13:07:56,320 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:07:58,701 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:07:59,048 - INFO - [global] Пачка 1/6: завершена за 48с
+2026-09-24 13:08:00,049 - INFO - [global] Пачка 2/6: старт (2 окон: ['Щега', 'Фанфурье'])
+2026-09-24 13:08:00,049 - INFO - [global] Запуск через 3 сек. | ['Щега', 'Фанфурье']
+2026-09-24 13:08:47,385 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:08:47,829 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:08:48,575 - INFO - [global] Пачка 2/6: завершена за 49с
+2026-09-24 13:08:49,575 - INFO - [global] Пачка 3/6: старт (2 окон: ['Валупа', 'Morthal'])
+2026-09-24 13:08:49,575 - INFO - [global] Запуск через 3 сек. | ['Валупа', 'Morthal']
+2026-09-24 13:09:00,276 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-24 13:09:00,279 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-24 13:09:01,287 - DEBUG - [global] _api_put: GET runs/20260924_130900_fail_periodic.log -> 404
+2026-09-24 13:09:03,521 - DEBUG - [global] _api_put: PUT runs/20260924_130900_fail_periodic.log -> 201 (1551 bytes)
+2026-09-24 13:09:03,524 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_130900_fail_periodic.log
+2026-09-24 13:09:03,524 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-24 13:09:04,482 - DEBUG - [global] _api_put: GET runs/20260924_130900_fail_global.log -> 404
+2026-09-24 13:09:06,362 - DEBUG - [global] _api_put: PUT runs/20260924_130900_fail_global.log -> 201 (21659 bytes)
+2026-09-24 13:09:06,363 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_130900_fail_global.log
+2026-09-24 13:09:06,363 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-24 13:09:06,363 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-24 13:09:35,219 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:09:37,609 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:09:38,109 - INFO - [global] Пачка 3/6: завершена за 49с
+2026-09-24 13:09:39,109 - INFO - [global] Пачка 4/6: старт (2 окон: ['Монгол', 'JoePeach'])
+2026-09-24 13:09:39,109 - INFO - [global] Запуск через 3 сек. | ['Монгол', 'JoePeach']
+2026-09-24 13:10:24,583 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:10:26,194 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:10:26,635 - INFO - [global] Пачка 4/6: завершена за 48с
+2026-09-24 13:10:27,635 - INFO - [global] Пачка 5/6: старт (2 окон: ['Solitude', 'Жмышенко'])
+2026-09-24 13:10:27,635 - INFO - [global] Запуск через 3 сек. | ['Solitude', 'Жмышенко']
+2026-09-24 13:11:14,999 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:11:16,679 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:11:17,162 - INFO - [global] Пачка 5/6: завершена за 50с
+2026-09-24 13:11:18,163 - INFO - [global] Пачка 6/6: старт (2 окон: ['Whiterun', 'Rezor'])
+2026-09-24 13:11:18,164 - INFO - [global] Запуск через 3 сек. | ['Whiterun', 'Rezor']
+2026-09-24 13:12:04,390 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:12:07,298 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:12:07,693 - INFO - [global] Пачка 6/6: завершена за 50с
+2026-09-24 13:12:08,694 - INFO - [global] Прогон завершён за 297с (5.0 мин). Пачек: 6.
+2026-09-24 13:14:06,510 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-24 13:14:06,511 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-24 13:14:07,348 - DEBUG - [global] _api_put: GET runs/20260924_131406_fail_periodic.log -> 404
+2026-09-24 13:14:08,849 - DEBUG - [global] _api_put: PUT runs/20260924_131406_fail_periodic.log -> 201 (1551 bytes)
+2026-09-24 13:14:08,850 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_131406_fail_periodic.log
+2026-09-24 13:14:08,851 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-24 13:14:09,766 - DEBUG - [global] _api_put: GET runs/20260924_131406_fail_global.log -> 404
+2026-09-24 13:14:11,514 - DEBUG - [global] _api_put: PUT runs/20260924_131406_fail_global.log -> 201 (21478 bytes)
+2026-09-24 13:14:11,516 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_131406_fail_global.log
+2026-09-24 13:14:11,516 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-24 13:14:11,516 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-24 13:17:02,110 - INFO - [global] Проверяю обновы...
+2026-09-24 13:17:03,114 - DEBUG - [global] needs_update: API → 5.12.21
+2026-09-24 13:17:03,149 - DEBUG - [global] needs_update: raw → 5.12.21
+2026-09-24 13:17:03,149 - DEBUG - [global] needs_update: лучший источник API → 5.12.21 (из 2)
+2026-09-24 13:17:03,149 - INFO - [global] needs_update: local=(5, 12, 19) remote=(5, 12, 21) -> has_update=True
+2026-09-24 13:17:03,149 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-09-24 13:19:11,663 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-24 13:19:11,664 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-24 13:19:12,546 - DEBUG - [global] _api_put: GET runs/20260924_131911_fail_periodic.log -> 404
+2026-09-24 13:19:14,163 - DEBUG - [global] _api_put: PUT runs/20260924_131911_fail_periodic.log -> 201 (1551 bytes)
+2026-09-24 13:19:14,164 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_131911_fail_periodic.log
+2026-09-24 13:19:14,165 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-24 13:19:15,081 - DEBUG - [global] _api_put: GET runs/20260924_131911_fail_global.log -> 404
+2026-09-24 13:19:16,736 - DEBUG - [global] _api_put: PUT runs/20260924_131911_fail_global.log -> 201 (21298 bytes)
+2026-09-24 13:19:16,738 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_131911_fail_global.log
+2026-09-24 13:19:16,738 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-24 13:19:16,738 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-24 13:22:29,925 - INFO - [global] show_update: юзер нажал Yes — запускаю update()
+2026-09-24 13:22:29,952 - INFO - [global] show_update: _UpdaterThread.run() стартовал
+2026-09-24 13:22:30,120 - INFO - [global] Сделан лёгкий бэкап .py в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.12.19.zip
+2026-09-24 13:22:30,121 - INFO - [global] Обнова: бэкап сделан, качаю файлы ПАРАЛЛЕЛЬНО (8 потоков)...
+2026-09-24 13:22:32,896 - DEBUG - [global] Обнова: скачано 20/71 (ok=20, fail=0)
+2026-09-24 13:22:34,061 - DEBUG - [global] Обнова: скачано 40/71 (ok=40, fail=0)
+2026-09-24 13:22:35,346 - DEBUG - [global] Обнова: скачано 60/71 (ok=56, fail=4)
+2026-09-24 13:22:36,204 - DEBUG - [global] Обнова: скачано 71/71 (ok=67, fail=4)
+2026-09-24 13:22:36,204 - INFO - [global] Обнова: скачано 67/71 файлов за 6.1с, ошибок: 4
+2026-09-24 13:22:36,204 - WARNING - [global] Обнова: НЕ скачаны (4): ['profiles/PvPDodge/pvp.py', 'profiles/Rewards/rewards.py', 'profiles/Buyer/buyer.py', 'profiles/MainAlchemy/main_alch.py']
+2026-09-24 13:22:36,204 - DEBUG - [global] Обнова: повтор неудачных (4)...
+2026-09-24 13:22:36,485 - WARNING - [global] Обнова: окончательно НЕ скачаны: ['profiles/PvPDodge/pvp.py', 'profiles/Rewards/rewards.py', 'profiles/Buyer/buyer.py', 'profiles/MainAlchemy/main_alch.py']
+2026-09-24 13:22:36,517 - INFO - [global] Создан apply_update.bat: C:\Users\PC\Desktop\L2Mauto\apply_update.bat
+2026-09-24 13:22:36,517 - INFO - [global] Накатил обнпату через apply_update.bat, закрываюсь для рестарта...
+2026-09-24 13:22:44,481 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-09-24 13:22:45,141 - INFO - [global] Запустил чекер обнов
+2026-09-24 13:22:45,141 - INFO - [global] Проверяю обновы...
+2026-09-24 13:22:45,141 - INFO - [global] Запустил периодический загрузчик логов
+2026-09-24 13:22:46,493 - DEBUG - [global] needs_update: raw → 5.12.22
+2026-09-24 13:22:46,521 - DEBUG - [global] needs_update: raw → 5.12.22
+2026-09-24 13:22:46,583 - DEBUG - [global] needs_update: API → 5.12.22
+2026-09-24 13:22:46,645 - DEBUG - [global] needs_update: лучший источник raw → 5.12.22 (из 2)
+2026-09-24 13:22:46,645 - INFO - [global] needs_update: local=(5, 12, 22) remote=(5, 12, 22) -> has_update=False
+2026-09-24 13:22:46,645 - DEBUG - [global] needs_update: API → 5.12.22
+2026-09-24 13:22:46,706 - DEBUG - [global] needs_update: лучший источник raw → 5.12.22 (из 2)
+2026-09-24 13:22:46,706 - INFO - [global] needs_update: local=(5, 12, 22) remote=(5, 12, 22) -> has_update=False
+2026-09-24 13:22:46,812 - INFO - [global] Установлена последняя версия бота | 5.12.22
+2026-09-24 13:23:00,908 - INFO - [global] Пачка 1/6: старт (2 окон: ['Rezor', 'Whiterun'])
+2026-09-24 13:23:00,908 - INFO - [global] Запуск через 3 сек. | ['Rezor', 'Whiterun']
+2026-09-24 13:23:03,935 - INFO - [global] Создал мышь
+2026-09-24 13:23:03,936 - INFO - [global] Инициализировал созданную мышь!
+2026-09-24 13:23:45,954 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:23:46,302 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-09-24 13:23:46,433 - INFO - [global] Пачка 1/6: завершена за 46с
+2026-09-24 13:23:47,213 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-09-24 13:23:47,214 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-09-24 13:23:47,214 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-09-24 13:23:47,434 - INFO - [global] start_all: СТОП — _start_next прерван перед batch 1
+2026-09-24 13:24:45,233 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-24 13:24:45,235 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-24 13:24:46,127 - DEBUG - [global] _api_put: GET runs/20260924_132445_fail_periodic.log -> 404
+2026-09-24 13:24:47,668 - DEBUG - [global] _api_put: PUT runs/20260924_132445_fail_periodic.log -> 201 (1551 bytes)
+2026-09-24 13:24:47,670 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_132445_fail_periodic.log
+2026-09-24 13:24:47,670 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-09-24 13:24:48,595 - DEBUG - [global] _api_put: GET runs/20260924_132445_fail_global.log -> 404
+2026-09-24 13:24:50,444 - DEBUG - [global] _api_put: PUT runs/20260924_132445_fail_global.log -> 201 (21362 bytes)
+2026-09-24 13:24:50,446 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_132445_fail_global.log
+2026-09-24 13:24:50,446 - DEBUG - [global] log_uploader: END window=periodic
+2026-09-24 13:24:50,446 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-09-24 13:29:50,588 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-09-24 13:29:50,589 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-09-24 13:29:51,605 - DEBUG - [global] _api_put: GET runs/20260924_132950_fail_periodic.log -> 404
+2026-09-24 13:29:53,215 - DEBUG - [global] _api_put: PUT runs/20260924_132950_fail_periodic.log -> 201 (1551 bytes)
+2026-09-24 13:29:53,216 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20260924_132950_fail_periodic.log
+2026-09-24 13:29:53,216 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
