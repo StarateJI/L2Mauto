@@ -1180,19 +1180,44 @@ class Auction(GameAction):
 
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет в инвентаре через matchTemplate multi-scale.
+        Искать предмет в инвентаре через pyautogui.locateCenterOnScreen().
 
-        Берём sample (иконку с продажи) и ищем в инвентаре через
-        cv2.matchTemplate с 5 масштабами. Возвращаем координаты центра.
+        pyautogui ищет картинку на ВСЁМ экране и возвращает ЭКРАННЫЕ
+        координаты — без перевода INV_SCAN → окно → экран.
+        Клик попадает точно.
         """
         best_result = None
+
+        # Сохраняем sample как файл для pyautogui
+        import tempfile
+        sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
+        sample_path = os.path.join(tempfile.gettempdir(), "au_sample_template.png")
+        cv2.imwrite(sample_path, sample_bgr)
 
         for page in range(1, SCAN_PAGES + 1):
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
 
-            # ── matchTemplate multi-scale ──────────────────────────────
+            # ── pyautogui.locateCenterOnScreen ──────────────────────────
+            # Ищет sample на всём экране. Возвращает экранные координаты.
+            try:
+                import pyautogui
+                # confidence=0.8 — допуск 80% совпадения
+                # pyautogui нужен opencv-python для confidence
+                pos = pyautogui.locateCenterOnScreen(sample_path, confidence=0.8)
+                if pos is not None:
+                    log(f"Аук: pyautogui НАШЁЛ — стр {page} "
+                        f"экр=({pos.x},{pos.y})", self.window_id)
+                    best_result = (pos.x, pos.y, 1.0, page)
+                    break
+                else:
+                    log(f"Аук: pyautogui не нашёл на стр {page}",
+                        self.window_id, level="DEBUG")
+            except Exception as e:
+                log(f"Аук: pyautogui ошибка: {e}", self.window_id, level="WARNING")
+
+            # ── Fallback: matchTemplate multi-scale ─────────────────────
             img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
             tm_match = self._match_template_multiscale(img_gray, sample_gray,
                                                         threshold=0.70)
@@ -1204,9 +1229,6 @@ class Auction(GameAction):
                 win_cy = cy + INV_SCAN[1]
                 best_result = (win_cx, win_cy, score, page)
                 break
-            else:
-                log(f"Аук: matchTemplate не нашёл на стр {page}",
-                    self.window_id, level="DEBUG")
 
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
@@ -1225,7 +1247,7 @@ class Auction(GameAction):
             return (best_result[0], best_result[1])
 
         log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
-            f"(matchTemplate)", self.window_id, level="ERROR")
+            f"(pyautogui + matchTemplate)", self.window_id, level="ERROR")
         return None
 
     def _match_template_multiscale(self, img_gray: np.ndarray,
