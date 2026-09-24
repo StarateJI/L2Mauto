@@ -133,7 +133,7 @@ TM_THRESHOLD = 0.75
 TM_SCALES = [0.85, 0.92, 1.0, 1.08, 1.15]
 
 # ── Лимиты ────────────────────────────────────────────────────────────────
-SCAN_PAGES = 3          # страниц инвентаря (предмет падает в КОНЕЦ, 3 достаточно)
+SCAN_PAGES = 2          # 2 страницы — не листаем слишком далеко
 MAX_OK_RETRIES = 4      # попыток кликнуть ОК отмены
 MAX_ITEMS = 10          # максимум предметов за один прогон
 
@@ -1206,46 +1206,67 @@ class Auction(GameAction):
         if not yolo_available:
             return None
 
+        # Сначала листаем ВНИЗ — предмет падает в конец инвентаря
         for page in range(1, SCAN_PAGES + 1):
-            log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
+            log(f"Аук: сканирую страницу {page}/{SCAN_PAGES} (вниз)", self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
 
-            try:
-                sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
-                result = yolo_find_item(img, sample_bgr, conf_threshold=0.3)
-                if result is not None:
-                    cx, cy, matches = result
-                    win_cx = cx + INV_SCAN[0]
-                    win_cy = cy + INV_SCAN[1]
-                    log(f"Аук: YOLOv8 НАШЁЛ — стр {page} ({cx},{cy}) matches={matches}",
-                        self.window_id)
-                    best_result = (win_cx, win_cy, matches / 100.0, page)
-                    break
-                else:
-                    log(f"Аук: YOLOv8 не нашёл на стр {page}", self.window_id, level="DEBUG")
-            except Exception as e:
-                log(f"Аук: YOLOv8 error: {e}", self.window_id, level="DEBUG")
+            # matchTemplate multi-scale
+            img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            tm_match = self._match_template_multiscale(img_gray, sample_gray, threshold=0.65)
+            if tm_match is not None:
+                cx, cy, score = tm_match
+                win_cx = cx + INV_SCAN[0]
+                win_cy = cy + INV_SCAN[1]
+                log(f"Аук: matchTemplate НАШЁЛ — стр {page} ({cx},{cy}) score={score:.3f}",
+                    self.window_id)
+                best_result = (win_cx, win_cy, score, page)
+                break
+            else:
+                log(f"Аук: matchTemplate не нашёл на стр {page}", self.window_id, level="DEBUG")
 
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # ВСЕГДА возвращаемся в начало — SCAN_PAGES свайпов up
-        for _ in range(SCAN_PAGES):
+        # Если не нашли внизу — листаем ВВЕРХ (второй предмет может быть выше)
+        if best_result is None:
+            # Возвращаемся в начало
+            for _ in range(SCAN_PAGES):
+                await self._swipe_inventory('up')
+            await asyncio.sleep(0.5)
+            # Листаем вверх 1 страницу
             await self._swipe_inventory('up')
-        await asyncio.sleep(1.0)
+            await asyncio.sleep(0.5)
+            log(f"Аук: сканирую вверх (стр -1)", self.window_id)
+            img = self._grab(INV_SCAN)
+            await self._save_debug("au_page_up.png", img)
+            img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            tm_match = self._match_template_multiscale(img_gray, sample_gray, threshold=0.65)
+            if tm_match is not None:
+                cx, cy, score = tm_match
+                win_cx = cx + INV_SCAN[0]
+                win_cy = cy + INV_SCAN[1]
+                log(f"Аук: matchTemplate НАШЁЛ вверх ({cx},{cy}) score={score:.3f}",
+                    self.window_id)
+                best_result = (win_cx, win_cy, score, -1)
+
+        # Возвращаемся в начало
+        if best_result is not None and best_result[3] > 0:
+            for _ in range(best_result[3]):
+                await self._swipe_inventory('up')
+            await asyncio.sleep(1.0)
+        elif best_result is not None and best_result[3] == -1:
+            await self._swipe_inventory('down')
+            await asyncio.sleep(1.0)
+
         if best_result is not None:
-            # Свайпаем down до нужной страницы
-            pages_to_go = best_result[3] - 1
-            for _ in range(pages_to_go):
-                await self._swipe_inventory('down')
-            log(f"Аук: предмет найден и подтверждён красной точкой! "
-                f"стр {best_result[3]} ({best_result[0]},{best_result[1]}) "
-                f"score={best_result[2]:.3f}", self.window_id)
+            log(f"Аук: предмет найден! стр {best_result[3]} "
+                f"({best_result[0]},{best_result[1]}) score={best_result[2]:.3f}",
+                self.window_id)
             return (best_result[0], best_result[1])
 
-        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
-            f"(ни иконки с красной точкой)", self.window_id, level="ERROR")
+        log(f"Аук: предмет не найден (ни внизу, ни вверху)", self.window_id, level="ERROR")
         return None
 
     # ──────────────────────────────────────────────────────────────────────
