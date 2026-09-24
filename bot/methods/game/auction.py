@@ -1180,14 +1180,10 @@ class Auction(GameAction):
 
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет в инвентаре через КРАСНУЮ ТОЧКУ.
+        Искать предмет в инвентаре через VLM.
 
-        Логика (по идее юзера):
-        - БЕЗ красной точки → точно НЕ наш, пропускаем
-        - С красной точкой → один из наших
-        - Если точек несколько → наш ПОСЛЕДНИЙ (свежедобавленный в конец)
-        - Если точка одна → она и есть наш
-        - Кликаем прямо в красную точку
+        VLM видит красную точку идеально — как человек.
+        Отправляем скрин инвентаря, VLM возвращает координаты точки.
         """
         best_result = None
 
@@ -1196,33 +1192,39 @@ class Auction(GameAction):
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
 
-            # ── ШАГ 1: найти красные точки на странице ────────────────
-            red_dots = self._find_red_dots(img)
-            log(f"Аук: стр {page} — красных точек: {len(red_dots)}",
-                self.window_id, level="DEBUG")
-
-            if not red_dots:
-                log(f"Аук: стр {page} — нет красных точек, свайп дальше",
+            # ── VLM: найти красную точку ──────────────────────────────
+            try:
+                from bot.vlm_client import vlm_find_red_dot
+                dot = vlm_find_red_dot(img)
+                if dot is not None:
+                    cx, cy = dot
+                    log(f"Аук: VLM нашёл красную точку ({cx},{cy}) на стр {page}",
+                        self.window_id)
+                    # VLM возвращает координаты в пикселях картинки
+                    # img = INV_SCAN zone, координаты уже относительные
+                    win_cx = cx + INV_SCAN[0]
+                    win_cy = cy + INV_SCAN[1]
+                    best_result = (win_cx, win_cy, 1.0, page)
+                    break
+                else:
+                    log(f"Аук: VLM не нашёл красную точку на стр {page}",
+                        self.window_id, level="DEBUG")
+            except Exception as e:
+                log(f"Аук: VLM ошибка: {e}", self.window_id, level="WARNING")
+                # Fallback на старый фильтр
+                red_dots = self._find_red_dots(img)
+                log(f"Аук: fallback фильтр — {len(red_dots)} точек",
                     self.window_id, level="DEBUG")
-                if page < SCAN_PAGES:
-                    await self._swipe_inventory('down')
-                continue
+                if red_dots:
+                    red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
+                    chosen_dot = red_dots_sorted[-1]
+                    win_cx = chosen_dot[0] + INV_SCAN[0]
+                    win_cy = chosen_dot[1] + INV_SCAN[1]
+                    best_result = (win_cx, win_cy, 1.0, page)
+                    break
 
-            # ── ШАГ 2: сортируем, берём ПОСЛЕДНЮЮ (нижнюю правую) ──────
-            red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
-            chosen_dot = red_dots_sorted[-1]
-            chosen_cx = chosen_dot[0]
-            chosen_cy = chosen_dot[1]
-
-            log(f"Аук: стр {page} — красных точек: {len(red_dots)}, "
-                f"берём ПОСЛЕДНЮЮ ({chosen_dot[0]},{chosen_dot[1]})",
-                self.window_id)
-
-            # Перевод в координаты окна
-            win_cx = chosen_cx + INV_SCAN[0]
-            win_cy = chosen_cy + INV_SCAN[1]
-            best_result = (win_cx, win_cy, 1.0, page)
-            break
+            if page < SCAN_PAGES:
+                await self._swipe_inventory('down')
 
         # ВСЕГДА возвращаемся в начало
         for _ in range(SCAN_PAGES):
@@ -1232,13 +1234,14 @@ class Auction(GameAction):
             pages_to_go = best_result[3] - 1
             for _ in range(pages_to_go):
                 await self._swipe_inventory('down')
-            log(f"Аук: предмет найден через красную точку! стр {best_result[3]} "
+            log(f"Аук: предмет найден через VLM! стр {best_result[3]} "
                 f"({best_result[0]},{best_result[1]})",
                 self.window_id)
             return (best_result[0], best_result[1])
 
         log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
-            f"(нет красной точки)", self.window_id, level="ERROR")
+            f"(VLM не нашёл красную точку)", self.window_id,
+            level="ERROR")
         return None
 
     def _match_template_multiscale(self, img_gray: np.ndarray,
@@ -1385,10 +1388,24 @@ class Auction(GameAction):
         after_item_click = self._grab(INV_SCAN)
         await self._save_debug("au_after_item_click.png", after_item_click)
 
-        # 6. OCR "Текущая минимальная цена"
-        # ⚠️ КРИТИЧНО: если OCR не смог прочитать цену — СТОП, не выставлять!
-        # Раньше бот ставил 10 аден и «успешно» выставлял предмет за бесценок.
-        min_price = self._ocr_price()
+        # 6. OCR "Текущая минимальная цена" — через VLM (видит как человек)
+        # Сначала VLM, если недоступен — fallback на Tesseract
+        min_price = None
+        try:
+            from bot.vlm_client import vlm_read_price
+            price_img = self._grab(ZONE_PRICE)
+            min_price = vlm_read_price(price_img)
+            if min_price is not None:
+                log(f"Аук: VLM цена = {min_price}", self.window_id)
+        except Exception as e:
+            log(f"Аук: VLM цена ошибка: {e}", self.window_id, level="DEBUG")
+
+        # Fallback на Tesseract если VLM не сработал
+        if min_price is None:
+            min_price = self._ocr_price()
+            if min_price is not None:
+                log(f"Аук: Tesseract цена = {min_price}", self.window_id)
+
         MAX_REASONABLE_PRICE = 10_000_000  # 10M — верхняя граница sanity
         if min_price is None or min_price < 10 or min_price > MAX_REASONABLE_PRICE:
             log("Аук: не удалось прочитать мин. цену — СТОП, не выставляю "
