@@ -406,6 +406,17 @@ def update():
         backup()
         log("Обнова: бэкап сделан, качаю файлы ПАРАЛЛЕЛЬНО (8 потоков)...", level="INFO")
 
+        # Purge кеш jsdelivr — мгновенная очистка. Без этого jsdelivr кеширует
+        # файлы до 12 часов и бот скачает старые. Purge делаем один раз для
+        # всего репо через wildcard.
+        try:
+            log("Обнова: purge кеша jsdelivr...", level="DEBUG")
+            purge_url = "https://purge.jsdelivr.net/gh/StarateJI/L2Mauto@main/"
+            r = requests.get(purge_url, timeout=10)
+            log(f"Обнова: purge статус={r.status_code}", level="DEBUG")
+        except Exception as e:
+            log(f"Обнова: purge не сработал: {e}", level="DEBUG")
+
         # GitHub кеширует ZIP (194MB из-за старой истории).
         # Скачиваем отдельные файлы через raw URLs ПАРАЛЛЕЛЬНО через пул потоков.
 
@@ -489,10 +500,10 @@ def update():
             shutil.rmtree(temp_dir)
         os.makedirs(temp_dir, exist_ok=True)
 
-        # raw.githubusercontent + cache-buster ?ts=<timestamp>
-        # raw кеширует 5 мин, НО cache-buster ?ts=<time> делает URL уникальным
-        # и raw отдаёт свежие файлы. Без cache-buster кеш 5 минут.
-        raw_base = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/"
+        # jsdelivr CDN + purge API — мгновенная очистка кеша перед скачиванием.
+        # jsdelivr кеширует до 12 часов, НО через purge.jsdelivr.net можно
+        # очистить кеш мгновенно. Без purge бот качает старые файлы.
+        raw_base = "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/"
 
         # Одна HTTP-сессия на все файлы — keep-alive, переиспользование TCP.
         # Так 71 файл качается за ~5 сек вместо ~30 сек.
@@ -503,10 +514,8 @@ def update():
         session.headers["Cache-Control"] = "no-cache"
 
         def _download_one(filepath: str):
-            # Cache-buster: ?ts=<timestamp> — обходит кеш raw.githubusercontent
-            # Без этого raw кеширует 5 минут и бот скачает СТАРЫЕ файлы
-            # если обновиться в первые 5 мин после пуша.
-            url = raw_base + filepath + f"?ts={int(time.time())}"
+            # jsdelivr CDN — purge сделан ранее, файлы свежие
+            url = raw_base + filepath
             local_path = os.path.join(temp_dir, filepath.replace("/", os.sep))
             os.makedirs(os.path.dirname(local_path), exist_ok=True)
             try:
