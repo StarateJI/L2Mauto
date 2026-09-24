@@ -33,6 +33,8 @@ class Energo(GameAction):
         width = window["Width"]
         height = window["Height"]
 
+        log(f"Energo: turn_on — клик по ({button_x},{button_y}) окно {width}x{height}",
+            self.window_id)
         await self.mouse.click(self.window_info, button_x, button_y)
         await asyncio.sleep(DELAY_AFTER_CLICK_ENERGO)
         await asyncio.sleep(0.1)
