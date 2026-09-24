@@ -200,37 +200,13 @@ class Dungeon(EventDrivenProfile):
                     f"OCR={'да' if ocr_found else 'нет'}", window_id, level="DEBUG")
 
                 if ocr_found:
-                    # Проверка яркости иконки — Благ Земля СВЕТЛАЯ (day),
-                    # Кролики/ивенты ТЁМНЫЕ (night). Измерили на скрине юзера:
-                    # Кролики gray mean=62, Благ Земля gray mean=101.
-                    # Если иконка тёмная — это не Благ Земля, пропускаем.
-                    # Берём зону иконки — слева от текста (~10-40% ширины списка)
-                    icon_zone = scene_bgr[:, :int(scene_bgr.shape[1] * 0.4)]
-                    if icon_zone.size > 0:
-                        icon_gray_zone = cv2.cvtColor(icon_zone, cv2.COLOR_BGR2GRAY)
-                        # Берём самую светлую строку — там где иконка
-                        row_means = icon_gray_zone.mean(axis=1)
-                        brightest_y = int(np.argmax(row_means))
-                        icon_brightness = float(row_means[brightest_y])
-                        log(f"Данги: OCR нашёл, проверка яркости иконки: "
-                            f"brightness={icon_brightness:.0f} "
-                            f"({'СВЕТЛАЯ — Благ Земля' if icon_brightness > 80 else 'ТЁМНАЯ — Кролики?'})",
-                            window_id, level="DEBUG")
-                        if icon_brightness < 80:
-                            # Тёмная иконка — это не Благ Земля
-                            log(f"Данги: OCR нашёл текст НО иконка ТЁМНАЯ "
-                                f"(brightness={icon_brightness:.0f}<80) — "
-                                f"пропускаю (вероятно Кролики)", window_id, level="DEBUG")
-                            ocr_found = False
-                    if ocr_found:
-                        click_x_rel = list_x_rel + int(list_w * 0.15)
-                        click_y_rel = list_y_rel + min(max(ocr_y, 10), list_h - 10)
-                        found = True
-                        log(f"Данги: найден через OCR+яркость "
-                            f"({click_x_rel},{click_y_rel}) brightness={icon_brightness:.0f}",
-                            window_id)
-                        self._save_debug("blessed_found_ocr.png", scene_bgr)
-                        break
+                    click_x_rel = list_x_rel + int(list_w * 0.15)
+                    click_y_rel = list_y_rel + min(max(ocr_y, 10), list_h - 10)
+                    found = True
+                    log(f"Данги: найден через OCR ({click_x_rel},{click_y_rel})",
+                        window_id)
+                    self._save_debug("blessed_found_ocr.png", scene_bgr)
+                    break
 
                 await self.mouse.wheel(self.window_info, [scroll_center],
                                        direction="down", times=5)
@@ -248,21 +224,24 @@ class Dungeon(EventDrivenProfile):
                 return False
 
             # 4. Кликнуть по строке → проверить время доступа
-            log(f"Данги: клик по строке ({click_x_rel},{click_y_rel})", window_id)
-            await self.mouse.click(self.window_info, click_x_rel, click_y_rel)
-            await asyncio.sleep(1.5)
-            log("Данги: кликнул, проверяю время доступа", window_id)
+            # ВАЖНО: клик может не сработать с 1 раза (50/50).
+            # Если после клика время доступа не появилось — повторяем.
+            # Если не появилось за 3 попытки — пропускаем (клик промахивается).
+            for click_attempt in range(3):
+                log(f"Данги: клик по строке ({click_x_rel},{click_y_rel}) "
+                    f"попытка {click_attempt+1}/3", window_id)
+                await self.mouse.click(self.window_info, click_x_rel, click_y_rel)
+                await asyncio.sleep(1.5)
 
-            # Скриншот после клика
-            after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-            if after_click is not None:
-                self._save_debug("blessed_after_dungeon_click.png", after_click)
+                # Проверка времени доступа
+                time_zone = self._grab_window_rect(wx, wy,
+                                                    int(ww * 0.45), int(wh * 0.55),
+                                                    int(ww * 0.50), int(wh * 0.13))
+                if time_zone is None:
+                    log("Данги: не удалось снять зону времени доступа",
+                        window_id, level="WARNING")
+                    continue
 
-            # Проверка времени доступа
-            time_zone = self._grab_window_rect(wx, wy,
-                                                int(ww * 0.45), int(wh * 0.55),
-                                                int(ww * 0.50), int(wh * 0.13))
-            if time_zone is not None:
                 self._save_debug("blessed_time_check.png", time_zone)
                 b_tz, g_tz, r_tz = cv2.split(time_zone)
                 red_mask = (r_tz > 180) & (g_tz < 80) & (b_tz < 80)
@@ -270,18 +249,42 @@ class Dungeon(EventDrivenProfile):
                 white_mask = (r_tz > 180) & (g_tz > 180) & (b_tz > 180)
                 white_count = int(np.sum(white_mask))
 
+                # Время появилось = есть и красные и белые пиксели
+                # Если оба 0 — клик не сработал, время не появилось
+                if red_count == 0 and white_count == 0:
+                    log(f"Данги: клик не сработал — время не появилось "
+                        f"(red=0, white=0). Повтор клика.",
+                        window_id, level="WARNING")
+                    continue
+
                 if red_count > 20 and white_count < 10:
-                    log(f"Данги: время доступа = 0 — сегодня уже был, усыпляю", window_id, level="WARNING")
+                    log(f"Данги: время доступа = 0 — сегодня уже был, усыпляю",
+                        window_id, level="WARNING")
                     await game.wait_and_click("npc_global_quit_button", timeout=2)
                     await asyncio.sleep(1)
                     if not await self.energo.is_on():
                         await self.energo.turn_on()
                         await asyncio.sleep(1)
                     return True
-                else:
-                    log(f"Данги: время доступа есть — иду в данж", window_id)
+
+                log(f"Данги: время доступа есть (red={red_count}, white={white_count}) — иду в данж",
+                    window_id)
+                break
             else:
-                log("Данги: не удалось снять зону времени доступа", window_id, level="WARNING")
+                # 3 попытки клика не сработали — пропускаем
+                log(f"Данги: 3 клика не сработали — время не появилось. "
+                    f"Пропускаю данж.", window_id, level="ERROR")
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+                await asyncio.sleep(1)
+                if not await self.energo.is_on():
+                    await self.energo.turn_on()
+                    await asyncio.sleep(1)
+                return False
+
+            # Скриншот после клика
+            after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if after_click is not None:
+                self._save_debug("blessed_after_dungeon_click.png", after_click)
 
             # 5. Нажать "Вход"
             await asyncio.sleep(1)
