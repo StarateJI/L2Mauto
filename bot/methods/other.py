@@ -191,15 +191,6 @@ class MouseEvents:
         await done_event.wait()
         return True
 
-    async def click_absolute(self, x, y, button="left"):
-        """Клик по ЭКРАННЫМ координатам (не оконным).
-        Используется когда координаты получены от pyautogui."""
-        done_event = asyncio.Event()
-        task = ("click_absolute", x, y, button, done_event)
-        await self._add_task(task)
-        await done_event.wait()
-        return True
-
     async def move_to(self, window_info, x_offset, y_offset):
         done_event = asyncio.Event()
         await self._add_task(("move", window_info, x_offset, y_offset, done_event))
@@ -302,7 +293,6 @@ class MouseEvents:
 
     ACTION_HANDLERS = {
         "click": "_handle_click",
-        "click_absolute": "_handle_click_absolute",
         "move": "_handle_move",
         "wheel": "_handle_wheel",
         "mouse_down": "_handle_mouse_down",
@@ -328,29 +318,6 @@ class MouseEvents:
             await self._do_click(window_info, x_offset, y_offset, button)
         except Exception as e:
             log(f"[MouseEvents] Ошибка клика: {e}")
-        finally:
-            self.clear = False
-            done_event.set()
-            await asyncio.sleep(CLICK_DELAY)
-
-    async def _handle_click_absolute(self, task):
-        """Клик по экранным координатам через inputs (interception)."""
-        _, x, y, button, done_event = task
-        self.clear = True
-        try:
-            loop = asyncio.get_running_loop()
-            # Двигаем мышь на экранные координаты и кликаем
-            def _do_abs_click():
-                from interception import inputs
-                inputs.move_to(x, y)
-                import time
-                time.sleep(0.03)
-                inputs.mouse_down(button)
-                time.sleep(0.01)
-                inputs.mouse_up(button)
-            await loop.run_in_executor(None, _do_abs_click)
-        except Exception as e:
-            log(f"[MouseEvents] Ошибка click_absolute: {e}")
         finally:
             self.clear = False
             done_event.set()

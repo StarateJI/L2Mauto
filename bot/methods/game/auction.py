@@ -133,7 +133,7 @@ TM_THRESHOLD = 0.75
 TM_SCALES = [0.85, 0.92, 1.0, 1.08, 1.15]
 
 # ── Лимиты ────────────────────────────────────────────────────────────────
-SCAN_PAGES = 5          # 3 → 5 — предмет падает в КОНЕЦ инвентаря, может быть далеко
+SCAN_PAGES = 3          # страниц инвентаря (предмет падает в КОНЕЦ, 3 достаточно)
 MAX_OK_RETRIES = 4      # попыток кликнуть ОК отмены
 MAX_ITEMS = 10          # максимум предметов за один прогон
 
@@ -1156,22 +1156,31 @@ class Auction(GameAction):
         return best_loc, best_score, best_scale, 0.0
 
     def _find_red_dots(self, img: np.ndarray) -> list:
-        """Найти красные точки «новое» в инвентаре."""
+        """
+        Найти красные точки «новое» в кадре инвентаря.
+        Точный цвет точки в Lineage2M: BGR=(0, 102, 255) = R=255, G=102, B=0.
+        Это яркий красно-оранжевый круг в правом верхнем углу ячейки.
+        Фильтр: R>200, G 70-130, B<30 — точный цвет красной точки.
+        """
         try:
             b, g, r = cv2.split(img)
-            # Простой фильтр — R>200, G=70-130, B<30
+            # R>200, G=70-130, B<30 — точный цвет красной точки Lineage2M
             mask = (r > 200) & (g > 70) & (g < 130) & (b < 30)
             mask_u8 = (mask.astype(np.uint8)) * 255
+            # Морфология — объединить пиксели в кластер
             kernel = np.ones((3, 3), np.uint8)
             mask_u8 = cv2.morphologyEx(mask_u8, cv2.MORPH_CLOSE, kernel)
             num, labels, stats, centroids = cv2.connectedComponentsWithStats(mask_u8)
             dots = []
-            for i in range(1, num):
+            for i in range(1, num):  # 0 = фон
                 area = stats[i, cv2.CC_STAT_AREA]
-                if area < 15: continue
+                if area < 15:  # слишком маленький — шум (было 5)
+                    continue
                 cx = int(centroids[i][0])
                 cy = int(centroids[i][1])
-                if cy < 30: continue  # заголовок — оранжевая линия такого же цвета
+                # Игнорировать точки в заголовке инвентаря (y < 30) — это шум
+                if cy < 30:
+                    continue
                 dots.append((cx, cy))
             return dots
         except Exception as e:
@@ -1180,125 +1189,64 @@ class Auction(GameAction):
 
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет через pyautogui.locateCenterOnScreen с region.
-        Ограничиваем поиск зоной окна бота — быстро (~1 сек).
-        Возвращает экранные координаты центра иконки.
+        Искать предмет в инвентаре ТОЛЬКО через YOLOv8 + ORB.
+        matchTemplate УБРАН — был ненадёжным.
+        Красная точка — подтверждение что предмет снят с продажи.
         """
         best_result = None
 
-        # Сохраняем sample как файл для pyautogui
-        import tempfile
-        sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
-        sample_path = os.path.join(tempfile.gettempdir(), "au_sample_template.png")
-        cv2.imwrite(sample_path, sample_bgr)
+        try:
+            from bot.yolo_detector import find_item as yolo_find_item
+            yolo_available = True
+        except Exception:
+            yolo_available = False
+            log("Аук: YOLOv8 недоступен — pip install ultralytics + "
+                "bot/models/item_detector.pt", self.window_id, level="ERROR")
 
-        # Окно бота — region для pyautogui (только INV_SCAN зона)
-        win = self.window_info[self.window_id]
-        wx, wy = win["Position"]
-        # INV_SCAN = (686, 130, 259, 318) — относительно окна
-        # region = (left, top, width, height) — экранные координаты
-        region = (wx + INV_SCAN[0], wy + INV_SCAN[1], INV_SCAN[2], INV_SCAN[3])
+        if not yolo_available:
+            return None
 
         for page in range(1, SCAN_PAGES + 1):
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
 
-            # ── pyautogui с region — ищет только в окне бота ───────────
             try:
-                import pyautogui
-                pos = pyautogui.locateCenterOnScreen(sample_path,
-                                                     confidence=0.8,
-                                                     region=region)
-                if pos is not None:
-                    log(f"Аук: pyautogui НАШЁЛ — стр {page} "
-                        f"экр=({pos.x},{pos.y})", self.window_id)
-                    best_result = (pos.x, pos.y, 1.0, page)
+                sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
+                result = yolo_find_item(img, sample_bgr, conf_threshold=0.3)
+                if result is not None:
+                    cx, cy, matches = result
+                    win_cx = cx + INV_SCAN[0]
+                    win_cy = cy + INV_SCAN[1]
+                    log(f"Аук: YOLOv8 НАШЁЛ — стр {page} ({cx},{cy}) matches={matches}",
+                        self.window_id)
+                    best_result = (win_cx, win_cy, matches / 100.0, page)
                     break
                 else:
-                    log(f"Аук: pyautogui не нашёл на стр {page}",
-                        self.window_id, level="DEBUG")
+                    log(f"Аук: YOLOv8 не нашёл на стр {page}", self.window_id, level="DEBUG")
             except Exception as e:
-                log(f"Аук: pyautogui ошибка: {e}", self.window_id, level="WARNING")
-
-            # ── Fallback: matchTemplate ─────────────────────────────────
-            img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            tm_match = self._match_template_multiscale(img_gray, sample_gray,
-                                                        threshold=0.70)
-            if tm_match is not None:
-                cx, cy, score = tm_match
-                log(f"Аук: matchTemplate НАШЁЛ — стр {page} "
-                    f"({cx},{cy}) score={score:.3f}", self.window_id)
-                win_cx = cx + INV_SCAN[0]
-                win_cy = cy + INV_SCAN[1]
-                best_result = (win_cx, win_cy, score, page)
-                break
+                log(f"Аук: YOLOv8 error: {e}", self.window_id, level="DEBUG")
 
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
-        # ВСЕГДА возвращаемся в начало
+        # ВСЕГДА возвращаемся в начало — SCAN_PAGES свайпов up
         for _ in range(SCAN_PAGES):
             await self._swipe_inventory('up')
         await asyncio.sleep(1.0)
         if best_result is not None:
+            # Свайпаем down до нужной страницы
             pages_to_go = best_result[3] - 1
             for _ in range(pages_to_go):
                 await self._swipe_inventory('down')
-            log(f"Аук: предмет найден! стр {best_result[3]} "
-                f"({best_result[0]},{best_result[1]}) score={best_result[2]:.3f}",
-                self.window_id)
+            log(f"Аук: предмет найден и подтверждён красной точкой! "
+                f"стр {best_result[3]} ({best_result[0]},{best_result[1]}) "
+                f"score={best_result[2]:.3f}", self.window_id)
             return (best_result[0], best_result[1])
 
-        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц",
-            self.window_id, level="ERROR")
+        log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
+            f"(ни иконки с красной точкой)", self.window_id, level="ERROR")
         return None
-
-    def _match_template_multiscale(self, img_gray: np.ndarray,
-                                    sample_gray: np.ndarray,
-                                    threshold: float = 0.70) -> Optional[Tuple[int, int, float]]:
-        """
-        matchTemplate multi-scale на grayscale.
-        Пробует 5 масштабов sample (0.7, 0.85, 1.0, 1.15, 1.3) чтобы
-        компенсировать разный размер иконок (sample 60×53 vs slot ~48×48).
-
-        Возвращает (cx, cy, score) или None.
-        """
-        if img_gray is None or sample_gray is None:
-            return None
-        if sample_gray.shape[0] < 5 or sample_gray.shape[1] < 5:
-            return None
-
-        img_f = np.float32(img_gray)
-        sample_f = np.float32(sample_gray)
-
-        scales = [1.3, 1.15, 1.0, 0.85, 0.7]
-        best = None  # (score, cx, cy)
-
-        for scale in scales:
-            new_w = max(8, int(sample_gray.shape[1] * scale))
-            new_h = max(8, int(sample_gray.shape[0] * scale))
-            scaled = cv2.resize(sample_f, (new_w, new_h),
-                                interpolation=cv2.INTER_AREA)
-            if scaled.shape[0] > img_f.shape[0] or scaled.shape[1] > img_f.shape[1]:
-                continue
-            try:
-                res = cv2.matchTemplate(img_f, scaled, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, max_loc = cv2.minMaxLoc(res)
-                if best is None or max_val > best[0]:
-                    best = (float(max_val), max_loc[0] + new_w // 2,
-                            max_loc[1] + new_h // 2)
-            except cv2.error:
-                continue
-
-        if best is None:
-            return None
-        score, cx, cy = best
-        if score < threshold:
-            log(f"Аук: TM лучший score={score:.3f} < {threshold}",
-                self.window_id, level="DEBUG")
-            return None
-        return (cx, cy, score)
 
     # ──────────────────────────────────────────────────────────────────────
     # ГЛАВНЫЙ ЦИКЛ ОДНОГО ПРЕДМЕТА
@@ -1331,7 +1279,7 @@ class Auction(GameAction):
         # Пропускаем. Обёрнуто в try/except — RapidOCR может крашнуть процесс
         # при первом вызове (скачивание моделей).
         try:
-            if False:  # self._is_status_prodano():  # ВРЕМЕННО ОТКЛЮЧЕНО ДЛЯ ТЕСТА
+            if self._is_status_prodano():
                 log("Аук: первый лот в статусе «Продаётся» — пропускаю",
                     self.window_id)
                 return 'empty'
@@ -1369,13 +1317,9 @@ class Auction(GameAction):
 
         log("Аук: лот снят, предмет упал в конец инвентаря", self.window_id)
 
-        # Пауза 3 сек — красная точка появляется НЕ СРАЗУ после снятия.
-        # Без паузы бот скроллит и не находит точку (она ещё не появилась).
-        await asyncio.sleep(3.0)
-
-        # 4. Найти предмет в инвентаре (красная точка, 5 страниц)
+        # 4. Найти предмет в инвентаре (YOLOv8, 5 страниц)
         await self._save_debug("au_after_click.png", self._grab(INV_SCAN))
-        log("Аук: ищу предмет (красная точка)...", self.window_id)
+        log("Аук: ищу предмет (YOLOv8)...", self.window_id)
 
         try:
             item_pos = await self._find_item(sample_gray)
@@ -1391,33 +1335,17 @@ class Auction(GameAction):
         # 5. ОДИН клик по найденному предмету — открывает окно цены.
         # Пользователь: «там не нужен двойной клик, открывается одним кликом»
         # Раньше был двойной клик — мог ломать открытие окна цены.
-        # 5. Клик по найденному предмету.
-        # pyautogui вернул ЭКРАННЫЕ координаты — кликаем напрямую через mouse.
-        # НЕ используем self._click (он добавляет позицию окна — двойной сдвиг).
-        log(f"Аук: клик по предмету {item_pos} (экранные координаты)", self.window_id)
-        await self.mouse.click_absolute(item_pos[0], item_pos[1])
+        await self._click(*item_pos)
+        log(f"Аук: клик по предмету {item_pos}", self.window_id)
         await asyncio.sleep(T_ITEM_WINDOW)
         # Скрин после клика — видно открылось ли окно цены
         after_item_click = self._grab(INV_SCAN)
         await self._save_debug("au_after_item_click.png", after_item_click)
 
-        # 6. OCR "Текущая минимальная цена" — через VLM Ollama
-        min_price = None
-        try:
-            from bot.ollama_vlm import vlm_read_price
-            price_img = self._grab(ZONE_PRICE)
-            min_price = vlm_read_price(price_img)
-            if min_price is not None:
-                log(f"Аук: VLM цена = {min_price}", self.window_id)
-        except Exception as e:
-            log(f"Аук: VLM цена ошибка: {e}", self.window_id, level="DEBUG")
-
-        # Fallback на Tesseract если VLM не сработал
-        if min_price is None:
-            min_price = self._ocr_price()
-            if min_price is not None:
-                log(f"Аук: Tesseract цена = {min_price}", self.window_id)
-
+        # 6. OCR "Текущая минимальная цена"
+        # ⚠️ КРИТИЧНО: если OCR не смог прочитать цену — СТОП, не выставлять!
+        # Раньше бот ставил 10 аден и «успешно» выставлял предмет за бесценок.
+        min_price = self._ocr_price()
         MAX_REASONABLE_PRICE = 10_000_000  # 10M — верхняя граница sanity
         if min_price is None or min_price < 10 or min_price > MAX_REASONABLE_PRICE:
             log("Аук: не удалось прочитать мин. цену — СТОП, не выставляю "
