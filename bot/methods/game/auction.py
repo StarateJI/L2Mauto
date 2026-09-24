@@ -1156,57 +1156,22 @@ class Auction(GameAction):
         return best_loc, best_score, best_scale, 0.0
 
     def _find_red_dots(self, img: np.ndarray) -> list:
-        """
-        Найти красные точки «новое» в кадре инвентаря.
-
-        Точный цвет точки в Lineage2M: BGR=(0, 102, 255) = R=255, G=102, B=0.
-        Это яркий красно-оранжевый круг в правом верхнем углу ячейки.
-
-        4 ПРОВЕРКИ для точной фильтрации (без ложных срабатываний):
-        1. ЦВЕТ: BGR≈(0,102,255) с допуском ±25. Отсекает красное свечение
-           от редких предметов (другой оттенок) и значки.
-        2. РАЗМЕР: кластер 30-150 пикселей. Маленькие = шум, большие =
-           свечение/выделение.
-        3. ФОРМА: круглая (aspect ratio bbox 0.5-2.0, fill_ratio >0.4).
-           Красная точка круглая, свечение вытянутое.
-        4. ПОЗИЦИЯ: не в заголовке (y > 30) — отсекает шум сверху.
-        """
+        """Найти красные точки «новое» в инвентаре."""
         try:
             b, g, r = cv2.split(img)
-            # ПРОВЕРКА 1: точный цвет BGR=(0, 102, 255) с допуском
-            # R в 230-255, G в 77-127, B в 0-25
-            mask = (r >= 230) & (r <= 255) & \
-                   (g >= 77) & (g <= 127) & \
-                   (b >= 0) & (b <= 25)
+            # Простой фильтр — R>200, G=70-130, B<30
+            mask = (r > 200) & (g > 70) & (g < 130) & (b < 30)
             mask_u8 = (mask.astype(np.uint8)) * 255
-            # Морфология — объединить пиксели в кластер
             kernel = np.ones((3, 3), np.uint8)
             mask_u8 = cv2.morphologyEx(mask_u8, cv2.MORPH_CLOSE, kernel)
             num, labels, stats, centroids = cv2.connectedComponentsWithStats(mask_u8)
             dots = []
-            for i in range(1, num):  # 0 = фон
+            for i in range(1, num):
                 area = stats[i, cv2.CC_STAT_AREA]
-                # ПРОВЕРКА 2: размер 30-150 пикселей
-                if area < 30 or area > 150:
-                    continue
+                if area < 15: continue
                 cx = int(centroids[i][0])
                 cy = int(centroids[i][1])
-                # ПРОВЕРКА 4: позиция — не в заголовке
-                if cy < 30:
-                    continue
-                # ПРОВЕРКА 3: форма (круглая)
-                w_box = stats[i, cv2.CC_STAT_WIDTH]
-                h_box = stats[i, cv2.CC_STAT_HEIGHT]
-                # aspect ratio — круглый = ~1.0, вытянутый >2 или <0.5
-                if w_box == 0 or h_box == 0:
-                    continue
-                aspect = w_box / h_box
-                if aspect < 0.5 or aspect > 2.0:
-                    continue  # вытянутый, не круг
-                # fill_ratio — круг заполняет ~78% bbox, свечение меньше
-                fill_ratio = area / (w_box * h_box)
-                if fill_ratio < 0.4:
-                    continue  # не плотный, скорее свечение
+                if cy < 30: continue
                 dots.append((cx, cy))
             return dots
         except Exception as e:
