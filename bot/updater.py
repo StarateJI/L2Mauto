@@ -500,7 +500,10 @@ def update():
         session.headers["Cache-Control"] = "no-cache"
 
         def _download_one(filepath: str):
-            url = raw_base + filepath
+            # Cache-buster: ?ts=<timestamp> — обходит кеш raw.githubusercontent
+            # Без этого raw кеширует 5 минут и бот скачает СТАРЫЕ файлы
+            # если обновиться в первые 5 мин после пуша.
+            url = raw_base + filepath + f"?ts={int(time.time())}"
             local_path = os.path.join(temp_dir, filepath.replace("/", os.sep))
             os.makedirs(os.path.dirname(local_path), exist_ok=True)
             try:
