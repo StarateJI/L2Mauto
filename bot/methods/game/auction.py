@@ -1214,42 +1214,41 @@ class Auction(GameAction):
 
             # matchTemplate multi-scale
             img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            tm_match = self._match_template_multiscale(img_gray, sample_gray, threshold=0.65)
-            if tm_match is not None:
-                cx, cy, score = tm_match
+            best_loc, best_score, _, _ = self._match_template(sample_gray, img_gray)
+            if best_loc is not None:
+                cx, cy = best_loc
                 win_cx = cx + INV_SCAN[0]
                 win_cy = cy + INV_SCAN[1]
-                log(f"Аук: matchTemplate НАШЁЛ — стр {page} ({cx},{cy}) score={score:.3f}",
+                log(f"Аук: matchTemplate НАШЁЛ — стр {page} ({cx},{cy}) score={best_score:.3f}",
                     self.window_id)
-                best_result = (win_cx, win_cy, score, page)
+                best_result = (win_cx, win_cy, best_score, page)
                 break
             else:
-                log(f"Аук: matchTemplate не нашёл на стр {page}", self.window_id, level="DEBUG")
+                log(f"Аук: matchTemplate не нашёл на стр {page} (score={best_score:.3f})",
+                    self.window_id, level="DEBUG")
 
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
 
         # Если не нашли внизу — листаем ВВЕРХ (второй предмет может быть выше)
         if best_result is None:
-            # Возвращаемся в начало
             for _ in range(SCAN_PAGES):
                 await self._swipe_inventory('up')
             await asyncio.sleep(0.5)
-            # Листаем вверх 1 страницу
             await self._swipe_inventory('up')
             await asyncio.sleep(0.5)
             log(f"Аук: сканирую вверх (стр -1)", self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug("au_page_up.png", img)
             img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-            tm_match = self._match_template_multiscale(img_gray, sample_gray, threshold=0.65)
-            if tm_match is not None:
-                cx, cy, score = tm_match
+            best_loc, best_score, _, _ = self._match_template(sample_gray, img_gray)
+            if best_loc is not None:
+                cx, cy = best_loc
                 win_cx = cx + INV_SCAN[0]
                 win_cy = cy + INV_SCAN[1]
-                log(f"Аук: matchTemplate НАШЁЛ вверх ({cx},{cy}) score={score:.3f}",
+                log(f"Аук: matchTemplate НАШЁЛ вверх ({cx},{cy}) score={best_score:.3f}",
                     self.window_id)
-                best_result = (win_cx, win_cy, score, -1)
+                best_result = (win_cx, win_cy, best_score, -1)
 
         # Возвращаемся в начало
         if best_result is not None and best_result[3] > 0:
