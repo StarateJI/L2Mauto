@@ -341,7 +341,7 @@ class MouseEvents:
             loop = asyncio.get_running_loop()
             # Двигаем мышь на экранные координаты и кликаем
             def _do_abs_click():
-                import inputs
+                from interception import inputs
                 inputs.move_to(x, y)
                 import time
                 time.sleep(0.03)
