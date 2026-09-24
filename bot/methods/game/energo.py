@@ -33,38 +33,7 @@ class Energo(GameAction):
         width = window["Width"]
         height = window["Height"]
 
-        log(f"Energo: turn_on — клик по ({button_x},{button_y}) окно {width}x{height}",
-            self.window_id)
         await self.mouse.click(self.window_info, button_x, button_y)
-        # Фуллскрин после клика для диагностики
-        try:
-            import mss as _mss
-            import cv2 as _cv2
-            import numpy as _np
-            import os as _os
-            _sct = _mss.mss()
-            monitors = _sct.monitors
-            monitor = monitors[1] if len(monitors) > 1 else monitors[0]
-            try:
-                shot = _sct.grab(monitor)
-            except Exception as e:
-                if 'srcdc' in str(e) or 'memdc' in str(e):
-                    local_sct = _mss.mss()
-                    shot = local_sct.grab(monitor)
-                    local_sct.close()
-                else:
-                    raise
-            arr = _np.array(shot)
-            img = _cv2.cvtColor(arr, _cv2.COLOR_BGRA2BGR)
-            out_dir = _os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))
-            out_dir = _os.path.join(out_dir, "methods", "game")
-            import time as _t
-            fname = f"energo_step_turn_on_{int(_t.time()*100)%100000}.png"
-            path = _os.path.join(out_dir, fname)
-            _cv2.imwrite(path, img)
-            log(f"Energo: фуллскрин {fname}", self.window_id)
-        except Exception as e:
-            log(f"Energo: фуллскрин не удался: {e}", self.window_id, level="DEBUG")
         await asyncio.sleep(DELAY_AFTER_CLICK_ENERGO)
         await asyncio.sleep(0.1)
 
