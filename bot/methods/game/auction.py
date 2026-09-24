@@ -1319,7 +1319,7 @@ class Auction(GameAction):
         # Пропускаем. Обёрнуто в try/except — RapidOCR может крашнуть процесс
         # при первом вызове (скачивание моделей).
         try:
-            if self._is_status_prodano():
+            if False:  # self._is_status_prodano():  # ВРЕМЕННО ОТКЛЮЧЕНО ДЛЯ ТЕСТА
                 log("Аук: первый лот в статусе «Продаётся» — пропускаю",
                     self.window_id)
                 return 'empty'
