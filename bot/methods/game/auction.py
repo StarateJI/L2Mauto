@@ -1192,16 +1192,14 @@ class Auction(GameAction):
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
 
-            # ── VLM: найти красную точку ──────────────────────────────
+            # ── VLM: найти красную точку через Ollama ────────────────
             try:
-                from bot.vlm_client import vlm_find_red_dot
+                from bot.ollama_vlm import vlm_find_red_dot
                 dot = vlm_find_red_dot(img)
                 if dot is not None:
                     cx, cy = dot
                     log(f"Аук: VLM нашёл красную точку ({cx},{cy}) на стр {page}",
                         self.window_id)
-                    # VLM возвращает координаты в пикселях картинки
-                    # img = INV_SCAN zone, координаты уже относительные
                     win_cx = cx + INV_SCAN[0]
                     win_cy = cy + INV_SCAN[1]
                     best_result = (win_cx, win_cy, 1.0, page)
@@ -1388,11 +1386,10 @@ class Auction(GameAction):
         after_item_click = self._grab(INV_SCAN)
         await self._save_debug("au_after_item_click.png", after_item_click)
 
-        # 6. OCR "Текущая минимальная цена" — через VLM (видит как человек)
-        # Сначала VLM, если недоступен — fallback на Tesseract
+        # 6. OCR "Текущая минимальная цена" — через VLM Ollama
         min_price = None
         try:
-            from bot.vlm_client import vlm_read_price
+            from bot.ollama_vlm import vlm_read_price
             price_img = self._grab(ZONE_PRICE)
             min_price = vlm_read_price(price_img)
             if min_price is not None:

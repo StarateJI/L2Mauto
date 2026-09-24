@@ -438,6 +438,7 @@ def update():
             "bot/ocr.py",
             "bot/vlm.py",
             "bot/vlm_client.py",
+            "bot/ollama_vlm.py",
             "bot/methods/game/__init__.py",
             "bot/methods/game/_base.py",
             "bot/methods/game/auction.py",
