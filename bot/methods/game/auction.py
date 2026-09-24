@@ -1180,72 +1180,33 @@ class Auction(GameAction):
 
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет в инвентаре через VLM (Ollama).
+        Искать предмет в инвентаре через matchTemplate multi-scale.
 
-        VLM видит как человек — сравнивает иконку sample с предметами в инвентаре.
-        Отправляем скрин инвентаря + иконку-образец, VLM находит такой же.
+        Берём sample (иконку с продажи) и ищем в инвентаре через
+        cv2.matchTemplate с 5 масштабами. Возвращаем координаты центра.
         """
         best_result = None
-
-        # sample_bgr для VLM
-        sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
 
         for page in range(1, SCAN_PAGES + 1):
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
 
-            # ── VLM + фильтр: Ollama подтверждает, фильтр наводит ──────
-            # VLM видит как человек — сравнивает иконку sample с инвентарём.
-            # Но VLM не может дать точные пиксели — поэтому:
-            # 1. VLM отвечает да/нет — есть ли предмет?
-            # 2. Если да — _find_red_dots даёт точные координаты
-            # 3. Кликаем по последней красной точке
-            try:
-                from bot.ollama_vlm import vlm_find_item_by_icon
-                vlm_result = vlm_find_item_by_icon(img, sample_bgr)
-                if vlm_result is True:
-                    # VLM подтвердил — предмет есть. Берём координаты через фильтр.
-                    red_dots = self._find_red_dots(img)
-                    if red_dots:
-                        red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
-                        chosen_dot = red_dots_sorted[-1]
-                        cx, cy = chosen_dot[0], chosen_dot[1]
-                        log(f"Аук: VLM подтвердил + фильтр навёл "
-                            f"({cx},{cy}) на стр {page}", self.window_id)
-                        win_cx = cx + INV_SCAN[0]
-                        win_cy = cy + INV_SCAN[1]
-                        best_result = (win_cx, win_cy, 1.0, page)
-                        break
-                    else:
-                        log(f"Аук: VLM подтвердил но фильтр не нашёл точку "
-                            f"на стр {page}", self.window_id, level="WARNING")
-                elif vlm_result is False:
-                    log(f"Аук: VLM не нашёл предмет на стр {page}",
-                        self.window_id, level="DEBUG")
-                else:
-                    # VLM ошибка — fallback на фильтр напрямую
-                    log(f"Аук: VLM недоступен, фильтр напрямую стр {page}",
-                        self.window_id, level="DEBUG")
-                    red_dots = self._find_red_dots(img)
-                    if red_dots:
-                        red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
-                        chosen_dot = red_dots_sorted[-1]
-                        win_cx = chosen_dot[0] + INV_SCAN[0]
-                        win_cy = chosen_dot[1] + INV_SCAN[1]
-                        best_result = (win_cx, win_cy, 1.0, page)
-                        break
-            except Exception as e:
-                log(f"Аук: VLM ошибка: {e}", self.window_id, level="WARNING")
-                # Fallback на старый фильтр
-                red_dots = self._find_red_dots(img)
-                if red_dots:
-                    red_dots_sorted = sorted(red_dots, key=lambda d: (d[1], d[0]))
-                    chosen_dot = red_dots_sorted[-1]
-                    win_cx = chosen_dot[0] + INV_SCAN[0]
-                    win_cy = chosen_dot[1] + INV_SCAN[1]
-                    best_result = (win_cx, win_cy, 1.0, page)
-                    break
+            # ── matchTemplate multi-scale ──────────────────────────────
+            img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+            tm_match = self._match_template_multiscale(img_gray, sample_gray,
+                                                        threshold=0.70)
+            if tm_match is not None:
+                cx, cy, score = tm_match
+                log(f"Аук: matchTemplate НАШЁЛ — стр {page} "
+                    f"({cx},{cy}) score={score:.3f}", self.window_id)
+                win_cx = cx + INV_SCAN[0]
+                win_cy = cy + INV_SCAN[1]
+                best_result = (win_cx, win_cy, score, page)
+                break
+            else:
+                log(f"Аук: matchTemplate не нашёл на стр {page}",
+                    self.window_id, level="DEBUG")
 
             if page < SCAN_PAGES:
                 await self._swipe_inventory('down')
@@ -1258,13 +1219,13 @@ class Auction(GameAction):
             pages_to_go = best_result[3] - 1
             for _ in range(pages_to_go):
                 await self._swipe_inventory('down')
-            log(f"Аук: предмет найден через VLM! стр {best_result[3]} "
-                f"({best_result[0]},{best_result[1]})",
+            log(f"Аук: предмет найден! стр {best_result[3]} "
+                f"({best_result[0]},{best_result[1]}) score={best_result[2]:.3f}",
                 self.window_id)
             return (best_result[0], best_result[1])
 
         log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
-            f"(VLM не нашёл)", self.window_id, level="ERROR")
+            f"(matchTemplate)", self.window_id, level="ERROR")
         return None
 
     def _match_template_multiscale(self, img_gray: np.ndarray,
