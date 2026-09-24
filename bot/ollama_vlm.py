@@ -74,13 +74,16 @@ def vlm_find_red_dot(img_bgr: np.ndarray) -> Optional[tuple]:
     """
     Найти красную точку через VLM.
     Возвращает (cx, cy) в координатах картинки, или None.
+    Координаты ограничены в пределах картинки.
     """
+    h, w = img_bgr.shape[:2]
     answer = vlm_ask(img_bgr,
-        "Есть ли на этом скриншоте красная точка (значок 'новое') "
-        "сверху-справа у какого-либо предмета? "
-        "Если да — назови ТОЛЬКО координаты центра красной точки в пикселях "
-        "в формате X,Y (где X — горизонталь, Y — вертикаль, от левого верхнего угла). "
-        "Если нет — скажи 'нет'."
+        f"Есть ли на этом скриншоте красная точка (значок 'новое') "
+        f"сверху-справа у какого-либо предмета? "
+        f"Размер картинки: {w} пикселей в ширину, {h} пикселей в высоту. "
+        f"Если да — назови координаты центра красной точки в пикселях "
+        f"в формате X,Y (где X от 0 до {w}, Y от 0 до {h}). "
+        f"Если нет — скажи 'нет'."
     )
     if not answer or answer.lower().startswith("нет"):
         return None
@@ -90,9 +93,77 @@ def vlm_find_red_dot(img_bgr: np.ndarray) -> Optional[tuple]:
     numbers = re.findall(r'\d+', answer)
     if len(numbers) >= 2:
         cx, cy = int(numbers[0]), int(numbers[1])
+        # Ограничиваем в пределах картинки
+        cx = max(0, min(cx, w - 1))
+        cy = max(0, min(cy, h - 1))
         log(f"VLM: красная точка найдена ({cx},{cy})", level="DEBUG")
         return (cx, cy)
     return None
+
+
+def vlm_find_item_by_icon(inventory_img: np.ndarray, sample_img: np.ndarray) -> Optional[tuple]:
+    """
+    Найти предмет в инвентаре по иконке через VLM.
+    Отправляем скрин инвентаря + иконку-образец.
+    Ollama сравнивает и находит такой же предмет.
+
+    Возвращает (cx, cy) центра иконки в координатах инвентаря, или None.
+    """
+    h, w = inventory_img.shape[:2]
+
+    # Кодируем обе картинки
+    ok1, buf1 = cv2.imencode('.png', inventory_img)
+    ok2, buf2 = cv2.imencode('.png', sample_img)
+    if not ok1 or not ok2:
+        return None
+    inv_b64 = base64.b64encode(buf1.tobytes()).decode()
+    sample_b64 = base64.b64encode(buf2.tobytes()).decode()
+
+    try:
+        payload = {
+            "model": OLLAMA_MODEL,
+            "messages": [
+                {
+                    "role": "user",
+                    "content": (
+                        f"Первое изображение — инвентарь (размер {w}x{h} пикселей). "
+                        f"Второе изображение — иконка предмета который нужно найти. "
+                        f"Найди в инвентаре предмет с ТАКОЙ ЖЕ иконкой. "
+                        f"Назови координаты ЦЕНТРА этой иконки в пикселях. "
+                        f"Формат: X,Y (X от 0 до {w}, Y от 0 до {h}). "
+                        f"Если такого предмета нет — скажи 'нет'."
+                    ),
+                    "images": [inv_b64, sample_b64]
+                }
+            ],
+            "stream": False
+        }
+
+        resp = requests.post(OLLAMA_URL, json=payload, timeout=OLLAMA_TIMEOUT)
+        if resp.status_code != 200:
+            log(f"VLM: HTTP {resp.status_code}", level="WARNING")
+            return None
+
+        data = resp.json()
+        answer = data.get("message", {}).get("content", "").strip()
+        if not answer or answer.lower().startswith("нет"):
+            return None
+
+        # Парсим координаты
+        import re
+        numbers = re.findall(r'\d+', answer)
+        if len(numbers) >= 2:
+            cx, cy = int(numbers[0]), int(numbers[1])
+            # Ограничиваем в пределах картинки
+            cx = max(0, min(cx, w - 1))
+            cy = max(0, min(cy, h - 1))
+            log(f"VLM: предмет найден по иконке ({cx},{cy})", level="DEBUG")
+            return (cx, cy)
+        return None
+
+    except Exception as e:
+        log(f"VLM: ошибка поиска по иконке: {e}", level="WARNING")
+        return None
 
 
 def vlm_read_price(img_bgr: np.ndarray) -> Optional[int]:

@@ -1180,36 +1180,39 @@ class Auction(GameAction):
 
     async def _find_item(self, sample_gray: np.ndarray) -> Optional[Tuple[int, int]]:
         """
-        Искать предмет в инвентаре через VLM.
+        Искать предмет в инвентаре через VLM (Ollama).
 
-        VLM видит красную точку идеально — как человек.
-        Отправляем скрин инвентаря, VLM возвращает координаты точки.
+        VLM видит как человек — сравнивает иконку sample с предметами в инвентаре.
+        Отправляем скрин инвентаря + иконку-образец, VLM находит такой же.
         """
         best_result = None
+
+        # sample_bgr для VLM
+        sample_bgr = cv2.cvtColor(sample_gray, cv2.COLOR_GRAY2BGR)
 
         for page in range(1, SCAN_PAGES + 1):
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
             img = self._grab(INV_SCAN)
             await self._save_debug(f"au_page_{page}.png", img)
 
-            # ── VLM: найти красную точку через Ollama ────────────────
+            # ── VLM: найти предмет по иконке ───────────────────────────
             try:
-                from bot.ollama_vlm import vlm_find_red_dot
-                dot = vlm_find_red_dot(img)
+                from bot.ollama_vlm import vlm_find_item_by_icon
+                dot = vlm_find_item_by_icon(img, sample_bgr)
                 if dot is not None:
                     cx, cy = dot
-                    log(f"Аук: VLM нашёл красную точку ({cx},{cy}) на стр {page}",
+                    log(f"Аук: VLM нашёл предмет по иконке ({cx},{cy}) на стр {page}",
                         self.window_id)
                     win_cx = cx + INV_SCAN[0]
                     win_cy = cy + INV_SCAN[1]
                     best_result = (win_cx, win_cy, 1.0, page)
                     break
                 else:
-                    log(f"Аук: VLM не нашёл красную точку на стр {page}",
+                    log(f"Аук: VLM не нашёл предмет по иконке на стр {page}",
                         self.window_id, level="DEBUG")
             except Exception as e:
                 log(f"Аук: VLM ошибка: {e}", self.window_id, level="WARNING")
-                # Fallback на старый фильтр
+                # Fallback на старый фильтр красной точки
                 red_dots = self._find_red_dots(img)
                 log(f"Аук: fallback фильтр — {len(red_dots)} точек",
                     self.window_id, level="DEBUG")
@@ -1238,8 +1241,7 @@ class Auction(GameAction):
             return (best_result[0], best_result[1])
 
         log(f"Аук: предмет не найден ни на одной из {SCAN_PAGES} страниц "
-            f"(VLM не нашёл красную точку)", self.window_id,
-            level="ERROR")
+            f"(VLM не нашёл)", self.window_id, level="ERROR")
         return None
 
     def _match_template_multiscale(self, img_gray: np.ndarray,
