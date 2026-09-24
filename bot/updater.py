@@ -505,7 +505,7 @@ def update():
         # jsdelivr CDN + purge API — мгновенная очистка кеша перед скачиванием.
         # jsdelivr кеширует до 12 часов, НО через purge.jsdelivr.net можно
         # очистить кеш мгновенно. Без purge бот качает старые файлы.
-        raw_base = "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/"
+        raw_base = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/"
 
         # Одна HTTP-сессия на все файлы — keep-alive, переиспользование TCP.
         # Так 71 файл качается за ~5 сек вместо ~30 сек.
