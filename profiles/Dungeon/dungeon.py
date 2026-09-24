@@ -200,13 +200,32 @@ class Dungeon(EventDrivenProfile):
                     f"OCR={'да' if ocr_found else 'нет'}", window_id, level="DEBUG")
 
                 if ocr_found:
-                    click_x_rel = list_x_rel + int(list_w * 0.15)
-                    click_y_rel = list_y_rel + min(max(ocr_y, 10), list_h - 10)
-                    found = True
-                    log(f"Данги: найден через OCR ({click_x_rel},{click_y_rel})",
-                        window_id)
-                    self._save_debug("blessed_found_ocr.png", scene_bgr)
-                    break
+                    # Если OCR нашёл "земля" но текст в самом низу списка
+                    # (ocr_y > 90% list_h) — значит виден только краешек иконки.
+                    # Клик попадёт в пустую зону. Прокрутить ещё вниз.
+                    if ocr_y > int(list_h * 0.90):
+                        log(f"Данги: OCR нашёл 'земля' но в самом низу (ocr_y={ocr_y}, "
+                            f"list_h={list_h}) — виден краешек. Прокручиваю ещё.",
+                            window_id, level="DEBUG")
+                        await self.mouse.wheel(self.window_info, [scroll_center],
+                                               direction="down", times=3)
+                        await asyncio.sleep(0.8)
+                        # Переснимаем и пересчитаем OCR
+                        scene_bgr = self._grab_window_rect(wx, wy, list_x_rel, list_y_rel, list_w, list_h)
+                        if scene_bgr is not None:
+                            scene_gray = cv2.cvtColor(scene_bgr, cv2.COLOR_BGR2GRAY)
+                            ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
+                            log(f"Данги: после прокрутки — OCR={'да' if ocr_found else 'нет'} "
+                                f"ocr_y={ocr_y}", window_id, level="DEBUG")
+                    if ocr_found:
+                        click_x_rel = list_x_rel + int(list_w * 0.15)
+                        click_y_rel = list_y_rel + min(max(ocr_y, 10), list_h - 10)
+                        found = True
+                        log(f"Данги: найден через OCR ({click_x_rel},{click_y_rel}) "
+                            f"ocr_y={ocr_y}",
+                            window_id)
+                        self._save_debug("blessed_found_ocr.png", scene_bgr)
+                        break
 
                 await self.mouse.wheel(self.window_info, [scroll_center],
                                        direction="down", times=5)
