@@ -1171,7 +1171,7 @@ class Auction(GameAction):
                 if area < 15: continue
                 cx = int(centroids[i][0])
                 cy = int(centroids[i][1])
-                if cy < 30: continue
+                if cy < 5: continue
                 dots.append((cx, cy))
             return dots
         except Exception as e:
