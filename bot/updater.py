@@ -437,6 +437,7 @@ def update():
             "bot/yolo_detector.py",
             "bot/ocr.py",
             "bot/vlm.py",
+            "bot/vlm_client.py",
             "bot/methods/game/__init__.py",
             "bot/methods/game/_base.py",
             "bot/methods/game/auction.py",
