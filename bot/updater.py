@@ -489,7 +489,8 @@ def update():
             shutil.rmtree(temp_dir)
         os.makedirs(temp_dir, exist_ok=True)
 
-        raw_base = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/"
+        # jsdelivr CDN — обновляется за 10 секунд (raw кеширует 5 минут)
+        raw_base = "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/"
 
         # Одна HTTP-сессия на все файлы — keep-alive, переиспользование TCP.
         # Так 71 файл качается за ~5 сек вместо ~30 сек.
