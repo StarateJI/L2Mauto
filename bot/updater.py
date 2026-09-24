@@ -7,22 +7,26 @@ import configparser
 import sys
 import subprocess
 import time
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from bot.clogger import log
 
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
 
-# Список URL для проверки версии (пробуем по очереди):
-# 1. raw.githubusercontent.com с cache-buster — оригинал, свежая версия
-# 2. GitHub API — JSON, no cache, всегда свежая (rate limit 60/час анонимно)
-# 3. cdn.jsdelivr.net — ОСТОРОЖНО: кеширует 7 дней (max-age=604800),
-#    используем только как последний fallback
-#    (для РФ где raw может быть недоступен)
+# Список URL для проверки версии:
+# 1. raw.githubusercontent.com — оригинал (но кеширует ~5 мин)
+# 2. GitHub API с XOR-токеном — не кеширует, нет rate limit
 REPO_VERSION_URLS = [
-    "https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main",
     "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt",
-    "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/bot/version.txt",
+    "https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main",
 ]
 REPO_ZIP = "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip"
+
+# Зеркала ZIP — если github.com не отвечает, пробуем другие.
+REPO_ZIP_MIRRORS = [
+    "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip",
+    "https://codeload.github.com/StarateJI/L2Mauto/zip/refs/heads/main",
+    "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main",
+]
 
 def get_my_version():
     try:
@@ -64,69 +68,71 @@ def _load_github_token() -> str | None:
 
 def _fetch_remote_version() -> str | None:
     """
-    Попробовать получить remote версию из нескольких источников.
+    Проверить remote версию из нескольких источников ПАРАЛЛЕЛЬНО.
     Возвращает строку с версией или None если все источники упали.
 
     Сравнивает версии из всех источников и берёт МАКСИМАЛЬНУЮ —
     так мы не зависим от того что jsdelivr закешировал старую версию.
     """
+    tok = _load_github_token()
     headers = {
         "Cache-Control": "no-cache, no-store, max-age=0",
         "Pragma": "no-cache",
     }
-    tok = _load_github_token()
     if tok:
         headers["Authorization"] = f"token {tok}"
 
-    # Cache-buster — уникальный URL для каждого запроса
     cache_buster = f"?ts={int(time.time())}"
 
-    versions_found: list[tuple[int, str, str]] = []  # (порядок, источник, версия)
-
-    for url in REPO_VERSION_URLS:
+    def _fetch_one(url: str):
         try:
-            # Для API GitHub — другой формат ответа (JSON с base64)
             if "api.github.com" in url:
-                r = requests.get(url, timeout=8, headers=headers)
+                r = requests.get(url, timeout=5, headers=headers)
                 r.raise_for_status()
                 import base64
                 data = r.json()
                 content = base64.b64decode(data["content"]).decode().strip()
                 if content and content[0].isdigit():
-                    versions_found.append((len(versions_found), "API", content))
-                    log(f"needs_update: API GitHub → {content}", level="DEBUG")
+                    return ("API", content)
             else:
-                # raw / jsdelivr — простой текст
                 full_url = url + cache_buster
-                r = requests.get(full_url, timeout=8, headers=headers)
+                r = requests.get(full_url, timeout=5, headers=headers)
                 r.raise_for_status()
                 content = r.text.strip()
                 if content and content[0].isdigit():
-                    src = "jsdelivr" if "jsdelivr" in url else "raw"
-                    versions_found.append((len(versions_found), src, content))
-                    log(f"needs_update: {src} → {content}", level="DEBUG")
+                    return ("raw", content)
         except Exception as e:
-            src = "API" if "api.github.com" in url else (
-                "jsdelivr" if "jsdelivr" in url else "raw")
+            src = "API" if "api.github.com" in url else "raw"
             log(f"needs_update: {src} failed: {type(e).__name__}: {e}",
                 level="DEBUG")
-            continue
+        return None
+
+    versions_found = []
+    # ПАРАЛЛЕЛЬНЫЙ опрос источников — не ждём медленный raw если API быстрый
+    with ThreadPoolExecutor(max_workers=len(REPO_VERSION_URLS)) as ex:
+        futures = {ex.submit(_fetch_one, u): u for u in REPO_VERSION_URLS}
+        for fut in as_completed(futures, timeout=8):
+            try:
+                res = fut.result()
+                if res:
+                    versions_found.append(res)
+                    log(f"needs_update: {res[0]} → {res[1]}", level="DEBUG")
+            except Exception:
+                pass
 
     if not versions_found:
         return None
 
-    # Взять МАКСИМАЛЬНУЮ версию из всех полученных — чтобы закешированный
-    # jsdelivr не блокировал обновление если raw уже отдаёт новую.
     def _vk(v: str):
         try:
             return tuple(int(x) for x in v.split("."))
         except Exception:
             return (0, 0, 0)
 
-    best = max(versions_found, key=lambda x: _vk(x[2]))
-    log(f"needs_update: лучший источник {best[1]} → {best[2]} "
+    best = max(versions_found, key=lambda x: _vk(x[1]))
+    log(f"needs_update: лучший источник {best[0]} → {best[1]} "
         f"(из {len(versions_found)})", level="DEBUG")
-    return best[2]
+    return best[1]
 
 
 def needs_update() -> bool:
@@ -158,16 +164,24 @@ def backup():
     os.makedirs(backups_dir, exist_ok=True)
     archive_path = os.path.join(backups_dir, f"update_backup_{version}.zip")
 
+    # ЛЁГКИЙ backup — только .py файлы (без скринов, temp_update, .git, debug)
     with zipfile.ZipFile(archive_path, "w", zipfile.ZIP_DEFLATED) as zipf:
         for root, dirs, files in os.walk(root_dir):
-            if any(skip in root for skip in ("backups", "logs")):
-                continue
+            dirs[:] = [d for d in dirs if d not in
+                       ("backups", "logs", "temp_update", ".git",
+                        "debug", "__pycache__", "screenshots")]
             for file in files:
+                if not file.endswith((".py", ".txt", ".ini", ".bat",
+                                       ".json", ".toml", ".md")):
+                    continue
                 path = os.path.join(root, file)
                 rel_path = os.path.relpath(path, root_dir)
-                zipf.write(path, rel_path)
+                try:
+                    zipf.write(path, rel_path)
+                except Exception:
+                    pass
 
-    log(f"Сделан бэкап текущей версии в {archive_path}")
+    log(f"Сделан лёгкий бэкап .py в {archive_path}")
     return archive_path
 
 def _cleanup(root_dir: str) -> None:
@@ -334,6 +348,32 @@ for /d %%D in ("{root_dir}\\*") do (
 )
 echo Step 3b done. >> "{root_dir}\\apply_update.log"
 
+REM ---- Шаг 3c: Проверяем что YOLOv8 модель на месте ----
+echo Step 3c: check YOLOv8 model... >> "{root_dir}\\apply_update.log"
+if not exist "{root_dir}\\bot\\models\\item_detector.pt" (
+    echo WARNING: item_detector.pt not found! >> "{root_dir}\\apply_update.log"
+    if not exist "{root_dir}\\bot\\models" mkdir "{root_dir}\\bot\\models"
+    powershell -Command "Invoke-WebRequest -Uri 'https://github.com/StarateJI/L2Mauto/raw/main/bot/models/item_detector.pt' -OutFile '{root_dir}\\bot\\models\\item_detector.pt'" >> "{root_dir}\\apply_update.log" 2>&1
+    if exist "{root_dir}\\bot\\models\\item_detector.pt" (
+        echo item_detector.pt downloaded successfully. >> "{root_dir}\\apply_update.log"
+    ) else (
+        echo ERROR: Failed to download item_detector.pt! >> "{root_dir}\\apply_update.log"
+    )
+) else (
+    echo item_detector.pt OK. >> "{root_dir}\\apply_update.log"
+)
+
+REM ---- Шаг 3d: Проверяем шаблоны для поиска данжей ----
+echo Step 3d: check dungeon templates... >> "{root_dir}\\apply_update.log"
+if not exist "{root_dir}\\profiles\\Dungeon\\blessed_zemlya.png" (
+    if not exist "{root_dir}\\profiles\\Dungeon" mkdir "{root_dir}\\profiles\\Dungeon"
+    powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/StarateJI/L2Mauto/main/profiles/Dungeon/blessed_zemlya.png' -OutFile '{root_dir}\\profiles\\Dungeon\\blessed_zemlya.png'" >> "{root_dir}\\apply_update.log" 2>&1
+)
+if not exist "{root_dir}\\profiles\\Dungeon\\blessed_land_text.png" (
+    powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/StarateJI/L2Mauto/main/profiles/Dungeon/blessed_land_text.png' -OutFile '{root_dir}\\profiles\\Dungeon\\blessed_land_text.png'" >> "{root_dir}\\apply_update.log" 2>&1
+)
+echo Step 3d done. >> "{root_dir}\\apply_update.log"
+
 REM ---- Шаг 4: cleanup ----
 echo Step 4: cleanup temp_dir... >> "{root_dir}\\apply_update.log"
 rd /s /q "{temp_dir}" 2>nul
@@ -364,67 +404,174 @@ def update():
     try:
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
         backup()
-        log("Обнова: бэкап сделан, качаю ZIP с GitHub...", level="INFO")
+        log("Обнова: бэкап сделан, качаю файлы ПАРАЛЛЕЛЬНО (8 потоков)...", level="INFO")
 
-        # Качаем ZIP с stream=True и connect/read timeout — иначе requests.get
-        # может зависнуть намертво если GitHub долго отдаёт большой файл.
-        # connect=10 сек (дозвон), read=60 сек (между пакетами).
+        # Purge кеш jsdelivr — мгновенная очистка. Без этого jsdelivr кеширует
+        # файлы до 12 часов и бот скачает старые. Purge делаем один раз для
+        # всего репо через wildcard.
         try:
-            r = requests.get(REPO_ZIP, timeout=(10, 60), stream=True)
-            r.raise_for_status()
-            # Читаем чанками с ограничением скорости — НЕ ложим инет.
-            # Пауза 50ms между чанками = ~1.2 MB/сек max (не забивает канал).
-            import time as _time
-            buf = io.BytesIO()
-            total = 0
-            last_log = 0
-            for chunk in r.iter_content(chunk_size=65536):
-                if chunk:
-                    buf.write(chunk)
-                    total += len(chunk)
-                    if total - last_log >= 1024 * 1024:
-                        log(f"Обнова: скачано {total // 1024} КБ...", level="DEBUG")
-                        last_log = total
-                    _time.sleep(0.05)  # 50ms пауза — не забиваем канал
-            log(f"Обнова: ZIP скачан ({total // 1024} КБ), распаковываю...", level="INFO")
-            z = zipfile.ZipFile(buf)
-        except requests.exceptions.ConnectTimeout:
-            log("Обнова: connect timeout — не смог дозвониться до GitHub за 10с",
-                level="ERROR")
-            sys.exit(1)
-        except requests.exceptions.ReadTimeout:
-            log("Обнова: read timeout — GitHub перестал слать данные (60с без пакетов)",
-                level="ERROR")
-            sys.exit(1)
-        except requests.exceptions.RequestException as e:
-            log(f"Обнова: сетевая ошибка: {type(e).__name__}: {e}", level="ERROR")
-            sys.exit(1)
+            log("Обнова: purge кеша jsdelivr...", level="DEBUG")
+            purge_url = "https://purge.jsdelivr.net/gh/StarateJI/L2Mauto@main/"
+            r = requests.get(purge_url, timeout=10)
+            log(f"Обнова: purge статус={r.status_code}", level="DEBUG")
+        except Exception as e:
+            log(f"Обнова: purge не сработал: {e}", level="DEBUG")
+
+        # GitHub кеширует ZIP (194MB из-за старой истории).
+        # Скачиваем отдельные файлы через raw URLs ПАРАЛЛЕЛЬНО через пул потоков.
+
+        # Список файлов для скачивания (относительно корня репо)
+        FILES_TO_DOWNLOAD = [
+            "bot/version.txt",
+            "bot/updater.py",
+            "bot/clogger.py",
+            "bot/constans.py",
+            "bot/controller.py",
+            "bot/delays.py",
+            "bot/limits.py",
+            "bot/log_uploader.py",
+            "bot/manager.py",
+            "bot/misc.py",
+            "bot/utils.py",
+            "bot/windows_memory.py",
+            "bot/yolo_detector.py",
+            "bot/ocr.py",
+            "bot/vlm.py",
+            "bot/vlm_client.py",
+            "bot/ollama_vlm.py",
+            "bot/methods/game/__init__.py",
+            "bot/methods/game/_base.py",
+            "bot/methods/game/auction.py",
+            "bot/methods/game/claims.py",
+            "bot/methods/game/combat.py",
+            "bot/methods/game/energo.py",
+            "bot/methods/game/errors.py",
+            "bot/methods/game/party_dungeon.py",
+            "bot/methods/game/scheduler.py",
+            "bot/methods/game/teleport.py",
+            "bot/methods/game/town.py",
+            "bot/methods/base.py",
+            "bot/methods/other.py",
+            "bot/cbt/cbt.py",
+            "bot/events/checker.py",
+            "bot/events/enums.py",
+            "bot/events/events.py",
+            "bot/capture/__init__.py",
+            "bot/capture/backend.py",
+            "bot/capture/hwnd.py",
+            "bot/capture/mss_backend.py",
+            "bot/capture/rust_backend.py",
+            "bot/alchemy/alch_cons.py",
+            "bot/alchemy/alch_utils.py",
+            "bot/alchemy/main_alch.py",
+            "bot/alchemy/mini_alch.py",
+            "profiles/base.py",
+            "profiles/event_driven.py",
+            "profiles/Auction/auction.py",
+            "profiles/Dungeon/dungeon.py",
+            "profiles/PvPDodge/pvp.py",
+            "profiles/Rewards/rewards.py",
+            "profiles/Scheduler/scheduler.py",
+            "profiles/Buyer/buyer.py",
+            "profiles/MainAlchemy/main_alch.py",
+            "gui/maingui.py",
+            "gui/single.py",
+            "gui/cache.py",
+            "main.py",
+            "requirements.txt",
+            "profiles/Dungeon/blessed_zemlya.png",
+            "profiles/Dungeon/blessed_land_text.png",
+            "bot/__init__.py",
+            "bot/methods/__init__.py",
+            "bot/events/__init__.py",
+            "bot/alchemy/__init__.py",
+            "bot/windows/__init__.py",
+            "profiles/__init__.py",
+            "profiles/Auction/__init__.py",
+            "profiles/Dungeon/__init__.py",
+            "profiles/BuyerProfile/__init__.py",
+            "profiles/PvpProfile/__init__.py",
+            "profiles/RewardsProfile/__init__.py",
+            "profiles/Scheduler/__init__.py",
+            "profiles/MainAlch/__init__.py",
+            "gui/__init__.py",
+        ]
 
         temp_dir = os.path.join(root_dir, "temp_update")
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
         os.makedirs(temp_dir, exist_ok=True)
 
-        z.extractall(temp_dir)
-        main_repo = os.path.join(temp_dir, "L2Mauto-main")
+        # jsdelivr CDN + purge API — мгновенная очистка кеша перед скачиванием.
+        # jsdelivr кеширует до 12 часов, НО через purge.jsdelivr.net можно
+        # очистить кеш мгновенно. Без purge бот качает старые файлы.
+        raw_base = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/"
 
-        # Раскрываем содержимое L2Mauto-main/ в корень temp_dir
-        if os.path.isdir(main_repo):
-            for item in os.listdir(main_repo):
-                src = os.path.join(main_repo, item)
-                dst = os.path.join(temp_dir, item)
-                if os.path.exists(dst):
-                    if os.path.isdir(dst):
-                        shutil.rmtree(dst)
-                    else:
-                        os.remove(dst)
-                shutil.move(src, dst)
+        # Одна HTTP-сессия на все файлы — keep-alive, переиспользование TCP.
+        # Так 71 файл качается за ~5 сек вместо ~30 сек.
+        session = requests.Session()
+        tok = _load_github_token()
+        if tok:
+            session.headers["Authorization"] = f"token {tok}"
+        session.headers["Cache-Control"] = "no-cache"
+
+        def _download_one(filepath: str):
+            # jsdelivr CDN — purge сделан ранее, файлы свежие
+            url = raw_base + filepath
+            local_path = os.path.join(temp_dir, filepath.replace("/", os.sep))
+            os.makedirs(os.path.dirname(local_path), exist_ok=True)
             try:
-                os.rmdir(main_repo)
-            except OSError:
-                pass  # папка может быть непустой если были скрытые файлы
+                r = session.get(url, timeout=(8, 30))
+                if r.status_code == 200:
+                    with open(local_path, "wb") as f:
+                        f.write(r.content)
+                    return filepath, True, None
+                else:
+                    return filepath, False, f"HTTP {r.status_code}"
+            except Exception as e:
+                return filepath, False, f"{type(e).__name__}: {e}"
 
-        # Очистка старых .pyd.old / .dll.old от прошлых обнов
+        # ПАРАЛЛЕЛЬНАЯ загрузка — 8 потоков одновременно.
+        # raw.githubusercontent держит keep-alive, не банит параллельные запросы.
+        t0 = time.time()
+        downloaded = 0
+        failed = []
+        with ThreadPoolExecutor(max_workers=8) as ex:
+            futures = [ex.submit(_download_one, fp) for fp in FILES_TO_DOWNLOAD]
+            for i, fut in enumerate(as_completed(futures), 1):
+                fp, ok, err = fut.result()
+                if ok:
+                    downloaded += 1
+                else:
+                    failed.append(fp)
+                # логируем прогресс каждые 20 файлов
+                if i % 20 == 0 or i == len(FILES_TO_DOWNLOAD):
+                    log(f"Обнова: скачано {i}/{len(FILES_TO_DOWNLOAD)} "
+                        f"(ok={downloaded}, fail={len(failed)})", level="DEBUG")
+
+        dt = time.time() - t0
+        log(f"Обнова: скачано {downloaded}/{len(FILES_TO_DOWNLOAD)} файлов "
+            f"за {dt:.1f}с, ошибок: {len(failed)}", level="INFO")
+        if failed:
+            log(f"Обнова: НЕ скачаны ({len(failed)}): {failed[:10]}", level="WARNING")
+            # ПОВТОРНАЯ попытка для упавших — последовательно, без пула
+            if failed:
+                log(f"Обнова: повтор неудачных ({len(failed)})...", level="DEBUG")
+                still_failed = []
+                for fp in failed:
+                    res_fp, ok, err = _download_one(fp)
+                    if ok:
+                        downloaded += 1
+                        log(f"Обнова: повторно скачан {fp}", level="DEBUG")
+                    else:
+                        still_failed.append(fp)
+                failed = still_failed
+                if failed:
+                    log(f"Обнова: окончательно НЕ скачаны: {failed}", level="WARNING")
+
+        # _write_apply_bat + запуск
+
+        # Очистка старых .pyd.old / .dll.old
         _cleanup(root_dir)
 
         # ── НОВЫЙ ПОДХОД: apply_update.bat ──────────────────────────────
@@ -453,10 +600,14 @@ def update():
         )
 
         print("NE TROGAI NI4EGO - APPLYING UPDATE")
-        sys.exit(0)
+        # os._exit а не sys.exit — потому что update() вызывается из QThread
+        # и sys.exit(0) в QThread не завершает процесс, а зависает.
+        import os as _os
+        _os._exit(0)
 
     except Exception as e:
         log(f"Обнова бахнула: {e}")
         import traceback
         log(traceback.format_exc(), level="ERROR")
-        sys.exit(1)
+        import os as _os
+        _os._exit(1)
