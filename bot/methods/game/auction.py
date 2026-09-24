@@ -1192,12 +1192,12 @@ class Auction(GameAction):
         sample_path = os.path.join(tempfile.gettempdir(), "au_sample_template.png")
         cv2.imwrite(sample_path, sample_bgr)
 
-        # Окно бота — region для pyautogui (ограничивает область поиска)
+        # Окно бота — region для pyautogui (только INV_SCAN зона)
         win = self.window_info[self.window_id]
         wx, wy = win["Position"]
-        ww, wh = win["Width"], win["Height"]
-        # Region = (left, top, width, height) — только окно бота
-        region = (wx, wy, ww, wh)
+        # INV_SCAN = (686, 130, 259, 318) — относительно окна
+        # region = (left, top, width, height) — экранные координаты
+        region = (wx + INV_SCAN[0], wy + INV_SCAN[1], INV_SCAN[2], INV_SCAN[3])
 
         for page in range(1, SCAN_PAGES + 1):
             log(f"Аук: сканирую страницу {page}/{SCAN_PAGES}", self.window_id)
