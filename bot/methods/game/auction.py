@@ -1352,24 +1352,11 @@ class Auction(GameAction):
                                f"Аук: ПРЕДМЕТ НЕ НАЙДЕН (SIFT, {SCAN_PAGES} стр)")
             return 'error'
 
-        # 5. Клик по найденному предмету.
-        # matchTemplate возвращает оконные координаты (cx + INV_SCAN[0]).
-        # Используем pyautogui.click — напрямую через Windows API, просто и надёжно.
-        try:
-            import pyautogui
-            # item_pos = (win_cx, win_cy) — оконные координаты
-            # Добавляем позицию окна для экранных
-            win = self.window_info[self.window_id]
-            wx, wy = win["Position"]
-            screen_x = wx + item_pos[0]
-            screen_y = wy + item_pos[1]
-            log(f"Аук: pyautogui.click({screen_x},{screen_y}) — окно=({wx},{wy}) item=({item_pos[0]},{item_pos[1]})",
-                self.window_id)
-            pyautogui.click(screen_x, screen_y)
-        except Exception as e:
-            log(f"Аук: pyautogui.click ошибка: {e} — fallback на self._click",
-                self.window_id, level="WARNING")
-            await self._click(*item_pos)
+        # 5. Клик по найденному предмету через interception (self._click).
+        # item_pos = (win_cx, win_cy) — ОТНОСИТЕЛЬНЫЕ координаты (cx + INV_SCAN[0]).
+        # self._click прибавляет позицию окна к этим координатам.
+        await self._click(*item_pos)
+        log(f"Аук: клик по предмету {item_pos} (interception)", self.window_id)
         await asyncio.sleep(T_ITEM_WINDOW)
         # Скрин после клика — видно открылось ли окно цены
         after_item_click = self._grab(INV_SCAN)
