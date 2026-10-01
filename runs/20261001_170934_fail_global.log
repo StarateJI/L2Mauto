@@ -1,0 +1,201 @@
+=== Log tail 2026-10-01T17:09:37.032351 | last 200 lines ===
+2026-10-01 17:00:52,720 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 4ed33f58ffce5c7f79fce58674636a34706607de but expected 6c52af2cb34b31ba3e8d5e2c68b8b8ca84b47adf","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:00:52,723 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-01 17:00:52,723 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-01 17:00:52,723 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-01 17:01:00,553 - INFO - [global] Проверяю обновы...
+2026-10-01 17:01:01,464 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:01:01,636 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:01:01,637 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:01:01,637 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:01:01,637 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:01:31,652 - INFO - [global] Проверяю обновы...
+2026-10-01 17:01:32,446 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:01:32,677 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:01:32,678 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:01:32,678 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:01:32,678 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:01:52,758 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-01 17:01:52,758 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-01 17:01:53,665 - DEBUG - [global] _api_put: GET runs/20261001_170152_fail_periodic.log -> 404
+2026-10-01 17:01:55,413 - DEBUG - [global] _api_put: PUT runs/20261001_170152_fail_periodic.log -> 409 (19392 bytes)
+2026-10-01 17:01:55,413 - WARNING - [global] _api_put: PUT failed body: {"message":"is at d5194899d79fe30f3e8cf38127d813314ecfdbf9 but expected 3d21d3e18412f52baa5f5833f1358a1ad5cd7f94","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:01:55,414 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-01 17:01:55,414 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-01 17:01:56,386 - DEBUG - [global] _api_put: GET runs/20261001_170152_fail_global.log -> 404
+2026-10-01 17:01:58,504 - DEBUG - [global] _api_put: PUT runs/20261001_170152_fail_global.log -> 409 (20738 bytes)
+2026-10-01 17:01:58,504 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 59e37e0d1c0bf09bd2b6001beb0c20d90003dc36 but expected d5194899d79fe30f3e8cf38127d813314ecfdbf9","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:01:58,506 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-01 17:01:58,506 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-01 17:01:58,506 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-01 17:02:02,693 - INFO - [global] Проверяю обновы...
+2026-10-01 17:02:03,488 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:02:03,747 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:02:03,747 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:02:03,747 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:02:03,747 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:02:33,765 - INFO - [global] Проверяю обновы...
+2026-10-01 17:02:34,681 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:02:34,810 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:02:34,811 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:02:34,811 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:02:34,811 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:02:58,546 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-01 17:02:58,546 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-01 17:02:59,483 - DEBUG - [global] _api_put: GET runs/20261001_170258_fail_periodic.log -> 404
+2026-10-01 17:03:01,600 - DEBUG - [global] _api_put: PUT runs/20261001_170258_fail_periodic.log -> 201 (19392 bytes)
+2026-10-01 17:03:01,603 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261001_170258_fail_periodic.log
+2026-10-01 17:03:01,603 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-01 17:03:02,566 - DEBUG - [global] _api_put: GET runs/20261001_170258_fail_global.log -> 404
+2026-10-01 17:03:04,339 - DEBUG - [global] _api_put: PUT runs/20261001_170258_fail_global.log -> 409 (20760 bytes)
+2026-10-01 17:03:04,339 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 47fba272da0a92fb5d174d76f1169a6690028008 but expected 9be2d548e8b6d0a548713b97e3c5dea0791afc30","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:03:04,341 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-01 17:03:04,341 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-01 17:03:04,341 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-01 17:03:04,830 - INFO - [global] Проверяю обновы...
+2026-10-01 17:03:05,660 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:03:05,911 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:03:05,912 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:03:05,912 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:03:05,912 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:03:35,929 - INFO - [global] Проверяю обновы...
+2026-10-01 17:03:36,821 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:03:36,990 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:03:36,990 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:03:36,990 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:03:36,990 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:04:04,380 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-01 17:04:04,381 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-01 17:04:05,265 - DEBUG - [global] _api_put: GET runs/20261001_170404_fail_periodic.log -> 404
+2026-10-01 17:04:07,007 - INFO - [global] Проверяю обновы...
+2026-10-01 17:04:07,356 - DEBUG - [global] _api_put: PUT runs/20261001_170404_fail_periodic.log -> 409 (19392 bytes)
+2026-10-01 17:04:07,356 - WARNING - [global] _api_put: PUT failed body: {"message":"is at d1d9ac55e08e3e9a26c1d88b8a0601afa029fb36 but expected 666ca3f07de47e084ecfaf92cbfe238a4e2d0e4b","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:04:07,358 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-01 17:04:07,359 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-01 17:04:07,820 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:04:07,970 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:04:07,970 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:04:07,970 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:04:07,970 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:04:08,343 - DEBUG - [global] _api_put: GET runs/20261001_170404_fail_global.log -> 404
+2026-10-01 17:04:10,298 - DEBUG - [global] _api_put: PUT runs/20261001_170404_fail_global.log -> 201 (20990 bytes)
+2026-10-01 17:04:10,301 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261001_170404_fail_global.log
+2026-10-01 17:04:10,301 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-01 17:04:10,301 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-01 17:04:37,985 - INFO - [global] Проверяю обновы...
+2026-10-01 17:04:38,787 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:04:39,000 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:04:39,000 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:04:39,000 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:04:39,000 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:05:09,020 - INFO - [global] Проверяю обновы...
+2026-10-01 17:05:09,800 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:05:10,005 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:05:10,005 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:05:10,005 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:05:10,005 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:05:10,332 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-01 17:05:10,332 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-01 17:05:11,219 - DEBUG - [global] _api_put: GET runs/20261001_170510_fail_periodic.log -> 404
+2026-10-01 17:05:13,165 - DEBUG - [global] _api_put: PUT runs/20261001_170510_fail_periodic.log -> 409 (19392 bytes)
+2026-10-01 17:05:13,165 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 759fdeeaf97374831e77cd154b99b293ff699e75 but expected 0e4a31c91370eee6f960b45cf402cd8df8b8dc4d","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:05:13,167 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-01 17:05:13,167 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-01 17:05:14,091 - DEBUG - [global] _api_put: GET runs/20261001_170510_fail_global.log -> 404
+2026-10-01 17:05:16,058 - DEBUG - [global] _api_put: PUT runs/20261001_170510_fail_global.log -> 409 (20962 bytes)
+2026-10-01 17:05:16,058 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 9023d3505a9aefc150ac46daf91693400ebb6afa but expected 759fdeeaf97374831e77cd154b99b293ff699e75","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:05:16,059 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-01 17:05:16,060 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-01 17:05:16,060 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-01 17:05:40,029 - INFO - [global] Проверяю обновы...
+2026-10-01 17:05:40,863 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:05:41,048 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:05:41,049 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:05:41,049 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:05:41,049 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:06:11,064 - INFO - [global] Проверяю обновы...
+2026-10-01 17:06:11,948 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:06:12,054 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:06:12,054 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:06:12,054 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:06:12,054 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:06:16,097 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-01 17:06:16,097 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-01 17:06:16,990 - DEBUG - [global] _api_put: GET runs/20261001_170616_fail_periodic.log -> 404
+2026-10-01 17:06:18,882 - DEBUG - [global] _api_put: PUT runs/20261001_170616_fail_periodic.log -> 409 (19392 bytes)
+2026-10-01 17:06:18,882 - WARNING - [global] _api_put: PUT failed body: {"message":"is at de12ef406d7673fc002372d042b44da91d9c646e but expected d94b3d64af3587a32d687b2d6d4d7bfea096efea","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:06:18,883 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-01 17:06:18,885 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-01 17:06:19,845 - DEBUG - [global] _api_put: GET runs/20261001_170616_fail_global.log -> 404
+2026-10-01 17:06:21,777 - DEBUG - [global] _api_put: PUT runs/20261001_170616_fail_global.log -> 201 (20962 bytes)
+2026-10-01 17:06:21,779 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261001_170616_fail_global.log
+2026-10-01 17:06:21,779 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-01 17:06:21,780 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-01 17:06:42,071 - INFO - [global] Проверяю обновы...
+2026-10-01 17:06:42,888 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:06:43,147 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:06:43,147 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:06:43,148 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:06:43,148 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:07:13,164 - INFO - [global] Проверяю обновы...
+2026-10-01 17:07:13,919 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:07:14,181 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:07:14,181 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:07:14,182 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:07:14,182 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:07:21,814 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-01 17:07:21,814 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-01 17:07:22,709 - DEBUG - [global] _api_put: GET runs/20261001_170721_fail_periodic.log -> 404
+2026-10-01 17:07:24,516 - DEBUG - [global] _api_put: PUT runs/20261001_170721_fail_periodic.log -> 409 (19392 bytes)
+2026-10-01 17:07:24,516 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 0b8876880d412fd2eec1536e73ed06f045666e51 but expected 1597aea7b53b4866e426efb026c2fbb5bc6f047c","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:07:24,518 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-01 17:07:24,518 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-01 17:07:25,481 - DEBUG - [global] _api_put: GET runs/20261001_170721_fail_global.log -> 404
+2026-10-01 17:07:27,561 - DEBUG - [global] _api_put: PUT runs/20261001_170721_fail_global.log -> 409 (20871 bytes)
+2026-10-01 17:07:27,561 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 70a4ce8a0f80deefc69d3906f97f0ddaed28fc6c but expected 0b8876880d412fd2eec1536e73ed06f045666e51","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:07:27,562 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-01 17:07:27,562 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-01 17:07:27,562 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-01 17:07:44,201 - INFO - [global] Проверяю обновы...
+2026-10-01 17:07:45,000 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:07:45,248 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:07:45,249 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:07:45,249 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:07:45,249 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:08:15,264 - INFO - [global] Проверяю обновы...
+2026-10-01 17:08:16,044 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:08:16,265 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:08:16,266 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:08:16,266 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:08:16,266 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:08:27,602 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-01 17:08:27,602 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-01 17:08:28,512 - DEBUG - [global] _api_put: GET runs/20261001_170827_fail_periodic.log -> 404
+2026-10-01 17:08:30,750 - DEBUG - [global] _api_put: PUT runs/20261001_170827_fail_periodic.log -> 409 (19392 bytes)
+2026-10-01 17:08:30,750 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 8d726c0e1d93531b6eec9b54f91561ec054ad78c but expected c06785a9a8c6380975563a173a16db81c3228979","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:08:30,752 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-01 17:08:30,753 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-01 17:08:31,725 - DEBUG - [global] _api_put: GET runs/20261001_170827_fail_global.log -> 404
+2026-10-01 17:08:34,138 - DEBUG - [global] _api_put: PUT runs/20261001_170827_fail_global.log -> 201 (21037 bytes)
+2026-10-01 17:08:34,139 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261001_170827_fail_global.log
+2026-10-01 17:08:34,140 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-01 17:08:34,140 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-01 17:08:46,284 - INFO - [global] Проверяю обновы...
+2026-10-01 17:08:47,053 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:08:47,267 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:08:47,267 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:08:47,268 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:08:47,268 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:09:17,284 - INFO - [global] Проверяю обновы...
+2026-10-01 17:09:18,052 - DEBUG - [global] needs_update: raw → 5.13.09
+2026-10-01 17:09:18,303 - DEBUG - [global] needs_update: API → 5.13.09
+2026-10-01 17:09:18,304 - DEBUG - [global] needs_update: лучший источник raw → 5.13.09 (из 2)
+2026-10-01 17:09:18,304 - INFO - [global] needs_update: local=(5, 13, 7) remote=(5, 13, 9) -> has_update=True
+2026-10-01 17:09:18,304 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-01 17:09:34,183 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-01 17:09:34,184 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-01 17:09:35,058 - DEBUG - [global] _api_put: GET runs/20261001_170934_fail_periodic.log -> 404
+2026-10-01 17:09:36,983 - DEBUG - [global] _api_put: PUT runs/20261001_170934_fail_periodic.log -> 409 (19392 bytes)
+2026-10-01 17:09:36,983 - WARNING - [global] _api_put: PUT failed body: {"message":"is at ea0fb161bb8da888e8441894d36b14218fa8062d but expected 76e1e37e14d076d364358c90b38716d0f13b6a30","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-01 17:09:36,985 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-01 17:09:36,985 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
