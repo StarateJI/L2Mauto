@@ -197,39 +197,43 @@ class NedoGui(QWidget):
         self.layout_main = QVBoxLayout()
         font_btn = QFont("Segoe UI", 9, QFont.Bold)
 
-        # ── Заголовок — по центру, с акцентной полосой ──────────────────────
+        # ── Заголовок + подзаголовок — типографическая иерархия ──────────
         self.title_label = QLabel("L2Mauto")
         self.title_label.setObjectName("title")
         self.title_label.setAlignment(Qt.AlignCenter)
         self.layout_main.addWidget(self.title_label)
 
-        self.btn_otdel = QPushButton("Отдельное управление")
+        self.subtitle_label = QLabel("AUTOMATION SUITE")
+        self.subtitle_label.setObjectName("subtitle")
+        self.subtitle_label.setAlignment(Qt.AlignCenter)
+        self.layout_main.addWidget(self.subtitle_label)
+
+        self.btn_otdel = QPushButton("▤  Отдельное управление")
         self.btn_otdel.setFont(font_btn)
         self.btn_otdel.setCursor(Qt.PointingHandCursor)
-        self.btn_otdel.setFixedHeight(32)
+        self.btn_otdel.setFixedHeight(34)
         self.btn_otdel.clicked.connect(self.open_otdel)
         self.layout_main.addWidget(self.btn_otdel)
 
         # Маппинг имён профилей в русские подписи кнопок.
         # Ключ — имя класса профиля (как в self.profiles).
-        # Значение — русский текст кнопки.
+        # Значение — (эмодзи-иконка, русский текст).
         PROFILE_LABELS = {
-            "Auction":      "Аукцион",
-            "Dungeon":      "Данжи",
-            "MainAlchemy":  "Химка",
-            "PvPDodge":     "ПВП",
-            "Rewards":      "Бонусы",
-            "Scheduler":    "Шедуля",
-            "Buyer":         "Закуп",
+            "Auction":      ("🔨", "Аукцион"),
+            "Dungeon":      ("🏰", "Данжи"),
+            "MainAlchemy":  ("⚗",  "Химка"),
+            "PvPDodge":     ("⚔",  "ПВП"),
+            "Rewards":      ("🎁", "Бонусы"),
+            "Scheduler":    ("📅", "Шедуля"),
+            "Buyer":         ("🛒", "Закуп"),
         }
 
         for name, cls in self.profiles.items():
-            # Русская подпись из маппинга, если нет — само имя класса
-            label = PROFILE_LABELS.get(name, name)
-            btn = QPushButton(f"▶  {label}")
+            icon, label = PROFILE_LABELS.get(name, ("▶", name))
+            btn = QPushButton(f"{icon}   {label}")
             btn.setFont(font_btn)
             btn.setCursor(Qt.PointingHandCursor)
-            btn.setFixedHeight(32)
+            btn.setFixedHeight(34)
             # Сохраняем имя класса профиля в свойстве кнопки — для подсчёта
             # активных окон (метод _update_running_counters ниже).
             btn.setProperty("profile_name", name)
