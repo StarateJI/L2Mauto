@@ -112,11 +112,8 @@ class NedoGui(QWidget):
     def __init__(self, kb: str, m: str):
         super().__init__()
         NedoGui._instance = self
-        if m is not None:
-            self.setWindowTitle(f"L2Mauto | Клава {kb} | Мышь {m}")
-        else:
-            # жаль никогда не случится =(
-            self.setWindowTitle("L2Monad | Драйвер не найден!")
+        # Заголовок окна — лаконичный. Клаву/мышь не показываем (visual noise).
+        self.setWindowTitle("L2Mauto")
 
         self.resize(400, 150)
         self.setMinimumWidth(50)
@@ -200,16 +197,16 @@ class NedoGui(QWidget):
         self.layout_main = QVBoxLayout()
         font_btn = QFont("Segoe UI", 9, QFont.Bold)
 
-        # ── Заголовок ───────────────────────────────────────────────────────
-        self.title_label = QLabel("🏰 L2Mauto")
+        # ── Заголовок — лаконичный, без эмодзи-визуального-шума ──────────
+        self.title_label = QLabel("L2Mauto")
         self.title_label.setObjectName("title")
-        self.title_label.setAlignment(Qt.AlignCenter)
+        self.title_label.setAlignment(Qt.AlignLeft)
         self.layout_main.addWidget(self.title_label)
 
-        self.btn_otdel = QPushButton("📋 Отдельное управление")
+        self.btn_otdel = QPushButton("ОТДЕЛЬНОЕ УПРАВЛЕНИЕ")
         self.btn_otdel.setFont(font_btn)
         self.btn_otdel.setCursor(Qt.PointingHandCursor)
-        self.btn_otdel.setFixedHeight(28)
+        self.btn_otdel.setFixedHeight(30)
         self.btn_otdel.clicked.connect(self.open_otdel)
         self.layout_main.addWidget(self.btn_otdel)
 
@@ -217,22 +214,22 @@ class NedoGui(QWidget):
         # Ключ — имя класса профиля (как в self.profiles).
         # Значение — русский текст кнопки.
         PROFILE_LABELS = {
-            "Auction":      "Аукцион",
-            "Dungeon":      "Данжи",
-            "MainAlchemy":  "Химка",
+            "Auction":      "АУКЦИОН",
+            "Dungeon":      "ДАНЖИ",
+            "MainAlchemy":  "ХИМКА",
             "PvPDodge":     "ПВП",
-            "Rewards":      "Бонусы",
-            "Scheduler":    "Шедуля",
-            "Buyer":         "Закуп",
+            "Rewards":      "БОНУСЫ",
+            "Scheduler":    "ШЕДУЛЯ",
+            "Buyer":         "ЗАКУП",
         }
 
         for name, cls in self.profiles.items():
             # Русская подпись из маппинга, если нет — само имя класса
             label = PROFILE_LABELS.get(name, name)
-            btn = QPushButton(f"▶ {label}")
+            btn = QPushButton(label)
             btn.setFont(font_btn)
             btn.setCursor(Qt.PointingHandCursor)
-            btn.setFixedHeight(28)
+            btn.setFixedHeight(30)
             # Сохраняем имя класса профиля в свойстве кнопки — для подсчёта
             # активных окон (метод _update_running_counters ниже).
             btn.setProperty("profile_name", name)
@@ -244,44 +241,42 @@ class NedoGui(QWidget):
 
             self.layout_main.addWidget(btn)
 
-        # ── СТОП — красная, крупная ────────────────────────────────────────
-        self.btn_stop_all = QPushButton("⏹ СТОП")
+        # ── СТОП — чистый красный, контрастный ──────────────────────────────
+        self.btn_stop_all = QPushButton("СТОП")
         self.btn_stop_all.setObjectName("stop_all")
-        self.btn_stop_all.setFont(QFont("Segoe UI", 10, QFont.Bold))
         self.btn_stop_all.setCursor(Qt.PointingHandCursor)
-        self.btn_stop_all.setFixedHeight(32)
+        self.btn_stop_all.setFixedHeight(36)
         self.btn_stop_all.clicked.connect(self.stop_profile)
         self.layout_main.addWidget(self.btn_stop_all)
 
-        # ── Нижний ряд — стильные pill-кнопки с иконкой + подписью ────────
+        # ── Нижний ряд — лаконичные текстовые кнопки ──────────────────────
         layout_mini = QHBoxLayout()
-        layout_mini.setSpacing(6)
-        layout_mini.setContentsMargins(0, 4, 0, 0)
+        layout_mini.setSpacing(0)
+        layout_mini.setContentsMargins(0, 6, 0, 0)
 
         MINI_BTN_STYLE = """
             QPushButton#mini_btn {
-                background-color: #21262d;
-                border: 1px solid #30363d;
-                border-radius: 14px;
-                color: #8b949e;
+                background-color: transparent;
+                border: none;
+                border-bottom: 2px solid transparent;
+                color: #666666;
                 font-size: 8pt;
                 font-weight: bold;
-                padding: 4px 10px 4px 8px;
-                text-align: left;
+                padding: 6px 10px;
+                letter-spacing: 1px;
             }
             QPushButton#mini_btn:hover {
-                background-color: #30363d;
-                border: 1px solid #58a6ff;
-                color: #58a6ff;
+                color: #00ff88;
+                border-bottom: 2px solid #00ff88;
+                background-color: transparent;
             }
             QPushButton#mini_btn:pressed {
-                background-color: #1f6feb;
                 color: #ffffff;
-                border: 1px solid #58a6ff;
+                background-color: #00ff88;
             }
         """
 
-        self.btn_settings = QPushButton("⚙  Настройки")
+        self.btn_settings = QPushButton("НАСТРОЙКИ")
         self.btn_settings.setObjectName("mini_btn")
         self.btn_settings.setFixedHeight(28)
         self.btn_settings.setCursor(Qt.PointingHandCursor)
@@ -290,7 +285,7 @@ class NedoGui(QWidget):
         self.btn_settings.clicked.connect(self.open_settings)
         layout_mini.addWidget(self.btn_settings)
 
-        self.windows_sel = QPushButton("👤  Окна")
+        self.windows_sel = QPushButton("ОКНА")
         self.windows_sel.setObjectName("mini_btn")
         self.windows_sel.setFixedHeight(28)
         self.windows_sel.setCursor(Qt.PointingHandCursor)
@@ -299,7 +294,7 @@ class NedoGui(QWidget):
         self.windows_sel.clicked.connect(self.winsel)
         layout_mini.addWidget(self.windows_sel)
 
-        self.btn_tiling = QPushButton("📐  Сетка")
+        self.btn_tiling = QPushButton("СЕТКА")
         self.btn_tiling.setObjectName("mini_btn")
         self.btn_tiling.setFixedHeight(28)
         self.btn_tiling.setCursor(Qt.PointingHandCursor)
@@ -309,7 +304,7 @@ class NedoGui(QWidget):
         layout_mini.addWidget(self.btn_tiling)
 
         version = QLabel(f"v{get_my_version()}")
-        version.setStyleSheet("color: #6e7681; font-size: 8pt; padding: 2px 6px;")
+        version.setStyleSheet("color: #444444; font-size: 8pt; padding: 2px 8px; letter-spacing: 1px;")
         version.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
         layout_mini.addStretch(1)
         layout_mini.addWidget(version)
@@ -663,10 +658,10 @@ class NedoGui(QWidget):
         if hasattr(self, 'btn_update'):
             return
 
-        self.btn_update = QPushButton("⬇  Доступна обнова! (жми)")
+        self.btn_update = QPushButton("ДОСТУПНА ОБНОВА")
         self.btn_update.setObjectName("upd_btn")
         self.btn_update.setCursor(Qt.PointingHandCursor)
-        self.btn_update.setFixedHeight(26)
+        self.btn_update.setFixedHeight(30)
         self.btn_update.setMinimumWidth(200)
         self.btn_update.clicked.connect(self.show_update)
         self.layout().addWidget(self.btn_update, alignment=Qt.AlignRight)
