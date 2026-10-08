@@ -25,8 +25,7 @@ from gui.single import WindowControlDialog
 from gui.alch_gui import AlchemyDialog
 from gui.alch_presets import PresetDialog
 from gui.settings_changer import SettingsChanger
-from gui.styles import STYLE, UPD
-from gui.donate import Donate
+from gui.styles import STYLE
 from gui.tiling import TilingDialog
 from gui.windows_selector import WorkAccs
 from gui.windows_selector import load_workaccs
@@ -254,36 +253,66 @@ class NedoGui(QWidget):
         self.btn_stop_all.clicked.connect(self.stop_profile)
         self.layout_main.addWidget(self.btn_stop_all)
 
+        # ── Нижний ряд — стильные pill-кнопки с иконкой + подписью ────────
         layout_mini = QHBoxLayout()
+        layout_mini.setSpacing(6)
+        layout_mini.setContentsMargins(0, 4, 0, 0)
 
-        self.btn_settings = QPushButton("⚙️")
-        self.btn_settings.setFixedSize(32, 32)
+        MINI_BTN_STYLE = """
+            QPushButton#mini_btn {
+                background-color: #21262d;
+                border: 1px solid #30363d;
+                border-radius: 14px;
+                color: #8b949e;
+                font-size: 8pt;
+                font-weight: bold;
+                padding: 4px 10px 4px 8px;
+                text-align: left;
+            }
+            QPushButton#mini_btn:hover {
+                background-color: #30363d;
+                border: 1px solid #58a6ff;
+                color: #58a6ff;
+            }
+            QPushButton#mini_btn:pressed {
+                background-color: #1f6feb;
+                color: #ffffff;
+                border: 1px solid #58a6ff;
+            }
+        """
+
+        self.btn_settings = QPushButton("⚙  Настройки")
+        self.btn_settings.setObjectName("mini_btn")
+        self.btn_settings.setFixedHeight(28)
         self.btn_settings.setCursor(Qt.PointingHandCursor)
+        self.btn_settings.setStyleSheet(MINI_BTN_STYLE)
+        self.btn_settings.setToolTip("Настройки бота")
         self.btn_settings.clicked.connect(self.open_settings)
-        layout_mini.addWidget(self.btn_settings, alignment=Qt.AlignLeft)
+        layout_mini.addWidget(self.btn_settings)
 
-        self.windows_sel = QPushButton("👤")
-        self.windows_sel.setFixedSize(32, 32)
+        self.windows_sel = QPushButton("👤  Окна")
+        self.windows_sel.setObjectName("mini_btn")
+        self.windows_sel.setFixedHeight(28)
         self.windows_sel.setCursor(Qt.PointingHandCursor)
+        self.windows_sel.setStyleSheet(MINI_BTN_STYLE)
+        self.windows_sel.setToolTip("Выбор рабочих окон")
         self.windows_sel.clicked.connect(self.winsel)
-        layout_mini.addWidget(self.windows_sel, alignment=Qt.AlignLeft)
+        layout_mini.addWidget(self.windows_sel)
 
-        self.don = QPushButton("💰")
-        self.don.setFixedSize(32, 32)
-        self.don.setCursor(Qt.PointingHandCursor)
-        self.don.clicked.connect(self.donate)
-        layout_mini.addWidget(self.don, alignment=Qt.AlignLeft)
-
-        self.btn_tiling = QPushButton("📐")
-        self.btn_tiling.setFixedSize(32, 32)
+        self.btn_tiling = QPushButton("📐  Сетка")
+        self.btn_tiling.setObjectName("mini_btn")
+        self.btn_tiling.setFixedHeight(28)
         self.btn_tiling.setCursor(Qt.PointingHandCursor)
+        self.btn_tiling.setStyleSheet(MINI_BTN_STYLE)
+        self.btn_tiling.setToolTip("Расстановка окон на мониторах")
         self.btn_tiling.clicked.connect(self.open_tiling)
-        layout_mini.addWidget(self.btn_tiling, alignment=Qt.AlignLeft)
+        layout_mini.addWidget(self.btn_tiling)
 
         version = QLabel(f"v{get_my_version()}")
-        version.setStyleSheet("color: #6e7681; font-size: 8pt;")
+        version.setStyleSheet("color: #6e7681; font-size: 8pt; padding: 2px 6px;")
         version.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
-        layout_mini.addWidget(version, stretch=1)
+        layout_mini.addStretch(1)
+        layout_mini.addWidget(version)
 
         self.layout_main.addLayout(layout_mini)
 
@@ -391,10 +420,6 @@ class NedoGui(QWidget):
 
     def winsel(self):
         dlg = WorkAccs(self)
-        dlg.exec_()
-
-    def donate(self):
-        dlg = Donate(self)
         dlg.exec_()
 
     def open_tiling(self):
@@ -638,11 +663,11 @@ class NedoGui(QWidget):
         if hasattr(self, 'btn_update'):
             return
 
-        self.btn_update = QPushButton("♿️ Доступна обнова! (жми)")
+        self.btn_update = QPushButton("⬇  Доступна обнова! (жми)")
+        self.btn_update.setObjectName("upd_btn")
         self.btn_update.setCursor(Qt.PointingHandCursor)
-        self.btn_update.setFixedHeight(18)
-        self.btn_update.setFixedWidth(180)
-        self.btn_update.setStyleSheet(UPD)
+        self.btn_update.setFixedHeight(26)
+        self.btn_update.setMinimumWidth(200)
         self.btn_update.clicked.connect(self.show_update)
         self.layout().addWidget(self.btn_update, alignment=Qt.AlignRight)
 

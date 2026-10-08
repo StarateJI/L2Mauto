@@ -6,22 +6,24 @@ QWidget {
     font-size: 11pt;
 }
 
-/* Заголовок */
+/* Заголовок — с градиентной полосой снизу */
 QLabel#title {
     color: #58a6ff;
-    font-size: 14pt;
+    font-size: 15pt;
     font-weight: bold;
-    padding: 4px;
+    padding: 6px 4px 8px 4px;
+    border-bottom: 2px solid #1f6feb;
+    margin-bottom: 4px;
 }
 
-/* Кнопки профилей */
+/* Кнопки профилей — стильные с лёгким акцентом */
 QPushButton {
     background-color: #21262d;
     border: 1px solid #30363d;
     border-radius: 6px;
     color: #c9d1d9;
     font-weight: bold;
-    padding: 4px 8px;
+    padding: 5px 10px;
 }
 
 QPushButton:hover {
@@ -31,8 +33,8 @@ QPushButton:hover {
 }
 
 QPushButton:pressed {
-    background-color: #58a6ff;
-    color: #0d1117;
+    background-color: #1f6feb;
+    color: #ffffff;
     border: 1px solid #58a6ff;
 }
 
@@ -44,7 +46,7 @@ QPushButton#stop_all {
     color: #ffffff;
     font-weight: bold;
     font-size: 12pt;
-    padding: 6px 8px;
+    padding: 6px 10px;
 }
 
 QPushButton#stop_all:hover {
@@ -67,6 +69,20 @@ QPushButton#active {
 QPushButton#active:hover {
     background-color: #238636;
     color: #0d1117;
+}
+
+/* Кнопка обновления */
+QPushButton#upd_btn {
+    background-color: #1f6feb;
+    border: 1px solid #58a6ff;
+    border-radius: 6px;
+    color: #ffffff;
+    font-size: 9pt;
+    font-weight: bold;
+    padding: 4px 12px;
+}
+QPushButton#upd_btn:hover {
+    background-color: #388bfd;
 }
 """
 
