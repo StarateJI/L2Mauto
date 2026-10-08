@@ -428,14 +428,49 @@ class NedoGui(QWidget):
             QMessageBox.information(self, "Info", "Готовых к запуску окон не найдено\nНастрой их в кнопке на 1 правее настроек!")
             return
 
-        # ── Диалог выбора окон ──────────────────────────────────────
+        # ── Единый диалог: окна + количество + тип данжа ────────────────
         profile_name = profile_class.__name__
         from gui.window_selector import WindowSelectorDialog
-        selector = WindowSelectorDialog(profile_name, windows, parent=self)
+
+        # PvPDodge — без количества (запускает все сразу)
+        show_count = (profile_name != "PvPDodge")
+        dungeon_types = ["Пати данж", "Благословенная Земля"] if profile_name == "Dungeon" else None
+
+        # Значения по умолчанию — из cache (запоминаются)
+        from gui.cache import load_cache, save_cache as _save_cache
+        _cache = load_cache()
+        default_count = self.cache.get(profile_name, 2)
+        default_dungeon = _cache.get("DungeonType", "Пати данж") if dungeon_types else None
+
+        selector = WindowSelectorDialog(
+            profile_name, windows, parent=self,
+            show_count=show_count,
+            dungeon_types=dungeon_types,
+            default_count=default_count,
+            default_dungeon_type=default_dungeon,
+        )
         if selector.exec_() != WindowSelectorDialog.Accepted:
             return
         windows = selector.get_selected()
         if not windows:
+            return
+
+        # Сохраняем количество и тип данжа (запоминаются для следующего раза)
+        num = selector.get_count()
+        if show_count:
+            self.cache[profile_name] = num
+            save_cache(self.cache)
+
+        batch_kwargs = {}
+        if dungeon_types:
+            dungeon_type = selector.get_dungeon_type()
+            _cache["DungeonType"] = dungeon_type
+            _save_cache(_cache)
+            batch_kwargs["dungeon_type"] = dungeon_type
+
+        # PvPDodge — запускает все выбранные окна сразу (без батчей)
+        if profile_name == "PvPDodge":
+            self.start_windows(profile_class, windows)
             return
 
         new_windows = [nick for nick in windows if load_settings(nick) is None]
@@ -443,45 +478,6 @@ class NedoGui(QWidget):
             regions = self.ask_region(new_windows)
             for nick, region in regions.items():
                 load_settings(nick, region=region)
-
-        profile_name = profile_class.__name__
-
-        if profile_name == "PvPDodge":
-            self.start_windows(profile_class, windows)
-            return
-
-        # Для Auction — диалог выбора кол-ва окон (как у всех профилей).
-        # Дефолт = 2 (проверено, работает). Пользователь может выбрать 1, 2, 3 или 4.
-        # 4 окна — экспериментально, возможно перекрытие.
-        last_value = self.cache.get(profile_name, 2)
-        num, ok = QInputDialog.getInt(
-            self, "Батчер для ВСЕХ",
-            f"Сколько окон запускать одновременно для {profile_name}?",
-            last_value, 1
-        )
-        if not ok:
-            return
-        self.cache[profile_name] = num
-        save_cache(self.cache)
-
-        # Для Dungeon — выбор типа данжа (Благословенная Земля / Пати данж)
-        batch_kwargs = {}
-        if profile_name == "Dungeon":
-            from gui.cache import load_cache, save_cache as _save_cache
-            _cache = load_cache()
-            last_dungeon = _cache.get("DungeonType", "Пати данж")
-            items = ["Пати данж", "Благословенная Земля"]
-            dungeon_type, dok = QInputDialog.getItem(
-                self, "Выбор данжа",
-                "Какой данж запускать?", items,
-                items.index(last_dungeon) if last_dungeon in items else 0,
-                editable=False
-            )
-            if not dok:
-                return
-            _cache["DungeonType"] = dungeon_type
-            _save_cache(_cache)
-            batch_kwargs["dungeon_type"] = dungeon_type
 
         batches = [windows[i:i + num] for i in range(0, len(windows), num)]
         self.controller.reset_batch_cancel()
