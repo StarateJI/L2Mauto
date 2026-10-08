@@ -1,116 +1,119 @@
 # ── ДИЗАЙН-СИСТЕМА ──────────────────────────────────────────────────────────
-# Лаконичный стиль в духе Студии Артемия Лебедева:
-#   • Глубокий чёрный фон (#0a0a0a)
-#   • Чистый белый текст
-#   • Один кислотный акцент — #00ff88 (электрик-зелёный)
-#   • Без рамок, без скруглений (radius 0)
-#   • Чёткая типографика, uppercase для кнопок действий
-#   • Hover = заливка акцентом, текст становится чёрным
-#   • Минимум визуального шума
+# Современный тёмный UI с чёткой иерархией:
+#   • Фон #1e1e2e (тёмно-серо-синий, светлее чисто-чёрного)
+#   • Кнопки #2b2b3d с чёткой границей #3d3d52 — видны, не сливаются
+#   • Текст по центру — симметрично, не прижат к левому краю
+#   • Акцент #7c9eff (приглушённо-синий, не кислотный)
+#   • Скругления 8px — мягче, современнее
+#   • Hover = подсветка границы акцентом + текст акцентом
 
 STYLE = """
 QWidget {
-    background-color: #0a0a0a;
-    color: #ffffff;
+    background-color: #1e1e2e;
+    color: #e4e4e7;
     font-family: 'Segoe UI', 'Segoe UI Emoji', sans-serif;
     font-size: 11pt;
 }
 
-/* Заголовок — крупный, bold, с акцентной полосой снизу */
+/* Заголовок — по центру, с акцентной полосой снизу */
 QLabel#title {
-    color: #ffffff;
-    font-size: 18pt;
-    font-weight: 900;
-    padding: 10px 4px 12px 4px;
-    border-bottom: 3px solid #00ff88;
+    color: #e4e4e7;
+    font-size: 16pt;
+    font-weight: bold;
+    padding: 10px 4px 10px 4px;
+    border-bottom: 2px solid #7c9eff;
     margin-bottom: 6px;
-    letter-spacing: 1px;
+    qproperty-alignment: AlignCenter;
 }
 
-/* Кнопки профилей — плоские, без рамок */
+/* Кнопки профилей — с чёткой границей, текст по центру */
 QPushButton {
-    background-color: #1a1a1a;
-    border: none;
-    border-radius: 0px;
-    color: #e0e0e0;
+    background-color: #2b2b3d;
+    border: 1px solid #3d3d52;
+    border-radius: 8px;
+    color: #d4d4d8;
     font-weight: bold;
-    padding: 8px 12px;
-    text-align: left;
+    padding: 7px 12px;
+    text-align: center;
 }
 
 QPushButton:hover {
-    background-color: #00ff88;
-    color: #0a0a0a;
+    background-color: #353548;
+    border: 1px solid #7c9eff;
+    color: #a5b4fc;
 }
 
 QPushButton:pressed {
-    background-color: #00cc6a;
-    color: #0a0a0a;
+    background-color: #7c9eff;
+    color: #1e1e2e;
+    border: 1px solid #7c9eff;
 }
 
-/* STOP — чистый красный, контраст */
+/* STOP — красный, заметный, по центру */
 QPushButton#stop_all {
-    background-color: #ff3b30;
-    border: none;
-    border-radius: 0px;
+    background-color: #dc2626;
+    border: 1px solid #ef4444;
+    border-radius: 8px;
     color: #ffffff;
-    font-weight: 900;
-    font-size: 13pt;
-    padding: 10px 12px;
-    letter-spacing: 2px;
+    font-weight: bold;
+    font-size: 12pt;
+    padding: 9px 12px;
+    text-align: center;
 }
 
 QPushButton#stop_all:hover {
-    background-color: #ffffff;
-    color: #ff3b30;
+    background-color: #ef4444;
+    border: 1px solid #f87171;
 }
 
 QPushButton#stop_all:pressed {
-    background-color: #cc2f26;
+    background-color: #b91c1c;
     color: #ffffff;
 }
 
-/* Активные кнопки профилей (счётчик > 0) — акцент */
+/* Активные кнопки профилей (счётчик > 0) — зелёный акцент */
 QPushButton#active {
-    background-color: #00ff88;
-    color: #0a0a0a;
+    background-color: #166534;
+    border: 1px solid #22c55e;
+    color: #86efac;
 }
 
 QPushButton#active:hover {
-    background-color: #ffffff;
-    color: #0a0a0a;
+    background-color: #22c55e;
+    color: #052e16;
+    border: 1px solid #4ade80;
 }
 
-/* Кнопка обновы — акцент */
+/* Кнопка обновы — синий акцент */
 QPushButton#upd_btn {
-    background-color: #00ff88;
-    border: none;
-    border-radius: 0px;
-    color: #0a0a0a;
+    background-color: #7c9eff;
+    border: 1px solid #a5b4fc;
+    border-radius: 8px;
+    color: #1e1e2e;
     font-size: 9pt;
-    font-weight: 900;
+    font-weight: bold;
     padding: 6px 14px;
-    letter-spacing: 1px;
+    text-align: center;
 }
 QPushButton#upd_btn:hover {
-    background-color: #ffffff;
-    color: #0a0a0a;
+    background-color: #a5b4fc;
+    border: 1px solid #c7d2fe;
 }
 """
 
 SCROLL = """
 QScrollBar:vertical {
-    background: #0a0a0a;
-    width: 6px;
+    background: transparent;
+    width: 8px;
     margin: 0px;
 }
 QScrollBar::handle:vertical {
-    background: #333;
+    background: #4a4a5e;
     min-height: 20px;
-    border-radius: 0px;
+    border-radius: 4px;
 }
 QScrollBar::handle:vertical:hover {
-    background: #00ff88;
+    background: #7c9eff;
 }
 QScrollBar::add-line, QScrollBar::sub-line {
     height: 0px;
@@ -121,122 +124,125 @@ QScrollBar::add-page, QScrollBar::sub-page {
 """
 
 NICK_STYLE = """
-    QFrame { border: 1px solid #333; border-radius: 0px; background-color: transparent; }
+    QFrame { border: 1px solid #3d3d52; border-radius: 8px; background-color: transparent; }
 """
 
 UPD = """
     QPushButton {
-        background-color: #00ff88;
-        color: #0a0a0a;
+        background-color: #7c9eff;
+        color: #1e1e2e;
         font-size: 9pt;
-        font-weight: 900;
-        border: none;
-        border-radius: 0px;
+        font-weight: bold;
+        border: 1px solid #a5b4fc;
+        border-radius: 8px;
         padding: 6px 14px;
     }
     QPushButton:hover {
-        background-color: #ffffff;
+        background-color: #a5b4fc;
     }
 """
 
 ERROR_STYLE = """
 QWidget {
-    background-color: #0a0a0a;
-    color: #ff3b30;
+    background-color: #1e1e2e;
+    color: #ef4444;
     font-family: 'Consolas', monospace;
     font-size: 11pt;
 }
 
 QMessageBox QLabel {
-    color: #ff3b30;
+    color: #ef4444;
 }
 
 QPushButton {
-    background-color: #1a1a1a;
-    color: #ff3b30;
-    border: none;
-    border-radius: 0px;
+    background-color: #2b2b3d;
+    color: #ef4444;
+    border: 1px solid #ef4444;
+    border-radius: 8px;
     padding: 6px 12px;
     font-weight: bold;
 }
 
 QPushButton:hover {
-    background-color: #ff3b30;
-    color: #0a0a0a;
+    background-color: #ef4444;
+    color: #1e1e2e;
 }
 
 QPushButton:pressed {
-    background-color: #cc2f26;
+    background-color: #b91c1c;
     color: #ffffff;
 }
 """
 
 CARD = """
     QFrame {
-        border: 1px solid #333;
-        border-radius: 0px;
-        background-color: #141414;
+        border: 1px solid #3d3d52;
+        border-radius: 8px;
+        background-color: #2b2b3d;
     }
     QFrame[selected="true"] {
-        background-color: #00ff88;
-        border: 1px solid #00ff88;
+        background-color: #7c9eff;
+        border: 1px solid #a5b4fc;
     }
     QLabel {
         font-size: 9px;
-        color: #ffffff;
+        color: #e4e4e7;
     }
 """
 
 WINDOWS_FRAME = """
     QFrame {
-        border: 1px solid #222;
-        border-radius: 0px;
-        background-color: #0f0f0f;
+        border: 1px solid #3d3d52;
+        border-radius: 8px;
+        background-color: #1a1a28;
     }
 """
 
 MONITOR = """
     QPushButton {
-        background-color: #141414;
-        border: none;
-        border-radius: 0px;
-        color: #e0e0e0;
+        background-color: #2b2b3d;
+        border: 1px solid #3d3d52;
+        border-radius: 6px;
+        color: #d4d4d8;
         font-size: 9pt;
     }
     QPushButton:hover {
-        background-color: #00ff88;
-        color: #0a0a0a;
+        background-color: #353548;
+        border: 1px solid #7c9eff;
+        color: #a5b4fc;
     }
     QPushButton:checked {
-        background-color: #00ff88;
-        color: #0a0a0a;
+        background-color: #7c9eff;
+        color: #1e1e2e;
+        border: 1px solid #a5b4fc;
         font-weight: bold;
     }
 """
 
 PAYMENT_CARD_STYLE = """
 QWidget#payment_card {
-    background-color: #141414;
-    border: none;
-    border-radius: 0px;
+    background-color: #2b2b3d;
+    border: 1px solid #3d3d52;
+    border-radius: 8px;
     padding: 8px;
 }
 QWidget#payment_card:hover {
-    background-color: #00ff88;
+    background-color: #353548;
+    border: 1px solid #7c9eff;
 }
 """
 
 PAYMENT_VALUE_LABEL_STYLE = """
 QLabel {
-    color: #00ff88;
+    color: #a5b4fc;
     font-weight: bold;
     padding: 6px 12px;
-    background-color: #0a0a0a;
-    border: none;
-    border-radius: 0px;
+    background-color: #1a1a28;
+    border: 1px solid #3d3d52;
+    border-radius: 6px;
 }
 QLabel:hover {
-    background-color: #ffffff;
-    color: #0a0a0a;
+    background-color: #2b2b3d;
+    border: 1px solid #7c9eff;
 }
 """
