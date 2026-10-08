@@ -428,6 +428,16 @@ class NedoGui(QWidget):
             QMessageBox.information(self, "Info", "Готовых к запуску окон не найдено\nНастрой их в кнопке на 1 правее настроек!")
             return
 
+        # ── Диалог выбора окон ──────────────────────────────────────
+        profile_name = profile_class.__name__
+        from gui.window_selector import WindowSelectorDialog
+        selector = WindowSelectorDialog(profile_name, windows, parent=self)
+        if selector.exec_() != WindowSelectorDialog.Accepted:
+            return
+        windows = selector.get_selected()
+        if not windows:
+            return
+
         new_windows = [nick for nick in windows if load_settings(nick) is None]
         if new_windows:
             regions = self.ask_region(new_windows)
