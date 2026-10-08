@@ -24,6 +24,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtGui import QFont, QColor, QPalette
 
 from bot.clogger import log
+from gui.styles import STYLE, SCROLL
 
 
 # Файл для сохранения выбора окон по сценариям
@@ -69,30 +70,47 @@ class WindowButton(QPushButton):
         if self.isChecked():
             self.setStyleSheet("""
                 QPushButton {
-                    background-color: #2d5a2d;
-                    color: #ffffff;
-                    border: 2px solid #4CAF50;
-                    border-radius: 6px;
-                    font-weight: bold;
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #22c55e, stop:1 #16a34a);
+                    border: 1px solid #4ade80;
+                    border-top: 1px solid #86efac;
+                    border-bottom: 1px solid #15803d;
+                    border-radius: 10px;
+                    color: #052e16;
+                    font-weight: 600;
                 }
                 QPushButton:hover {
-                    background-color: #3a6b3a;
-                    border: 2px solid #66BB6A;
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #4ade80, stop:1 #22c55e);
+                    border: 1px solid #86efac;
+                }
+                QPushButton:pressed {
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #16a34a, stop:1 #22c55e);
                 }
             """)
         else:
             self.setStyleSheet("""
                 QPushButton {
-                    background-color: #3a3a3a;
-                    color: #666666;
-                    border: 2px solid #555555;
-                    border-radius: 6px;
-                    font-weight: normal;
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #34344a, stop:1 #2a2a3d);
+                    border: 1px solid #3d3d52;
+                    border-top: 1px solid #4a4a63;
+                    border-bottom: 1px solid #1f1f30;
+                    border-radius: 10px;
+                    color: #71717a;
+                    font-weight: 400;
                 }
                 QPushButton:hover {
-                    background-color: #444444;
-                    color: #888888;
-                    border: 2px solid #666666;
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #3d3d56, stop:1 #30304a);
+                    border: 1px solid #818cf8;
+                    border-top: 1px solid #a5b4fc;
+                    color: #c7d2fe;
+                }
+                QPushButton:pressed {
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #2a2a3d, stop:1 #34344a);
                 }
             """)
 
@@ -115,30 +133,47 @@ class DungeonTypeButton(QPushButton):
         if self.isChecked():
             self.setStyleSheet("""
                 QPushButton {
-                    background-color: #5a4a2d;
-                    color: #ffffff;
-                    border: 2px solid #FFA726;
-                    border-radius: 6px;
-                    font-weight: bold;
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #fb923c, stop:1 #f97316);
+                    border: 1px solid #fdba74;
+                    border-top: 1px solid #fed7aa;
+                    border-bottom: 1px solid #c2410c;
+                    border-radius: 10px;
+                    color: #431407;
+                    font-weight: 600;
                 }
                 QPushButton:hover {
-                    background-color: #6b5a3a;
-                    border: 2px solid #FFB74D;
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #fdba74, stop:1 #fb923c);
+                    border: 1px solid #fed7aa;
+                }
+                QPushButton:pressed {
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #f97316, stop:1 #fb923c);
                 }
             """)
         else:
             self.setStyleSheet("""
                 QPushButton {
-                    background-color: #3a3a3a;
-                    color: #888888;
-                    border: 2px solid #555555;
-                    border-radius: 6px;
-                    font-weight: normal;
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #34344a, stop:1 #2a2a3d);
+                    border: 1px solid #3d3d52;
+                    border-top: 1px solid #4a4a63;
+                    border-bottom: 1px solid #1f1f30;
+                    border-radius: 10px;
+                    color: #71717a;
+                    font-weight: 400;
                 }
                 QPushButton:hover {
-                    background-color: #444444;
-                    color: #aaaaaa;
-                    border: 2px solid #777777;
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #3d3d56, stop:1 #30304a);
+                    border: 1px solid #818cf8;
+                    border-top: 1px solid #a5b4fc;
+                    color: #c7d2fe;
+                }
+                QPushButton:pressed {
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #2a2a3d, stop:1 #34344a);
                 }
             """)
 
@@ -175,7 +210,7 @@ class WindowSelectorDialog(QDialog):
         self.setWindowTitle(f"Запуск — {scenario_name}")
         self.setMinimumWidth(520)
         self.setMinimumHeight(600)
-        self.setStyleSheet("QDialog { background-color: #1e1e1e; }")
+        self.setStyleSheet(STYLE)
 
         self._load_saved = load_selection()
         saved = set(self._load_saved.get(scenario_name, all_windows))
@@ -188,12 +223,17 @@ class WindowSelectorDialog(QDialog):
         title = QLabel(f"▶ {scenario_name}")
         title.setFont(QFont("Segoe UI", 13, QFont.Bold))
         title.setAlignment(Qt.AlignCenter)
-        title.setStyleSheet("color: #00ffcc; padding: 6px;")
+        title.setStyleSheet(
+            "color: #f4f4f5; font-size: 16pt; font-weight: 700; "
+            "letter-spacing: 1px; padding: 6px 4px;"
+        )
         layout.addWidget(title)
 
         info = QLabel("Зелёные = выбраны, серые = пропустить. Выбор запоминается.")
         info.setAlignment(Qt.AlignCenter)
-        info.setStyleSheet("color: #888888; font-size: 9pt; padding: 2px;")
+        info.setStyleSheet(
+            "color: #71717a; font-size: 9pt; letter-spacing: 2px; padding: 2px 4px;"
+        )
         layout.addWidget(info)
 
         # ── Кнопки "Все" / "Снять все" + счётчик ─────────────────────────
@@ -212,7 +252,7 @@ class WindowSelectorDialog(QDialog):
 
         self.lbl_count_windows = QLabel("0 выбрано")
         self.lbl_count_windows.setStyleSheet(
-            "color: #4CAF50; font-size: 9pt; font-weight: bold; padding: 2px 8px;"
+            "color: #22c55e; font-size: 9pt; font-weight: 700; padding: 2px 8px;"
         )
         btn_row.addWidget(self.lbl_count_windows, alignment=Qt.AlignRight)
         layout.addLayout(btn_row)
@@ -220,14 +260,9 @@ class WindowSelectorDialog(QDialog):
         # ── Сетка с кнопками окон ────────────────────────────────────────
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
-        scroll.setStyleSheet("""
-            QScrollArea { border: 1px solid #333; border-radius: 6px; }
-            QScrollBar:vertical { background: #2a2a2a; width: 10px; }
-            QScrollBar::handle:vertical { background: #555; border-radius: 4px; }
-            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; }
-        """)
+        scroll.setStyleSheet(SCROLL)
         scroll_content = QWidget()
-        scroll_content.setStyleSheet("background-color: #252525;")
+        scroll_content.setStyleSheet("background-color: transparent;")
         grid = QGridLayout(scroll_content)
         grid.setHorizontalSpacing(6)
         grid.setVerticalSpacing(4)
@@ -261,13 +296,25 @@ class WindowSelectorDialog(QDialog):
         self.btn_ok.setCursor(Qt.PointingHandCursor)
         self.btn_ok.setStyleSheet("""
             QPushButton {
-                background-color: #2d5a2d;
-                color: white;
-                border: 2px solid #4CAF50;
-                border-radius: 6px;
-                font-weight: bold;
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #22c55e, stop:1 #16a34a);
+                border: 1px solid #4ade80;
+                border-top: 1px solid #86efac;
+                border-bottom: 1px solid #15803d;
+                border-radius: 10px;
+                color: #052e16;
+                font-weight: 700;
+                letter-spacing: 1px;
             }
-            QPushButton:hover { background-color: #3a6b3a; border: 2px solid #66BB6A; }
+            QPushButton:hover {
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #4ade80, stop:1 #22c55e);
+                border: 1px solid #86efac;
+            }
+            QPushButton:pressed {
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #16a34a, stop:1 #22c55e);
+            }
         """)
         self.btn_ok.clicked.connect(self._on_ok)
         btn_row2.addWidget(self.btn_ok, stretch=2)
@@ -277,12 +324,26 @@ class WindowSelectorDialog(QDialog):
         btn_cancel.setCursor(Qt.PointingHandCursor)
         btn_cancel.setStyleSheet("""
             QPushButton {
-                background-color: #3a3a3a;
-                color: #cccccc;
-                border: 2px solid #555;
-                border-radius: 6px;
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #34344a, stop:1 #2a2a3d);
+                border: 1px solid #3d3d52;
+                border-top: 1px solid #4a4a63;
+                border-bottom: 1px solid #1f1f30;
+                border-radius: 10px;
+                color: #d4d4d8;
+                font-weight: 600;
             }
-            QPushButton:hover { background-color: #444; border: 2px solid #777; }
+            QPushButton:hover {
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #3d3d56, stop:1 #30304a);
+                border: 1px solid #818cf8;
+                border-top: 1px solid #a5b4fc;
+                color: #c7d2fe;
+            }
+            QPushButton:pressed {
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #2a2a3d, stop:1 #34344a);
+            }
         """)
         btn_cancel.clicked.connect(self.reject)
         btn_row2.addWidget(btn_cancel, stretch=1)
@@ -296,9 +357,9 @@ class WindowSelectorDialog(QDialog):
         panel = QFrame()
         panel.setStyleSheet("""
             QFrame {
-                background-color: #2a2a2a;
-                border: 1px solid #444;
-                border-radius: 8px;
+                background-color: #2a2a3d;
+                border: 1px solid #3d3d52;
+                border-radius: 10px;
             }
         """)
         panel_layout = QVBoxLayout(panel)
@@ -309,7 +370,9 @@ class WindowSelectorDialog(QDialog):
         if show_count:
             row = QHBoxLayout()
             lbl = QLabel("⚡ Одновременно:")
-            lbl.setStyleSheet("color: #dddddd; font-size: 10pt; font-weight: bold;")
+            lbl.setStyleSheet(
+                "color: #d4d4d8; font-size: 10pt; font-weight: 600;"
+            )
             row.addWidget(lbl)
 
             self._count_spin = QSpinBox()
@@ -320,28 +383,34 @@ class WindowSelectorDialog(QDialog):
             self._count_spin.setMinimumWidth(80)
             self._count_spin.setStyleSheet("""
                 QSpinBox {
-                    background-color: #1e1e1e;
-                    color: #00ffcc;
-                    border: 2px solid #4CAF50;
-                    border-radius: 6px;
-                    font-weight: bold;
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #1f1f30, stop:1 #1a1a26);
+                    color: #c7d2fe;
+                    border: 1px solid #3d3d52;
+                    border-radius: 8px;
+                    font-weight: 600;
                     font-size: 11pt;
                     padding: 2px 6px;
                 }
+                QSpinBox:focus {
+                    border: 1px solid #818cf8;
+                }
                 QSpinBox::up-button, QSpinBox::down-button {
-                    background: #4CAF50;
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #34344a, stop:1 #2a2a3d);
                     width: 18px;
                     border: none;
-                    border-radius: 3px;
+                    border-radius: 4px;
                 }
                 QSpinBox::up-button:hover, QSpinBox::down-button:hover {
-                    background: #66BB6A;
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #818cf8, stop:1 #6366f1);
                 }
             """)
             row.addWidget(self._count_spin)
 
             hint = QLabel("окон за пачку")
-            hint.setStyleSheet("color: #888; font-size: 9pt;")
+            hint.setStyleSheet("color: #71717a; font-size: 9pt;")
             row.addWidget(hint)
             row.addStretch()
             panel_layout.addLayout(row)
@@ -350,11 +419,13 @@ class WindowSelectorDialog(QDialog):
         if dungeon_types:
             sep = QFrame()
             sep.setFrameShape(QFrame.HLine)
-            sep.setStyleSheet("color: #444; max-height: 1px;")
+            sep.setStyleSheet("color: #3d3d52; max-height: 1px;")
             panel_layout.addWidget(sep)
 
             lbl_d = QLabel("⚔ Тип данжа:")
-            lbl_d.setStyleSheet("color: #FFA726; font-size: 10pt; font-weight: bold;")
+            lbl_d.setStyleSheet(
+                "color: #fb923c; font-size: 10pt; font-weight: 600;"
+            )
             panel_layout.addWidget(lbl_d)
 
             dungeon_row = QHBoxLayout()

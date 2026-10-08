@@ -49,7 +49,7 @@ class AlchemyDialog(QDialog):
 
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
-        line.setStyleSheet("color: #333;")
+        line.setStyleSheet("color: #3d3d52;")
         self.layout.addWidget(line)
 
         windows_frame = QFrame()
@@ -61,7 +61,7 @@ class AlchemyDialog(QDialog):
         scroll.setStyleSheet(SCROLL + """
             QScrollArea {
                 border: none;
-                background-color: #151515;
+                background-color: #1a1a26;
             }
         """)
         scroll_content = QWidget()
@@ -103,7 +103,9 @@ class AlchemyDialog(QDialog):
 
         hello = QLabel("работает на двух лошадиных силах")
         hello.setAlignment(Qt.AlignCenter)
-        hello.setStyleSheet("color: #00ffcc; font-size: 9pt;")
+        hello.setStyleSheet(
+            "color: #71717a; font-size: 9pt; letter-spacing: 2px;"
+        )
 
         self.layout.addWidget(hello)
 

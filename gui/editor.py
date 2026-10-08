@@ -303,32 +303,39 @@ class Editor(QDialog):
         tabs = QTabWidget()
         tabs.setStyleSheet("""
             QTabWidget::pane {
-                border: 1px solid #333;
-                background: #151515;
+                border: 1px solid #3d3d52;
+                background: #1a1a26;
                 top: -1px;
             }
             QTabBar {
-                background: #111217;
+                background: #1a1a26;
             }
             QTabBar::tab {
-                background: #1c1c28;
-                color: #bbb;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #2a2a3d, stop:1 #1f1f30);
+                color: #71717a;
                 padding: 6px 14px;
-                border: 1px solid #333;
+                border: 1px solid #3d3d52;
                 border-bottom: none;
-                border-top-left-radius: 4px;
-                border-top-right-radius: 4px;
+                border-top-left-radius: 8px;
+                border-top-right-radius: 8px;
                 margin-right: 2px;
+                font-weight: 600;
             }
             QTabBar::tab:hover {
-                background: #252535;
-                color: #ddd;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #34344a, stop:1 #2a2a3d);
+                color: #d4d4d8;
+                border: 1px solid #818cf8;
+                border-bottom: none;
             }
             QTabBar::tab:selected {
-                background: #151515;
-                color: #00ffcc;
-                border: 1px solid #00ffcc;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #818cf8, stop:1 #6366f1);
+                color: #ffffff;
+                border: 1px solid #a5b4fc;
                 border-bottom: none;
+                font-weight: 700;
             }
         """)
 
@@ -340,7 +347,7 @@ class Editor(QDialog):
         scroll1.setStyleSheet(SCROLL + """
              QScrollArea {
                  border: none;
-                 background-color: #151515;
+                 background-color: #1a1a26;
              }
          """)
 
@@ -352,7 +359,7 @@ class Editor(QDialog):
         scroll2.setStyleSheet(SCROLL + """
              QScrollArea {
                  border: none;
-                 background-color: #151515;
+                 background-color: #1a1a26;
              }
          """)
 
@@ -364,7 +371,7 @@ class Editor(QDialog):
         scroll3.setStyleSheet(SCROLL + """
              QScrollArea {
                  border: none;
-                 background-color: #151515;
+                 background-color: #1a1a26;
              }
          """)
 

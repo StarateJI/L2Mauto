@@ -132,7 +132,10 @@ class EditPreset(QDialog):
         label.setAlignment(Qt.AlignCenter)
         label.setFixedHeight(28)
         label.setStyleSheet(
-            "background:#FFD700; color:black; border-radius:6px; font-weight:bold; padding:4px 8px;"
+            "background: qlineargradient(x1:0, y1:0, x2:0, y2:1,"
+            " stop:0 #fb923c, stop:1 #f97316);"
+            " color: #431407; border: 1px solid #fdba74;"
+            " border-radius: 8px; font-weight: 700; padding: 4px 8px;"
         )
         layout.addWidget(label)
         layout.addWidget(self.editor)
@@ -147,7 +150,7 @@ class EditPreset(QDialog):
 
         cancel_btn = QPushButton("Отмена")
         cancel_btn.setCursor(Qt.PointingHandCursor)
-        save_btn.setStyleSheet(STYLE)
+        cancel_btn.setStyleSheet(STYLE)
         cancel_btn.clicked.connect(self.reject)
 
         btn_layout.addWidget(save_btn)
@@ -189,7 +192,7 @@ class SvgBtn(QPushButton):
         self.setCursor(Qt.PointingHandCursor)
         self.setIcon(icon(svg, base))
         self.setIconSize(QSize(18, 18))
-        self.setStyleSheet("border:none; border-radius:14px; background:rgba(50,50,50,0.3);")
+        self.setStyleSheet("border:none; border-radius:14px; background:rgba(52,52,74,0.6);")
 
     def enterEvent(self, e):
         self.setIcon(icon(self.svg, self.hover))
@@ -203,32 +206,64 @@ class SvgBtn(QPushButton):
 class Card(QFrame):
     def __init__(self, name, desc, dlg):
         super().__init__()
-        self.setStyleSheet("QFrame{background:rgba(255,255,255,0.035); border-radius:12px;} QFrame:hover{background:rgba(255,255,255,0.07);}")
+        self.setStyleSheet("""
+            QFrame {
+                background-color: #2a2a3d;
+                border: 1px solid #3d3d52;
+                border-radius: 10px;
+            }
+            QFrame:hover {
+                background-color: #34344a;
+                border: 1px solid #818cf8;
+            }
+        """)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(12, 10, 12, 10)
         layout.setSpacing(6)
 
         top = QHBoxLayout()
         lbl = QLabel(name)
-        lbl.setStyleSheet("font-weight:600; font-size:10.5pt; color:#eee;")
+        lbl.setStyleSheet(
+            "font-weight: 600; font-size: 10.5pt; color: #f4f4f5;"
+        )
         top.addWidget(lbl)
         top.addStretch()
 
         ok_btn = QPushButton()
-        ok_btn.setIcon(icon("gui/images/ok.svg", "#00ff88"))
+        ok_btn.setIcon(icon("gui/images/ok.svg", "#22c55e"))
         ok_btn.setIconSize(QSize(16, 16))
         ok_btn.setFixedSize(28, 28)
         ok_btn.setCursor(Qt.PointingHandCursor)
-        ok_btn.setStyleSheet("border:none; border-radius:14px; background:rgba(50,50,50,0.3);")
+        ok_btn.setStyleSheet("""
+            QPushButton {
+                border: none;
+                border-radius: 14px;
+                background: rgba(52,52,74,0.6);
+            }
+            QPushButton:hover {
+                background: rgba(34,197,94,0.25);
+                border: 1px solid #22c55e;
+            }
+        """)
         ok_btn.clicked.connect(lambda: dlg.select(name))
         top.addWidget(ok_btn)
 
         edit_btn = QPushButton()
-        edit_btn.setIcon(icon("gui/images/pen.svg", "#ffaa00"))
+        edit_btn.setIcon(icon("gui/images/pen.svg", "#fb923c"))
         edit_btn.setIconSize(QSize(16, 16))
         edit_btn.setFixedSize(28, 28)
         edit_btn.setCursor(Qt.PointingHandCursor)
-        edit_btn.setStyleSheet("border:none; border-radius:14px; background:rgba(50,50,50,0.3);")
+        edit_btn.setStyleSheet("""
+            QPushButton {
+                border: none;
+                border-radius: 14px;
+                background: rgba(52,52,74,0.6);
+            }
+            QPushButton:hover {
+                background: rgba(251,146,60,0.25);
+                border: 1px solid #fb923c;
+            }
+        """)
         edit_btn.clicked.connect(lambda: dlg.edit(name))
         top.addWidget(edit_btn)
 
@@ -236,7 +271,7 @@ class Card(QFrame):
         d_lbl = QLabel(desc)
         d_lbl.setWordWrap(True)
         d_lbl.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        d_lbl.setStyleSheet("font-size:9pt; color:rgba(220,220,220,0.55);")
+        d_lbl.setStyleSheet("font-size: 9pt; color: #71717a;")
         layout.addWidget(d_lbl)
 
 

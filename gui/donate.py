@@ -28,7 +28,7 @@ class CLabel(QLabel):
             cb = QApplication.clipboard()
             cb.setText(self.orig)
             self.setText("✓ Скопировано!")
-            self.setStyleSheet(PAYMENT_VALUE_LABEL_STYLE + "QLabel { color: #00ff00; }")
+            self.setStyleSheet(PAYMENT_VALUE_LABEL_STYLE + "QLabel { color: #22c55e; }")
             from PyQt5.QtCore import QTimer
             QTimer.singleShot(1000, self._back)
         super().mousePressEvent(event)
@@ -55,11 +55,15 @@ class Donate(QDialog):
         header = QLabel("💰 Поддержать Раз Раба")
         header.setFont(QFont("Calibri", 14, QFont.Bold))
         header.setAlignment(Qt.AlignCenter)
+        header.setStyleSheet(
+            "color: #f4f4f5; font-size: 16pt; font-weight: 700; "
+            "letter-spacing: 2px;"
+        )
         main_layout.addWidget(header)
 
         hint = QLabel("💡 Нажмите на нужное значение, чтобы скопировать")
         hint.setFont(QFont("Calibri", 6))
-        hint.setStyleSheet("color: #888888; font-style: italic;")
+        hint.setStyleSheet("color: #71717a; font-style: italic; font-size: 9pt;")
         hint.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(hint)
 
@@ -86,7 +90,7 @@ class Donate(QDialog):
         main_layout.addWidget(scroll)
         hint2 = QLabel("🎩 Возможно когда-то донатерам будут различные плюшки, хз =)")
         hint2.setFont(QFont("Calibri", 12))
-        hint2.setStyleSheet("color: #888888; font-style: italic;")
+        hint2.setStyleSheet("color: #71717a; font-style: italic; font-size: 9pt;")
         hint2.setAlignment(Qt.AlignCenter)
         main_layout.addWidget(hint2)
 
@@ -100,7 +104,8 @@ class Donate(QDialog):
         label_title = QLabel(title)
         label_title.setFont(QFont("Calibri", 11, QFont.Bold))
         label_title.setStyleSheet(
-            "color: #ffffff; background: transparent; border: none;")
+            "color: #f4f4f5; background: transparent; border: none; "
+            "font-weight: 700; letter-spacing: 1px;")
         label_title.setAlignment(Qt.AlignCenter)
         card_layout.addWidget(label_title)
 

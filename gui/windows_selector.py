@@ -49,13 +49,16 @@ class WorkAccs(QDialog):
 
     def init_ui(self):
         top_label = QLabel("Выбирай рабочие окна:")
-        top_label.setStyleSheet("color: #00ffcc; font-size: 9pt;")
+        top_label.setStyleSheet(
+            "color: #f4f4f5; font-size: 11pt; font-weight: 600; "
+            "letter-spacing: 2px;"
+        )
         top_label.setAlignment(Qt.AlignCenter)
         self.layout.addWidget(top_label)
 
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
-        line.setStyleSheet("color: #333;")
+        line.setStyleSheet("color: #3d3d52;")
         self.layout.addWidget(line)
 
         windows_frame = QFrame()
@@ -98,7 +101,7 @@ class WorkAccs(QDialog):
 
         line2 = QFrame()
         line2.setFrameShape(QFrame.HLine)
-        line2.setStyleSheet("color: #333;")
+        line2.setStyleSheet("color: #3d3d52;")
         self.layout.addWidget(line2)
 
         btns = QHBoxLayout()

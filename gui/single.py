@@ -129,9 +129,9 @@ class WindowControlDialog(QDialog):
 
         nick_label = self._create_label(nick, width=120, bold=True, style=NICK_STYLE)
         status_label = self._create_label("Остановлено", width=100, bold=True,
-                                          color="red")
+                                          color="#ef4444")
 
-        active_profile = self._create_label("", width=120, bold=True, color="#00ff00")
+        active_profile = self._create_label("", width=120, bold=True, color="#22c55e")
         active_profile.setVisible(False)
 
         profile_buttons = []
@@ -210,7 +210,7 @@ class WindowControlDialog(QDialog):
 
         status.setText("Запущено" if running else "Остановлено")
         status.setStyleSheet(
-            f"color: {'#00ff00' if running else '#ff0000'}; font-weight: bold;")
+            f"color: {'#22c55e' if running else '#ef4444'}; font-weight: bold;")
 
         if label:
             label.setVisible(running)

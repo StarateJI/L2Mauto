@@ -33,7 +33,7 @@ class Windowbtnn(QFrame):
         self.label = QLabel(nick, self)
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setTextInteractionFlags(Qt.NoTextInteraction)
-        self.label.setStyleSheet("font-size: 10px; color: #f0f0f0;")
+        self.label.setStyleSheet("font-size: 10px; color: #e4e4e7;")
         self.label.setWordWrap(False)
         self.label.setMinimumWidth(40)
         self.label.setMaximumHeight(20)
@@ -65,7 +65,7 @@ class Windowbtnn(QFrame):
         if self.selected:
             glow = QGraphicsDropShadowEffect()
             glow.setBlurRadius(6)
-            glow.setColor(QColor("#3366ff"))
+            glow.setColor(QColor("#818cf8"))
             glow.setOffset(0, 0)
             self.setGraphicsEffect(glow)
         else:
