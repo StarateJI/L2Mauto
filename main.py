@@ -3,6 +3,49 @@ warnings.filterwarnings("ignore", message=".*TypedStorage is deprecated.*")
 
 import sys
 import os
+import datetime as _dt
+import traceback as _tb
+
+# ── ЛОВЕЦ КРАШЕЙ → crash.log ──────────────────────────────────────────────
+# СТАВИТСЯ ПЕРВЫМ. Без него любой краш (Python в Qt-слоте или native-сегфолт
+# от capture_rs.pyd / torch / ultralytics) уходит в stderr консоли и НЕ
+# попадает в логи — именно поэтому "логи не загрузились на GitHub".
+# crash.log лежит рядом с main.py. После краша — открой его и пришли.
+_CRASH_LOG = os.path.join(os.getcwd(), "crash.log")
+
+def _crash_header():
+    try:
+        with open(_CRASH_LOG, "a", encoding="utf-8") as _f:
+            _f.write(f"\n{'='*60}\n"
+                     f"ЗАПУСК бота: {_dt.datetime.now():%Y-%m-%d %H:%M:%S}\n"
+                     f"cwd: {os.getcwd()}\n{'='*60}\n")
+    except Exception:
+        pass
+
+_crash_header()
+
+# 1) native segfault → дамп Python-стека всех потоков в crash.log
+_crash_fh = None
+try:
+    import faulthandler as _fh
+    _crash_fh = open(_CRASH_LOG, "a", encoding="utf-8")
+    _fh.enable(file=_crash_fh, all_threads=True)
+except Exception:
+    pass
+
+# 2) необработанное Python-исключение (в т.ч. в Qt-слоте клика сценария)
+def _crash_dump(_et, _ev, _tb_obj):
+    try:
+        with open(_CRASH_LOG, "a", encoding="utf-8") as _f:
+            _f.write(f"\n### PYTHON CRASH @ {_dt.datetime.now():%Y-%m-%d %H:%M:%S} ###\n")
+            _tb.print_exception(_et, _ev, _tb_obj, file=_f)
+            _f.write("### END CRASH ###\n")
+    except Exception:
+        pass
+    _tb.print_exception(_et, _ev, _tb_obj)  # дублируем в консоль (cmd окно)
+
+sys.excepthook = _crash_dump
+# ── /ЛОВЕЦ КРАШЕЙ ─────────────────────────────────────────────────────────
 
 # ── ФИКС memory allocation of 14745616 bytes failed ──────────────────────
 # 14745616 = 2560×1440×4 (один фрейм фуллскрина). Это Rust-захват capture_rs.pyd
