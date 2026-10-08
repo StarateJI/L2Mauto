@@ -68,28 +68,7 @@ class WindowButton(QPushButton):
 
     def _update_style(self):
         if self.isChecked():
-            self.setStyleSheet("""
-                QPushButton {
-                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #22c55e, stop:1 #16a34a);
-                    border: 1px solid #4ade80;
-                    border-top: 1px solid #86efac;
-                    border-bottom: 1px solid #15803d;
-                    border-radius: 10px;
-                    color: #052e16;
-                    font-weight: 600;
-                }
-                QPushButton:hover {
-                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #4ade80, stop:1 #22c55e);
-                    border: 1px solid #86efac;
-                }
-                QPushButton:pressed {
-                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #16a34a, stop:1 #22c55e);
-                }
-            """)
-        else:
+            # Выбрано — стандартный стиль кнопок (как везде)
             self.setStyleSheet("""
                 QPushButton {
                     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -98,8 +77,8 @@ class WindowButton(QPushButton):
                     border-top: 1px solid #4a4a63;
                     border-bottom: 1px solid #1f1f30;
                     border-radius: 10px;
-                    color: #71717a;
-                    font-weight: 400;
+                    color: #d4d4d8;
+                    font-weight: 600;
                 }
                 QPushButton:hover {
                     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -111,6 +90,30 @@ class WindowButton(QPushButton):
                 QPushButton:pressed {
                     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                         stop:0 #2a2a3d, stop:1 #34344a);
+                }
+            """)
+        else:
+            # Не выбрано — тусклый
+            self.setStyleSheet("""
+                QPushButton {
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #1f1f30, stop:1 #1a1a26);
+                    border: 1px solid #2a2a3d;
+                    border-top: 1px solid #30304a;
+                    border-bottom: 1px solid #14141f;
+                    border-radius: 10px;
+                    color: #52525b;
+                    font-weight: 400;
+                }
+                QPushButton:hover {
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #2a2a3d, stop:1 #1f1f30);
+                    border: 1px solid #3d3d52;
+                    color: #71717a;
+                }
+                QPushButton:pressed {
+                    background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #1a1a26, stop:1 #1f1f30);
                 }
             """)
 
@@ -131,49 +134,50 @@ class DungeonTypeButton(QPushButton):
 
     def _update_style(self):
         if self.isChecked():
+            # Выбрано — индиго акцент (как кнопка обновы/запустить)
             self.setStyleSheet("""
                 QPushButton {
                     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #fb923c, stop:1 #f97316);
-                    border: 1px solid #fdba74;
-                    border-top: 1px solid #fed7aa;
-                    border-bottom: 1px solid #c2410c;
+                        stop:0 #818cf8, stop:1 #6366f1);
+                    border: 1px solid #a5b4fc;
+                    border-top: 1px solid #c7d2fe;
+                    border-bottom: 1px solid #4f46e5;
                     border-radius: 10px;
-                    color: #431407;
-                    font-weight: 600;
+                    color: #ffffff;
+                    font-weight: 700;
                 }
                 QPushButton:hover {
                     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #fdba74, stop:1 #fb923c);
-                    border: 1px solid #fed7aa;
+                        stop:0 #a5b4fc, stop:1 #818cf8);
+                    border: 1px solid #c7d2fe;
                 }
                 QPushButton:pressed {
                     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #f97316, stop:1 #fb923c);
+                        stop:0 #6366f1, stop:1 #818cf8);
                 }
             """)
         else:
+            # Не выбрано — тусклый
             self.setStyleSheet("""
                 QPushButton {
                     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #34344a, stop:1 #2a2a3d);
-                    border: 1px solid #3d3d52;
-                    border-top: 1px solid #4a4a63;
-                    border-bottom: 1px solid #1f1f30;
+                        stop:0 #1f1f30, stop:1 #1a1a26);
+                    border: 1px solid #2a2a3d;
+                    border-top: 1px solid #30304a;
+                    border-bottom: 1px solid #14141f;
                     border-radius: 10px;
-                    color: #71717a;
+                    color: #52525b;
                     font-weight: 400;
                 }
                 QPushButton:hover {
                     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #3d3d56, stop:1 #30304a);
-                    border: 1px solid #818cf8;
-                    border-top: 1px solid #a5b4fc;
-                    color: #c7d2fe;
+                        stop:0 #2a2a3d, stop:1 #1f1f30);
+                    border: 1px solid #3d3d52;
+                    color: #71717a;
                 }
                 QPushButton:pressed {
                     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #2a2a3d, stop:1 #34344a);
+                        stop:0 #1a1a26, stop:1 #1f1f30);
                 }
             """)
 
@@ -252,7 +256,7 @@ class WindowSelectorDialog(QDialog):
 
         self.lbl_count_windows = QLabel("0 выбрано")
         self.lbl_count_windows.setStyleSheet(
-            "color: #22c55e; font-size: 9pt; font-weight: 700; padding: 2px 8px;"
+            "color: #a5b4fc; font-size: 9pt; font-weight: 700; padding: 2px 8px;"
         )
         btn_row.addWidget(self.lbl_count_windows, alignment=Qt.AlignRight)
         layout.addLayout(btn_row)
@@ -297,23 +301,23 @@ class WindowSelectorDialog(QDialog):
         self.btn_ok.setStyleSheet("""
             QPushButton {
                 background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #22c55e, stop:1 #16a34a);
-                border: 1px solid #4ade80;
-                border-top: 1px solid #86efac;
-                border-bottom: 1px solid #15803d;
+                    stop:0 #818cf8, stop:1 #6366f1);
+                border: 1px solid #a5b4fc;
+                border-top: 1px solid #c7d2fe;
+                border-bottom: 1px solid #4f46e5;
                 border-radius: 10px;
-                color: #052e16;
+                color: #ffffff;
                 font-weight: 700;
                 letter-spacing: 1px;
             }
             QPushButton:hover {
                 background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #4ade80, stop:1 #22c55e);
-                border: 1px solid #86efac;
+                    stop:0 #a5b4fc, stop:1 #818cf8);
+                border: 1px solid #c7d2fe;
             }
             QPushButton:pressed {
                 background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #16a34a, stop:1 #22c55e);
+                    stop:0 #6366f1, stop:1 #818cf8);
             }
         """)
         self.btn_ok.clicked.connect(self._on_ok)
@@ -424,7 +428,7 @@ class WindowSelectorDialog(QDialog):
 
             lbl_d = QLabel("⚔ Тип данжа:")
             lbl_d.setStyleSheet(
-                "color: #fb923c; font-size: 10pt; font-weight: 600;"
+                "color: #71717a; font-size: 10pt; font-weight: 600;"
             )
             panel_layout.addWidget(lbl_d)
 

@@ -248,24 +248,26 @@ class GridCell(QFrame):
     def _update_style(self):
         #todo закинуть в стили
         if self.nick:
+            # Занято — стандартный стиль (как все кнопки)
             self.setStyleSheet("""
                 QFrame {
                     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #22c55e, stop:1 #16a34a);
-                    border: 1px solid #4ade80;
-                    border-top: 1px solid #86efac;
-                    border-bottom: 1px solid #15803d;
+                        stop:0 #34344a, stop:1 #2a2a3d);
+                    border: 1px solid #3d3d52;
+                    border-top: 1px solid #4a4a63;
+                    border-bottom: 1px solid #1f1f30;
                     border-radius: 8px;
                 }
             """)
         else:
+            # Пусто — тусклый
             self.setStyleSheet("""
                 QFrame {
                     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 #2a2a3d, stop:1 #1f1f30);
-                    border: 1px solid #3d3d52;
-                    border-top: 1px solid #4a4a63;
-                    border-bottom: 1px solid #1f1f30;
+                        stop:0 #1f1f30, stop:1 #1a1a26);
+                    border: 1px solid #2a2a3d;
+                    border-top: 1px solid #30304a;
+                    border-bottom: 1px solid #14141f;
                     border-radius: 8px;
                 }
             """)
@@ -613,25 +615,27 @@ class TilingDialog(QDialog):
         b_save.setToolTip("Запомнить где какое окно стоит сейчас")
         b_save.setStyleSheet("""
             QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #22c55e, stop:1 #16a34a);
-                border: 1px solid #4ade80;
-                border-top: 1px solid #86efac;
-                border-bottom: 1px solid #15803d;
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #34344a, stop:1 #2a2a3d);
+                border: 1px solid #3d3d52;
+                border-top: 1px solid #4a4a63;
+                border-bottom: 1px solid #1f1f30;
                 border-radius: 10px;
-                color: #052e16;
-                font-weight: 700;
+                color: #d4d4d8;
+                font-weight: 600;
                 padding: 6px 16px;
                 font-size: 9pt;
             }
             QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #4ade80, stop:1 #22c55e);
-                border: 1px solid #86efac;
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #3d3d56, stop:1 #30304a);
+                border: 1px solid #818cf8;
+                border-top: 1px solid #a5b4fc;
+                color: #c7d2fe;
             }
             QPushButton:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #16a34a, stop:1 #22c55e);
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #2a2a3d, stop:1 #34344a);
             }
         """)
         b_save.clicked.connect(self._save_positions)
@@ -643,25 +647,25 @@ class TilingDialog(QDialog):
         b_restore.setToolTip("Поставить все окна на сохранённые места + рабочий размер 400x225")
         b_restore.setStyleSheet("""
             QPushButton {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #fb923c, stop:1 #f97316);
-                border: 1px solid #fdba74;
-                border-top: 1px solid #fed7aa;
-                border-bottom: 1px solid #c2410c;
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #818cf8, stop:1 #6366f1);
+                border: 1px solid #a5b4fc;
+                border-top: 1px solid #c7d2fe;
+                border-bottom: 1px solid #4f46e5;
                 border-radius: 10px;
-                color: #431407;
+                color: #ffffff;
                 font-weight: 700;
                 padding: 6px 16px;
                 font-size: 9pt;
             }
             QPushButton:hover {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #fdba74, stop:1 #fb923c);
-                border: 1px solid #fed7aa;
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #a5b4fc, stop:1 #818cf8);
+                border: 1px solid #c7d2fe;
             }
             QPushButton:pressed {
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 #f97316, stop:1 #fb923c);
+                background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #6366f1, stop:1 #818cf8);
             }
         """)
         b_restore.clicked.connect(self._restore_positions)
