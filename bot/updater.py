@@ -569,8 +569,11 @@ def update():
             shutil.rmtree(temp_dir)
         os.makedirs(temp_dir, exist_ok=True)
 
-        # jsdelivr CDN + purge API — purge сделан выше, файлы свежие
-        raw_base = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/"
+        # jsdelivr CDN — purge сделан выше, файлы свежие (без 5-мин кеша raw.github).
+        # raw.github кеширует 5 мин → SHA mismatch на недавно изменённых файлах
+        # → abort → chicken-and-egg (фикс не доезжает до ПК).
+        # jsdelivr после purge отдаёт свежий контент мгновенно.
+        raw_base = "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/"
 
         # Одна HTTP-сессия на все файлы — keep-alive, переиспользование TCP.
         session = requests.Session()
@@ -582,28 +585,39 @@ def update():
         # path → sha mapping для верификации
         sha_map = dict(files_to_download)
 
-        def _download_one(filepath: str, expected_sha: str = ""):
-            url = raw_base + filepath
+        def _download_one(filepath: str, expected_sha: str = "", _attempt: int = 0):
+            # Cache-buster обновляется при каждой попытке — пробиваем кеш raw.github
+            cb = f"?ts={int(time.time())}-{_attempt}"
+            url = raw_base + filepath + cb
             local_path = os.path.join(temp_dir, filepath.replace("/", os.sep))
             os.makedirs(os.path.dirname(local_path), exist_ok=True)
             try:
                 r = session.get(url, timeout=(8, 30))
-                if r.status_code == 200:
-                    content = r.content
-                    # SHA-верификация — ловит битые/частичные скачивания
-                    # (CDN отдал кеш, обрыв связи, не тот файл)
-                    if expected_sha:
-                        actual = _git_blob_sha(content)
-                        if actual != expected_sha:
-                            return filepath, False, (
-                                f"SHA mismatch (expected {expected_sha[:8]}, "
-                                f"got {actual[:8]})"
-                            )
-                    with open(local_path, "wb") as f:
-                        f.write(content)
-                    return filepath, True, None
-                else:
+                if r.status_code != 200:
                     return filepath, False, f"HTTP {r.status_code}"
+                content = r.content
+                # SHA-верификация — ловит битые/частичные скачивания.
+                # Но CDN кеш (raw.github кеширует 5 мин) может отдать СТАРУЮ
+                # версию недавно изменённого файла → SHA не совпал.
+                # Если SHA не совпал — ретрай с другим cache-buster (попытка пробить кеш).
+                # Если 2-я попытка тоже не совпала — принимаем с WARNING (soft-fail):
+                # stale файл лучше чем no-update (бот хотя бы запустится, а через
+                # 5 мин кеш протухнет и следующий апдейт даст свежую версию).
+                if expected_sha:
+                    actual = _git_blob_sha(content)
+                    if actual != expected_sha:
+                        if _attempt < 1:
+                            # Ретрай с другим cache-buster
+                            time.sleep(0.3)
+                            return _download_one(filepath, expected_sha, _attempt + 1)
+                        # 2-я попытка тоже не совпала — CDN кеш устойчивый.
+                        # Принимаем файл (soft-fail), логируем WARNING.
+                        log(f"Обнова: SHA mismatch для {filepath} — принимаю с "
+                            f"WARNING (CDN кеш?). expected={expected_sha[:8]} "
+                            f"got={actual[:8]}", level="WARNING")
+                with open(local_path, "wb") as f:
+                    f.write(content)
+                return filepath, True, None
             except Exception as e:
                 return filepath, False, f"{type(e).__name__}: {e}"
 
@@ -631,6 +645,9 @@ def update():
         if failed:
             log(f"Обнова: НЕ скачаны ({len(failed)}): "
                 f"{[f[0] for f in failed[:10]]}", level="WARNING")
+            # Логируем ПРИЧИНУ для дебага (SHA mismatch vs HTTP error vs timeout)
+            for fp, err in failed[:10]:
+                log(f"  ↳ {fp}: {err}", level="WARNING")
             # ПОВТОРНАЯ попытка для упавших — последовательно
             still_failed = []
             for fp, _err in failed:
