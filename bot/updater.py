@@ -7,6 +7,8 @@ import configparser
 import sys
 import subprocess
 import time
+import hashlib
+import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from bot.clogger import log
 
@@ -400,6 +402,136 @@ exit
     return bat_path
 
 
+# ── ДИНАМИЧЕСКИЙ СПИСОК ФАЙЛОВ ─────────────────────────────────────────────
+# Раньше был захардкоженный FILES_TO_DOWNLOAD (130+ строк). Если добавляли
+# новый файл в репо, но забывали добавить в список — файл не доходил до
+# клиентов → ModuleNotFoundError (как было с gui/window_selector.py).
+# Теперь: список берётся с GitHub Git Trees API (динамически) + короткий
+# exclusion list (что НЕ качать).
+
+# Fallback-список — используется ТОЛЬКО если Git Trees API упал (rate limit / сеть).
+# Содержит критичные файлы. При нормальной работе не используется.
+FALLBACK_FILES = [
+    "bot/version.txt", "bot/updater.py", "bot/clogger.py", "bot/constans.py",
+    "bot/controller.py", "bot/delays.py", "bot/limits.py", "bot/log_uploader.py",
+    "bot/manager.py", "bot/misc.py", "bot/utils.py", "bot/windows_memory.py",
+    "bot/yolo_detector.py", "bot/ocr.py", "bot/vlm.py", "bot/vlm_client.py",
+    "bot/ollama_vlm.py", "bot/methods/game/__init__.py", "bot/methods/game/_base.py",
+    "bot/methods/game/auction.py", "bot/methods/game/claims.py",
+    "bot/methods/game/combat.py", "bot/methods/game/energo.py",
+    "bot/methods/game/errors.py", "bot/methods/game/party_dungeon.py",
+    "bot/methods/game/scheduler.py", "bot/methods/game/teleport.py",
+    "bot/methods/game/town.py", "bot/methods/base.py", "bot/methods/other.py",
+    "bot/cbt/cbt.py", "bot/events/checker.py", "bot/events/enums.py",
+    "bot/events/events.py", "bot/capture/__init__.py", "bot/capture/backend.py",
+    "bot/capture/hwnd.py", "bot/capture/mss_backend.py", "bot/capture/rust_backend.py",
+    "bot/alchemy/alch_cons.py", "bot/alchemy/alch_utils.py",
+    "bot/alchemy/main_alch.py", "bot/alchemy/mini_alch.py",
+    "profiles/base.py", "profiles/event_driven.py",
+    "profiles/Auction/auction.py", "profiles/Dungeon/dungeon.py",
+    "profiles/PvpProfile/pvp.py", "profiles/RewardsProfile/rewards.py",
+    "profiles/Scheduler/scheduler.py", "profiles/BuyerProfile/buyer.py",
+    "profiles/MainAlch/alch.py", "gui/maingui.py", "gui/single.py",
+    "gui/cache.py", "main.py", "requirements.txt",
+    "profiles/Dungeon/blessed_zemlya.png", "profiles/Dungeon/blessed_land_text.png",
+    "bot/__init__.py", "bot/methods/__init__.py", "bot/events/__init__.py",
+    "bot/alchemy/__init__.py", "bot/windows/__init__.py", "profiles/__init__.py",
+    "profiles/Auction/__init__.py", "profiles/Dungeon/__init__.py",
+    "profiles/BuyerProfile/__init__.py", "profiles/PvpProfile/__init__.py",
+    "profiles/RewardsProfile/__init__.py", "profiles/Scheduler/__init__.py",
+    "profiles/MainAlch/__init__.py", "gui/__init__.py", "bot/cbt/__init__.py",
+    "bot/windows/base.py", "bot/windows/runtime.py", "bot/windows/settings_loader.py",
+    "gui/alch_gui.py", "gui/alch_presets.py", "gui/donate.py", "gui/driver_error.py",
+    "gui/editor.py", "gui/region_selector.py", "gui/settings_changer.py",
+    "gui/styles.py", "gui/tiling.py", "gui/windows_selector.py",
+    "gui/window_selector.py", "tgbot/bot.py", "tgbot/config.py",
+    "tgbot/handlers/__init__.py", "tgbot/handlers/global_menu.py",
+    "tgbot/handlers/ignore.py", "tgbot/handlers/manage.py", "tgbot/handlers/menu.py",
+    "tgbot/handlers/notifications.py", "tgbot/handlers/prank.py",
+    "tgbot/handlers/screenshot.py", "tgbot/handlers/start.py",
+    "tgbot/handlers/windows.py", "tgbot/keyboards/global_menu.py",
+    "tgbot/keyboards/manage.py", "tgbot/keyboards/menu.py",
+    "tgbot/keyboards/notifications.py", "tgbot/keyboards/prank.py",
+    "tgbot/keyboards/screenshot.py", "tgbot/keyboards/windows.py",
+    "tgbot/services/decorators.py", "tgbot/services/notifier.py",
+    "tgbot/services/setup.py", "tgbot/states/flow.py", "tgbot/utils/pagination.py",
+    "digit_templates.json", "tgbot/keyboards/logs.py", "tgbot/handlers/logs.py",
+    "interception/strokes.py", "interception/interception.py", "interception/inputs.py",
+    "interception/exceptions.py", "interception/device.py", "interception/constants.py",
+    "interception/beziercurve.py", "interception/_utils.py",
+    "interception/_keycodes.py", "interception/_ioctl.py", "interception/__init__.py",
+]
+
+# Папки которые НИКОГДА не качаем (локальные/тренировочные/мусор)
+EXCLUDE_DIRS = {
+    ".git", ".github", "backups", "logs", "temp_update",
+    "debug_latest", "yolo_dataset", "__pycache__", "settings",
+    "github_l2monad", "installer",
+}
+
+# Файлы которые НЕ качаем поимённо
+EXCLUDE_FILES = {
+    ".gitignore", ".gitattributes", "LICENSE", "README.md", "ROADMAP.md",
+    "apply_update.bat", "apply_update.log", "crash.log",
+    "window_selection.json",
+    # крупные бинарники — качаются отдельно через powershell (Step 3c в apply_update.bat)
+    "bot/models/item_detector.pt",
+    "bot/alchemy/L2Monad.pth",
+    "yolo_dataset/yolov8n.pt",
+}
+
+# Суффиксы которые НЕ качаем
+EXCLUDE_SUFFIX = (".pyc", ".pyo", ".old", ".log")
+
+# Если хоть один из этих не скачался → АБОРТ обновы (half-update хуже no-update)
+CRITICAL_FILES = [
+    "main.py", "bot/updater.py", "bot/version.txt", "bot/clogger.py",
+    "bot/controller.py", "bot/utils.py", "gui/maingui.py",
+    "gui/window_selector.py", "gui/windows_selector.py",
+    "gui/styles.py", "bot/methods/base.py", "bot/methods/game/_base.py",
+]
+
+
+def _git_blob_sha(content: bytes) -> str:
+    """GitHub blob SHA = sha1('blob {size}\0{content}')."""
+    return hashlib.sha1(f"blob {len(content)}\0".encode() + content).hexdigest()
+
+
+def _fetch_remote_filetree() -> list:
+    """
+    Получить полное дерево файлов репо через Git Trees API.
+    Возвращает [(path, sha), ...] только для blob (файлов).
+    """
+    tok = _load_github_token()
+    headers = {"Accept": "application/vnd.github+json"}
+    if tok:
+        headers["Authorization"] = f"token {tok}"
+    url = "https://api.github.com/repos/StarateJI/L2Mauto/git/trees/main?recursive=1"
+    r = requests.get(url, timeout=15, headers=headers)
+    r.raise_for_status()
+    data = r.json()
+    if data.get("truncated"):
+        log("Обнова: ВНИМАНИЕ — дерево репо обрезано API! Часть файлов может "
+            "не скачаться. Сообщи разработчику.", level="WARNING")
+    return [(e["path"], e.get("sha", "")) for e in data.get("tree", [])
+            if e.get("type") == "blob"]
+
+
+def _filter_downloadable(entries: list) -> list:
+    """Применить exclusion list к дереву файлов."""
+    result = []
+    for path, sha in entries:
+        parts = path.split("/")
+        if any(p in EXCLUDE_DIRS for p in parts):
+            continue
+        if path in EXCLUDE_FILES:
+            continue
+        if any(path.endswith(suf) for suf in EXCLUDE_SUFFIX):
+            continue
+        result.append((path, sha))
+    return result
+
+
 def update():
     try:
         root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -417,167 +549,58 @@ def update():
         except Exception as e:
             log(f"Обнова: purge не сработал: {e}", level="DEBUG")
 
-        # GitHub кеширует ZIP (194MB из-за старой истории).
-        # Скачиваем отдельные файлы через raw URLs ПАРАЛЛЕЛЬНО через пул потоков.
-
-        # Список файлов для скачивания (относительно корня репо)
-        FILES_TO_DOWNLOAD = [
-            "bot/version.txt",
-            "bot/updater.py",
-            "bot/clogger.py",
-            "bot/constans.py",
-            "bot/controller.py",
-            "bot/delays.py",
-            "bot/limits.py",
-            "bot/log_uploader.py",
-            "bot/manager.py",
-            "bot/misc.py",
-            "bot/utils.py",
-            "bot/windows_memory.py",
-            "bot/yolo_detector.py",
-            "bot/ocr.py",
-            "bot/vlm.py",
-            "bot/vlm_client.py",
-            "bot/ollama_vlm.py",
-            "bot/methods/game/__init__.py",
-            "bot/methods/game/_base.py",
-            "bot/methods/game/auction.py",
-            "bot/methods/game/claims.py",
-            "bot/methods/game/combat.py",
-            "bot/methods/game/energo.py",
-            "bot/methods/game/errors.py",
-            "bot/methods/game/party_dungeon.py",
-            "bot/methods/game/scheduler.py",
-            "bot/methods/game/teleport.py",
-            "bot/methods/game/town.py",
-            "bot/methods/base.py",
-            "bot/methods/other.py",
-            "bot/cbt/cbt.py",
-            "bot/events/checker.py",
-            "bot/events/enums.py",
-            "bot/events/events.py",
-            "bot/capture/__init__.py",
-            "bot/capture/backend.py",
-            "bot/capture/hwnd.py",
-            "bot/capture/mss_backend.py",
-            "bot/capture/rust_backend.py",
-            "bot/alchemy/alch_cons.py",
-            "bot/alchemy/alch_utils.py",
-            "bot/alchemy/main_alch.py",
-            "bot/alchemy/mini_alch.py",
-            "profiles/base.py",
-            "profiles/event_driven.py",
-            "profiles/Auction/auction.py",
-            "profiles/Dungeon/dungeon.py",
-            "profiles/PvpProfile/pvp.py",
-            "profiles/RewardsProfile/rewards.py",
-            "profiles/Scheduler/scheduler.py",
-            "profiles/BuyerProfile/buyer.py",
-            "profiles/MainAlch/alch.py",
-            "gui/maingui.py",
-            "gui/single.py",
-            "gui/cache.py",
-            "main.py",
-            "requirements.txt",
-            "profiles/Dungeon/blessed_zemlya.png",
-            "profiles/Dungeon/blessed_land_text.png",
-            "bot/__init__.py",
-            "bot/methods/__init__.py",
-            "bot/events/__init__.py",
-            "bot/alchemy/__init__.py",
-            "bot/windows/__init__.py",
-            "profiles/__init__.py",
-            "profiles/Auction/__init__.py",
-            "profiles/Dungeon/__init__.py",
-            "profiles/BuyerProfile/__init__.py",
-            "profiles/PvpProfile/__init__.py",
-            "profiles/RewardsProfile/__init__.py",
-            "profiles/Scheduler/__init__.py",
-            "profiles/MainAlch/__init__.py",
-            "gui/__init__.py",
-                    "bot/cbt/__init__.py",
-            "bot/windows/base.py",
-            "bot/windows/runtime.py",
-            "bot/windows/settings_loader.py",
-            "gui/alch_gui.py",
-            "gui/alch_presets.py",
-            "gui/donate.py",
-            "gui/driver_error.py",
-            "gui/editor.py",
-            "gui/region_selector.py",
-            "gui/settings_changer.py",
-            "gui/styles.py",
-            "gui/tiling.py",
-            "gui/windows_selector.py",
-            "gui/window_selector.py",
-            "tgbot/bot.py",
-            "tgbot/config.py",
-            "tgbot/handlers/__init__.py",
-            "tgbot/handlers/global_menu.py",
-            "tgbot/handlers/ignore.py",
-            "tgbot/handlers/manage.py",
-            "tgbot/handlers/menu.py",
-            "tgbot/handlers/notifications.py",
-            "tgbot/handlers/prank.py",
-            "tgbot/handlers/screenshot.py",
-            "tgbot/handlers/start.py",
-            "tgbot/handlers/windows.py",
-            "tgbot/keyboards/global_menu.py",
-            "tgbot/keyboards/manage.py",
-            "tgbot/keyboards/menu.py",
-            "tgbot/keyboards/notifications.py",
-            "tgbot/keyboards/prank.py",
-            "tgbot/keyboards/screenshot.py",
-            "tgbot/keyboards/windows.py",
-            "tgbot/services/decorators.py",
-            "tgbot/services/notifier.py",
-            "tgbot/services/setup.py",
-            "tgbot/states/flow.py",
-            "tgbot/utils/pagination.py",
-            "digit_templates.json",
-            "tgbot/keyboards/logs.py",
-            "tgbot/handlers/logs.py",
-            "interception/strokes.py",
-            "interception/interception.py",
-            "interception/inputs.py",
-            "interception/exceptions.py",
-            "interception/device.py",
-            "interception/constants.py",
-            "interception/beziercurve.py",
-            "interception/_utils.py",
-            "interception/_keycodes.py",
-            "interception/_ioctl.py",
-            "interception/__init__.py",
-]
+        # ── ДИНАМИЧЕСКИЙ список файлов с GitHub ────────────────────────────
+        # Git Trees API отдаёт ВСЕ файлы репо. Фильтруем exclusion list.
+        # Любой новый файл в репо → автоматически скачается. Больше никаких
+        # 'забыл добавить в FILES_TO_DOWNLOAD'.
+        try:
+            tree_entries = _fetch_remote_filetree()
+            files_to_download = _filter_downloadable(tree_entries)
+            log(f"Обнова: Git Trees API — {len(tree_entries)} файлов в репо, "
+                f"{len(files_to_download)} качаем (excluded={len(tree_entries)-len(files_to_download)})",
+                level="INFO")
+        except Exception as e:
+            log(f"Обнова: Git Trees API упал ({type(e).__name__}: {e}) — "
+                "fallback на захардкоженный список", level="WARNING")
+            files_to_download = [(f, "") for f in FALLBACK_FILES]
 
         temp_dir = os.path.join(root_dir, "temp_update")
         if os.path.exists(temp_dir):
             shutil.rmtree(temp_dir)
         os.makedirs(temp_dir, exist_ok=True)
 
-        # jsdelivr CDN + purge API — мгновенная очистка кеша перед скачиванием.
-        # jsdelivr кеширует до 12 часов, НО через purge.jsdelivr.net можно
-        # очистить кеш мгновенно. Без purge бот качает старые файлы.
+        # jsdelivr CDN + purge API — purge сделан выше, файлы свежие
         raw_base = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/"
 
         # Одна HTTP-сессия на все файлы — keep-alive, переиспользование TCP.
-        # Так 71 файл качается за ~5 сек вместо ~30 сек.
         session = requests.Session()
         tok = _load_github_token()
         if tok:
             session.headers["Authorization"] = f"token {tok}"
         session.headers["Cache-Control"] = "no-cache"
 
-        def _download_one(filepath: str):
-            # jsdelivr CDN — purge сделан ранее, файлы свежие
+        # path → sha mapping для верификации
+        sha_map = dict(files_to_download)
+
+        def _download_one(filepath: str, expected_sha: str = ""):
             url = raw_base + filepath
             local_path = os.path.join(temp_dir, filepath.replace("/", os.sep))
             os.makedirs(os.path.dirname(local_path), exist_ok=True)
             try:
                 r = session.get(url, timeout=(8, 30))
                 if r.status_code == 200:
+                    content = r.content
+                    # SHA-верификация — ловит битые/частичные скачивания
+                    # (CDN отдал кеш, обрыв связи, не тот файл)
+                    if expected_sha:
+                        actual = _git_blob_sha(content)
+                        if actual != expected_sha:
+                            return filepath, False, (
+                                f"SHA mismatch (expected {expected_sha[:8]}, "
+                                f"got {actual[:8]})"
+                            )
                     with open(local_path, "wb") as f:
-                        f.write(r.content)
+                        f.write(content)
                     return filepath, True, None
                 else:
                     return filepath, False, f"HTTP {r.status_code}"
@@ -585,42 +608,57 @@ def update():
                 return filepath, False, f"{type(e).__name__}: {e}"
 
         # ПАРАЛЛЕЛЬНАЯ загрузка — 8 потоков одновременно.
-        # raw.githubusercontent держит keep-alive, не банит параллельные запросы.
         t0 = time.time()
         downloaded = 0
         failed = []
+        total = len(files_to_download)
         with ThreadPoolExecutor(max_workers=8) as ex:
-            futures = [ex.submit(_download_one, fp) for fp in FILES_TO_DOWNLOAD]
+            futures = [ex.submit(_download_one, fp, sha)
+                       for fp, sha in files_to_download]
             for i, fut in enumerate(as_completed(futures), 1):
                 fp, ok, err = fut.result()
                 if ok:
                     downloaded += 1
                 else:
-                    failed.append(fp)
-                # логируем прогресс каждые 20 файлов
-                if i % 20 == 0 or i == len(FILES_TO_DOWNLOAD):
-                    log(f"Обнова: скачано {i}/{len(FILES_TO_DOWNLOAD)} "
+                    failed.append((fp, err))
+                if i % 20 == 0 or i == total:
+                    log(f"Обнова: скачано {i}/{total} "
                         f"(ok={downloaded}, fail={len(failed)})", level="DEBUG")
 
         dt = time.time() - t0
-        log(f"Обнова: скачано {downloaded}/{len(FILES_TO_DOWNLOAD)} файлов "
+        log(f"Обнова: скачано {downloaded}/{total} файлов "
             f"за {dt:.1f}с, ошибок: {len(failed)}", level="INFO")
         if failed:
-            log(f"Обнова: НЕ скачаны ({len(failed)}): {failed[:10]}", level="WARNING")
-            # ПОВТОРНАЯ попытка для упавших — последовательно, без пула
+            log(f"Обнова: НЕ скачаны ({len(failed)}): "
+                f"{[f[0] for f in failed[:10]]}", level="WARNING")
+            # ПОВТОРНАЯ попытка для упавших — последовательно
+            still_failed = []
+            for fp, _err in failed:
+                res_fp, ok, err = _download_one(fp, sha_map.get(fp, ""))
+                if ok:
+                    downloaded += 1
+                    log(f"Обнова: повторно скачан {fp}", level="DEBUG")
+                else:
+                    still_failed.append((fp, err))
+            failed = still_failed
             if failed:
-                log(f"Обнова: повтор неудачных ({len(failed)})...", level="DEBUG")
-                still_failed = []
-                for fp in failed:
-                    res_fp, ok, err = _download_one(fp)
-                    if ok:
-                        downloaded += 1
-                        log(f"Обнова: повторно скачан {fp}", level="DEBUG")
-                    else:
-                        still_failed.append(fp)
-                failed = still_failed
-                if failed:
-                    log(f"Обнова: окончательно НЕ скачаны: {failed}", level="WARNING")
+                log(f"Обнова: окончательно НЕ скачаны: "
+                    f"{[f[0] for f in failed]}", level="WARNING")
+
+        # ── ПРОВЕРКА КРИТИЧНЫХ ФАЙЛОВ ──────────────────────────────────────
+        # Если хоть один критичный .py не скачался — НЕ применяем обнову.
+        # Half-update хуже чем no-update: были краши ModuleNotFoundError.
+        missing_critical = [
+            f for f in CRITICAL_FILES
+            if not os.path.exists(os.path.join(temp_dir, f.replace("/", os.sep)))
+        ]
+        if missing_critical:
+            log(f"Обнова: АБОРТ — критичные файлы не скачались: "
+                f"{missing_critical}", level="ERROR")
+            log("Обнова: обновление НЕ применено. Бот работает на старой "
+                "версии. Проверь интернет / сообщи разработчику.", level="ERROR")
+            shutil.rmtree(temp_dir, ignore_errors=True)
+            return  # не _os._exit — бот продолжает работать
 
         # _write_apply_bat + запуск
 

@@ -47,6 +47,51 @@ def _crash_dump(_et, _ev, _tb_obj):
 sys.excepthook = _crash_dump
 # ── /ЛОВЕЦ КРАШЕЙ ─────────────────────────────────────────────────────────
 
+# ── SELF-REPAIR: проверка критичных файлов при старте ─────────────────────
+# Решает chicken-and-egg: если старый updater не скачал файл (забыл добавить
+# в список), бот при старте проверит и докачает сам.
+# Список синхронизирован с CRITICAL_FILES в bot/updater.py.
+_SELF_REPAIR_FILES = [
+    "gui/window_selector.py",      # v5.13.10 добавил, но забыл в FILES_TO_DOWNLOAD
+    "gui/windows_selector.py",
+    "gui/maingui.py",
+    "bot/updater.py",
+    "bot/controller.py",
+    "bot/utils.py",
+]
+
+def _self_repair():
+    """Докачать критичные файлы если их нет. Тихо, без UI."""
+    missing = []
+    for fp in _SELF_REPAIR_FILES:
+        local = os.path.join(os.getcwd(), fp.replace("/", os.sep))
+        if not os.path.exists(local):
+            missing.append(fp)
+    if not missing:
+        return
+    print(f"[self-repair] нет файлов: {missing} — докачиваю с GitHub...")
+    try:
+        import requests as _req
+        raw_base = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/"
+        for fp in missing:
+            local = os.path.join(os.getcwd(), fp.replace("/", os.sep))
+            os.makedirs(os.path.dirname(local), exist_ok=True)
+            try:
+                r = _req.get(raw_base + fp, timeout=15)
+                if r.status_code == 200 and len(r.content) > 10:
+                    with open(local, "wb") as f:
+                        f.write(r.content)
+                    print(f"[self-repair] OK: {fp} ({len(r.content)} bytes)")
+                else:
+                    print(f"[self-repair] FAIL: {fp} (HTTP {r.status_code})")
+            except Exception as e:
+                print(f"[self-repair] FAIL: {fp} ({e})")
+    except Exception as e:
+        print(f"[self-repair] не смог: {e}")
+
+_self_repair()
+# ── /SELF-REPAIR ───────────────────────────────────────────────────────────
+
 # ── ФИКС memory allocation of 14745616 bytes failed ──────────────────────
 # 14745616 = 2560×1440×4 (один фрейм фуллскрина). Это Rust-захват capture_rs.pyd
 # пытается выделить буфер и падает на одном ПК.
