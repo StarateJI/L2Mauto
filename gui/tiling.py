@@ -184,14 +184,21 @@ class NickTile(QLabel):
         #todo закинуть в стили
         self.setStyleSheet("""
             QLabel {
-                background: #1c1c28;
-                border: 1px solid #444;
-                border-radius: 2px;
-                color: #aaa;
-                font: 7pt "Segoe UI";
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #34344a, stop:1 #2a2a3d);
+                border: 1px solid #3d3d52;
+                border-top: 1px solid #4a4a63;
+                border-radius: 8px;
+                color: #a1a1aa;
+                font: 7pt 'Segoe UI Variable Display', 'Segoe UI', sans-serif;
                 padding: 0 2px;
             }
-            QLabel:hover { background: #252535; color: #00ffcc; border-color: #00ffcc; }
+            QLabel:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #3d3d56, stop:1 #30304a);
+                color: #c7d2fe;
+                border-color: #818cf8;
+            }
         """)
 
     def mousePressEvent(self, event):
@@ -229,9 +236,9 @@ class GridCell(QFrame):
         self._btn.setFixedSize(14, 14)
         self._btn.setCursor(Qt.PointingHandCursor)
         self._btn.setStyleSheet(
-            "QPushButton { background: #0d1418; border: 1px solid #00ccaa; color: #00ffcc;"
-            " font: bold 7pt 'Segoe UI'; padding: 0; border-radius: 2px; }"
-            "QPushButton:hover { background: #142428; }"
+            "QPushButton { background: #1a1a26; border: 1px solid #818cf8; color: #c7d2fe;"
+            " font: bold 7pt 'Segoe UI Variable Display', 'Segoe UI', sans-serif; padding: 0; border-radius: 6px; }"
+            "QPushButton:hover { background: #2a2a3d; border-color: #a5b4fc; }"
         )
         self._btn.move(cell_w - 16, 2)
         self._btn.hide()
@@ -241,9 +248,27 @@ class GridCell(QFrame):
     def _update_style(self):
         #todo закинуть в стили
         if self.nick:
-            self.setStyleSheet("QFrame { background: #1a2a2a; border: 1px solid #00ccaa; }")
+            self.setStyleSheet("""
+                QFrame {
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #22c55e, stop:1 #16a34a);
+                    border: 1px solid #4ade80;
+                    border-top: 1px solid #86efac;
+                    border-bottom: 1px solid #15803d;
+                    border-radius: 8px;
+                }
+            """)
         else:
-            self.setStyleSheet("QFrame { background: #161620; border: 1px solid #2a2a2a; }")
+            self.setStyleSheet("""
+                QFrame {
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 #2a2a3d, stop:1 #1f1f30);
+                    border: 1px solid #3d3d52;
+                    border-top: 1px solid #4a4a63;
+                    border-bottom: 1px solid #1f1f30;
+                    border-radius: 8px;
+                }
+            """)
 
     def assign(self, nick):
         self.nick = nick
@@ -301,17 +326,17 @@ class GridCell(QFrame):
         p = QPainter(self)
         p.setRenderHint(QPainter.Antialiasing)
         if self._hover and not self.nick:
-            p.fillRect(self.rect().adjusted(1, 1, -1, -1), QColor(0, 255, 204, 25))
+            p.fillRect(self.rect().adjusted(1, 1, -1, -1), QColor(129, 140, 248, 40))
         if self.nick:
-            p.setPen(QColor("#00ffcc"))
-            f = QFont("Segoe UI", 7, QFont.Bold)
+            p.setPen(QColor("#f4f4f5"))
+            f = QFont("Segoe UI Variable Display", 7, QFont.Bold)
             p.setFont(f)
             fm = p.fontMetrics()
             elided = fm.elidedText(self.nick, Qt.ElideRight, self.rect().width() - 6)
             p.drawText(self.rect(), Qt.AlignCenter, elided)
         else:
-            p.setPen(QColor("#333"))
-            p.setFont(QFont("Segoe UI", 6))
+            p.setPen(QColor("#52525b"))
+            p.setFont(QFont("Segoe UI Variable Display", 6))
             p.drawText(self.rect(), Qt.AlignCenter, f"{self.grid_col + 1},{self.grid_row + 1}")
         p.end()
 
@@ -464,18 +489,35 @@ class TilingDialog(QDialog):
     def _build_ui(self):
         # в стили
         self.setStyleSheet("""
-            QDialog { background: #111217; }
+            QDialog { background: #1a1a26; }
             QPushButton {
-                background: #1c1c28;
-                border: 1px solid #333;
-                border-radius: 3px;
-                color: #ccc;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #34344a, stop:1 #2a2a3d);
+                border: 1px solid #3d3d52;
+                border-top: 1px solid #4a4a63;
+                border-bottom: 1px solid #1f1f30;
+                border-radius: 10px;
+                color: #d4d4d8;
                 font-size: 9pt;
-                padding: 4px 10px;
+                font-weight: 600;
+                padding: 6px 10px;
             }
-            QPushButton:hover { background: #252535; border-color: #555; }
-            QPushButton:checked { background: #1a2a2a; border: 1px solid #00ccaa; color: #00ffcc; }
-            QLabel { color: #999; font-size: 9pt; }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #3d3d56, stop:1 #30304a);
+                border: 1px solid #818cf8;
+                border-top: 1px solid #a5b4fc;
+                color: #c7d2fe;
+            }
+            QPushButton:checked {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #818cf8, stop:1 #6366f1);
+                border: 1px solid #a5b4fc;
+                border-top: 1px solid #c7d2fe;
+                color: #ffffff;
+                font-weight: 700;
+            }
+            QLabel { color: #71717a; font-size: 9pt; }
         """)
 
         ml = QVBoxLayout(self)
@@ -499,11 +541,13 @@ class TilingDialog(QDialog):
         self.grid_scroll = QScrollArea()
         self.grid_scroll.setWidgetResizable(True)
         self.grid_scroll.setStyleSheet("""
-            QScrollArea { border: none; background: #0d0d12; }
-            QScrollBar:vertical { width: 6px; background: #111; }
-            QScrollBar::handle:vertical { background: #333; border-radius: 3px; }
-            QScrollBar:horizontal { height: 6px; background: #111; }
-            QScrollBar::handle:horizontal { background: #333; border-radius: 3px; }
+            QScrollArea { border: none; background: #1a1a26; }
+            QScrollBar:vertical { width: 6px; background: #1a1a26; }
+            QScrollBar::handle:vertical { background: #3d3d52; border-radius: 3px; }
+            QScrollBar::handle:vertical:hover { background: #818cf8; }
+            QScrollBar:horizontal { height: 6px; background: #1a1a26; }
+            QScrollBar::handle:horizontal { background: #3d3d52; border-radius: 3px; }
+            QScrollBar::handle:horizontal:hover { background: #818cf8; }
         """)
         self.grid_container = QWidget()
         self.grid_layout = QGridLayout(self.grid_container)
@@ -522,13 +566,13 @@ class TilingDialog(QDialog):
         pool_hdr.setContentsMargins(0, 6, 0, 0)
 
         lab_pool = QLabel("Свободные окна")
-        lab_pool.setStyleSheet("color: #888; font-weight: 600;")
+        lab_pool.setStyleSheet("color: #71717a; font-weight: 600; letter-spacing: 1px;")
         pool_hdr.addWidget(lab_pool)
 
         pool_hdr.addStretch(1)
 
         self.counter = QLabel()
-        self.counter.setStyleSheet("color: #666;")
+        self.counter.setStyleSheet("color: #52525b;")
         pool_hdr.addWidget(self.counter)
 
         ml.addLayout(pool_hdr)
@@ -537,9 +581,10 @@ class TilingDialog(QDialog):
         self.pool_scroll.setFixedHeight(80)
         self.pool_scroll.setWidgetResizable(True)
         self.pool_scroll.setStyleSheet("""
-            QScrollArea { border: 1px solid #1a1a1a; background: #0d0d12; }
-            QScrollBar:vertical { width: 5px; background: #111; }
-            QScrollBar::handle:vertical { background: #333; border-radius: 2px; }
+            QScrollArea { border: 1px solid #3d3d52; background: #1a1a26; border-radius: 8px; }
+            QScrollBar:vertical { width: 5px; background: #1a1a26; }
+            QScrollBar::handle:vertical { background: #3d3d52; border-radius: 2px; }
+            QScrollBar::handle:vertical:hover { background: #818cf8; }
         """)
         self.pool_widget = QWidget()
         self.pool_widget.setAcceptDrops(True)
@@ -563,31 +608,61 @@ class TilingDialog(QDialog):
         g_main.addStretch(1)
 
         b_save = QPushButton("💾 Сохранить расположение")
-        b_save.setFixedHeight(32)
+        b_save.setFixedHeight(34)
         b_save.setCursor(Qt.PointingHandCursor)
         b_save.setToolTip("Запомнить где какое окно стоит сейчас")
         b_save.setStyleSheet("""
             QPushButton {
-                background: #1a3a1a; border: 2px solid #4CAF50;
-                border-radius: 4px; color: #00ffcc; font-weight: bold;
-                padding: 4px 16px; font-size: 9pt;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #22c55e, stop:1 #16a34a);
+                border: 1px solid #4ade80;
+                border-top: 1px solid #86efac;
+                border-bottom: 1px solid #15803d;
+                border-radius: 10px;
+                color: #052e16;
+                font-weight: 700;
+                padding: 6px 16px;
+                font-size: 9pt;
             }
-            QPushButton:hover { background: #244a24; border-color: #66BB6A; }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #4ade80, stop:1 #22c55e);
+                border: 1px solid #86efac;
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #16a34a, stop:1 #22c55e);
+            }
         """)
         b_save.clicked.connect(self._save_positions)
         g_main.addWidget(b_save)
 
         b_restore = QPushButton("▶ Восстановить")
-        b_restore.setFixedHeight(32)
+        b_restore.setFixedHeight(34)
         b_restore.setCursor(Qt.PointingHandCursor)
         b_restore.setToolTip("Поставить все окна на сохранённые места + рабочий размер 400x225")
         b_restore.setStyleSheet("""
             QPushButton {
-                background: #3a2a1a; border: 2px solid #FFA726;
-                border-radius: 4px; color: #FFA726; font-weight: bold;
-                padding: 4px 16px; font-size: 9pt;
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #fb923c, stop:1 #f97316);
+                border: 1px solid #fdba74;
+                border-top: 1px solid #fed7aa;
+                border-bottom: 1px solid #c2410c;
+                border-radius: 10px;
+                color: #431407;
+                font-weight: 700;
+                padding: 6px 16px;
+                font-size: 9pt;
             }
-            QPushButton:hover { background: #4a3a2a; border-color: #FFB74D; }
+            QPushButton:hover {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #fdba74, stop:1 #fb923c);
+                border: 1px solid #fed7aa;
+            }
+            QPushButton:pressed {
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 #f97316, stop:1 #fb923c);
+            }
         """)
         b_restore.clicked.connect(self._restore_positions)
         g_main.addWidget(b_restore)
