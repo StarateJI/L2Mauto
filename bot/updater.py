@@ -509,6 +509,7 @@ def update():
             "gui/styles.py",
             "gui/tiling.py",
             "gui/windows_selector.py",
+            "gui/window_selector.py",
             "tgbot/bot.py",
             "tgbot/config.py",
             "tgbot/handlers/__init__.py",
