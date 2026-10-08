@@ -9,6 +9,7 @@ import subprocess
 import time
 import hashlib
 import json
+import base64
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from bot.clogger import log
 
@@ -538,11 +539,10 @@ def update():
         backup()
         log("Обнова: бэкап сделан, качаю файлы ПАРАЛЛЕЛЬНО (8 потоков)...", level="INFO")
 
-        # Purge кеш jsdelivr — мгновенная очистка. Без этого jsdelivr кеширует
-        # файлы до 12 часов и бот скачает старые. Purge делаем один раз для
-        # всего репо через wildcard.
+        # Purge больше не нужен — скачивание через Git Blobs API (SHA-адресованный,
+        # без кеша). Оставил вызов для совместимости, но он ни на что не влияет.
         try:
-            log("Обнова: purge кеша jsdelivr...", level="DEBUG")
+            log("Обнова: purge кеша jsdelivr (для fallback raw URL)...", level="DEBUG")
             purge_url = "https://purge.jsdelivr.net/gh/StarateJI/L2Mauto@main/"
             r = requests.get(purge_url, timeout=10)
             log(f"Обнова: purge статус={r.status_code}", level="DEBUG")
@@ -569,65 +569,61 @@ def update():
             shutil.rmtree(temp_dir)
         os.makedirs(temp_dir, exist_ok=True)
 
-        # jsdelivr CDN — purge сделан выше, файлы свежие (без 5-мин кеша raw.github).
-        # raw.github кеширует 5 мин → SHA mismatch на недавно изменённых файлах
-        # → abort → chicken-and-egg (фикс не доезжает до ПК).
-        # jsdelivr после purge отдаёт свежий контент мгновенно.
-        raw_base = "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main/"
-
         # Одна HTTP-сессия на все файлы — keep-alive, переиспользование TCP.
         session = requests.Session()
         tok = _load_github_token()
         if tok:
             session.headers["Authorization"] = f"token {tok}"
+        session.headers["Accept"] = "application/vnd.github+json"
         session.headers["Cache-Control"] = "no-cache"
 
-        # path → sha mapping для верификации
+        # path → sha mapping
         sha_map = dict(files_to_download)
 
-        def _download_one(filepath: str, expected_sha: str = "", _attempt: int = 0):
-            # Cache-buster обновляется при каждой попытке — пробиваем кеш raw.github
-            cb = f"?ts={int(time.time())}-{_attempt}"
-            url = raw_base + filepath + cb
+        # ── СКАЧИВАНИЕ ЧЕРЕЗ GIT BLOBS API ─────────────────────────────────
+        # GitHub Git Blobs API: GET /repos/.../git/blobs/{sha} → base64 content.
+        # Это SHA-адресованный запрос — GitHub отдаёт РОВНО тот контент что в
+        # этом blob. НИКАКОГО кеша. Невозможно получить stale версию.
+        #
+        # Раньше raw.github/jsdelivr кешировали 5 мин → один файл свежий,
+        # другой stale → рассинхрон (maingui.py v5.13.16 + window_selector.py
+        # старый) → TypeError: unexpected keyword argument 'show_count'.
+        # Blobs API решает это НАВСЕГДА.
+        BLOB_API = "https://api.github.com/repos/StarateJI/L2Mauto/git/blobs/"
+        RAW_FALLBACK = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/"
+
+        def _download_blob(filepath: str, sha: str):
+            """Скачать файл по SHA через Git Blobs API. Всегда свежий."""
             local_path = os.path.join(temp_dir, filepath.replace("/", os.sep))
             os.makedirs(os.path.dirname(local_path), exist_ok=True)
             try:
-                r = session.get(url, timeout=(8, 30))
-                if r.status_code != 200:
-                    return filepath, False, f"HTTP {r.status_code}"
-                content = r.content
-                # SHA-верификация — ловит битые/частичные скачивания.
-                # Но CDN кеш (raw.github кеширует 5 мин) может отдать СТАРУЮ
-                # версию недавно изменённого файла → SHA не совпал.
-                # Если SHA не совпал — ретрай с другим cache-buster (попытка пробить кеш).
-                # Если 2-я попытка тоже не совпала — принимаем с WARNING (soft-fail):
-                # stale файл лучше чем no-update (бот хотя бы запустится, а через
-                # 5 мин кеш протухнет и следующий апдейт даст свежую версию).
-                if expected_sha:
-                    actual = _git_blob_sha(content)
-                    if actual != expected_sha:
-                        if _attempt < 1:
-                            # Ретрай с другим cache-buster
-                            time.sleep(0.3)
-                            return _download_one(filepath, expected_sha, _attempt + 1)
-                        # 2-я попытка тоже не совпала — CDN кеш устойчивый.
-                        # Принимаем файл (soft-fail), логируем WARNING.
-                        log(f"Обнова: SHA mismatch для {filepath} — принимаю с "
-                            f"WARNING (CDN кеш?). expected={expected_sha[:8]} "
-                            f"got={actual[:8]}", level="WARNING")
+                if sha:
+                    # ── Основной путь: Blobs API по SHA ──
+                    r = session.get(BLOB_API + sha, timeout=(8, 30))
+                    if r.status_code != 200:
+                        return filepath, False, f"Blobs API HTTP {r.status_code}"
+                    data = r.json()
+                    content = base64.b64decode(data["content"])
+                else:
+                    # ── Fallback: нет SHA (Git Trees API упал) → raw URL ──
+                    url = RAW_FALLBACK + filepath + f"?ts={int(time.time())}"
+                    r = session.get(url, timeout=(8, 30))
+                    if r.status_code != 200:
+                        return filepath, False, f"raw HTTP {r.status_code}"
+                    content = r.content
                 with open(local_path, "wb") as f:
                     f.write(content)
                 return filepath, True, None
             except Exception as e:
                 return filepath, False, f"{type(e).__name__}: {e}"
 
-        # ПАРАЛЛЕЛЬНАЯ загрузка — 8 потоков одновременно.
+        # ПАРАЛЛЕЛЬНАЯ загрузка — 8 потоков.
         t0 = time.time()
         downloaded = 0
         failed = []
         total = len(files_to_download)
         with ThreadPoolExecutor(max_workers=8) as ex:
-            futures = [ex.submit(_download_one, fp, sha)
+            futures = [ex.submit(_download_blob, fp, sha)
                        for fp, sha in files_to_download]
             for i, fut in enumerate(as_completed(futures), 1):
                 fp, ok, err = fut.result()
@@ -645,13 +641,13 @@ def update():
         if failed:
             log(f"Обнова: НЕ скачаны ({len(failed)}): "
                 f"{[f[0] for f in failed[:10]]}", level="WARNING")
-            # Логируем ПРИЧИНУ для дебага (SHA mismatch vs HTTP error vs timeout)
+            # Логируем ПРИЧИНУ для дебага
             for fp, err in failed[:10]:
                 log(f"  ↳ {fp}: {err}", level="WARNING")
             # ПОВТОРНАЯ попытка для упавших — последовательно
             still_failed = []
             for fp, _err in failed:
-                res_fp, ok, err = _download_one(fp, sha_map.get(fp, ""))
+                res_fp, ok, err = _download_blob(fp, sha_map.get(fp, ""))
                 if ok:
                     downloaded += 1
                     log(f"Обнова: повторно скачан {fp}", level="DEBUG")
