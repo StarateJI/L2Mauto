@@ -404,20 +404,21 @@ class TilingDialog(QDialog):
         return CELL_W + (SIDEBAR_W if self.keep_panels else 0)
 
     def _save_cfg(self):
-        self._cache["tiling"] = {"keep_panels": self.keep_panels}
+        if "tiling" not in self._cache:
+            self._cache["tiling"] = {}
+        self._cache["tiling"]["keep_panels"] = self.keep_panels
         save_cache(self._cache)
 
     def _sync_mode(self):
-        self.b_narrow.setChecked(not self.keep_panels)
-        self.b_wide.setChecked(self.keep_panels)
+        # Кнопки Плотный/С панельками убраны — нечего синхронизировать.
+        # Режим keep_panels остаётся в cache (default False = плотный).
+        pass
 
     def _set_mode(self, keep):
         if keep == self.keep_panels:
-            self._sync_mode()
             return
         self.keep_panels = keep
         self._save_cfg()
-        self._sync_mode()
         self._rebuild()
         self._auto_fill()
 
@@ -553,85 +554,46 @@ class TilingDialog(QDialog):
         ml.addWidget(self.pool_scroll)
 
         LAB_STYLE = "color: #777; min-width: 80px;"
-        BTN_W = 130
 
-        g1 = QHBoxLayout()
-        g1.setSpacing(6)
-        g1.setContentsMargins(0, 6, 0, 0)
-        lab_a = QLabel("Действия:")
-        lab_a.setStyleSheet(LAB_STYLE)
-        g1.addWidget(lab_a)
+        # ── Единый ряд: Сохранить + Восстановить ──────────────────────────
+        # Было 6 бесполезных кнопок в 3 ряда. Теперь только 2 нужные.
+        g_main = QHBoxLayout()
+        g_main.setSpacing(8)
+        g_main.setContentsMargins(0, 8, 0, 0)
+        g_main.addStretch(1)
 
-        b_fill = QPushButton("Расставить")
-        b_fill.setFixedHeight(26)
-        b_fill.setFixedWidth(BTN_W)
-        b_fill.setCursor(Qt.PointingHandCursor)
-        b_fill.setToolTip("Заполнить сетку окнами из пула")
-        b_fill.clicked.connect(self._auto_fill)
-        g1.addWidget(b_fill)
+        b_save = QPushButton("💾 Сохранить расположение")
+        b_save.setFixedHeight(32)
+        b_save.setCursor(Qt.PointingHandCursor)
+        b_save.setToolTip("Запомнить где какое окно стоит сейчас")
+        b_save.setStyleSheet("""
+            QPushButton {
+                background: #1a3a1a; border: 2px solid #4CAF50;
+                border-radius: 4px; color: #00ffcc; font-weight: bold;
+                padding: 4px 16px; font-size: 9pt;
+            }
+            QPushButton:hover { background: #244a24; border-color: #66BB6A; }
+        """)
+        b_save.clicked.connect(self._save_positions)
+        g_main.addWidget(b_save)
 
-        b_refresh = QPushButton("Обновить")
-        b_refresh.setFixedHeight(26)
-        b_refresh.setFixedWidth(BTN_W)
-        b_refresh.setCursor(Qt.PointingHandCursor)
-        b_refresh.setToolTip("Обновить список окон")
-        b_refresh.clicked.connect(self._refresh)
-        g1.addWidget(b_refresh)
+        b_restore = QPushButton("▶ Восстановить")
+        b_restore.setFixedHeight(32)
+        b_restore.setCursor(Qt.PointingHandCursor)
+        b_restore.setToolTip("Поставить все окна на сохранённые места + рабочий размер 400x225")
+        b_restore.setStyleSheet("""
+            QPushButton {
+                background: #3a2a1a; border: 2px solid #FFA726;
+                border-radius: 4px; color: #FFA726; font-weight: bold;
+                padding: 4px 16px; font-size: 9pt;
+            }
+            QPushButton:hover { background: #4a3a2a; border-color: #FFB74D; }
+        """)
+        b_restore.clicked.connect(self._restore_positions)
+        g_main.addWidget(b_restore)
 
-        g1.addStretch(1)
-        ml.addLayout(g1)
-
-        g2 = QHBoxLayout()
-        g2.setSpacing(6)
-        lab_p = QLabel("Панельки:")
-        lab_p.setStyleSheet(LAB_STYLE)
-        g2.addWidget(lab_p)
-
-        b_hide = QPushButton("Свернуть")
-        b_hide.setFixedHeight(26)
-        b_hide.setFixedWidth(BTN_W)
-        b_hide.setCursor(Qt.PointingHandCursor)
-        b_hide.setToolTip("Свернуть панельки у всех расставленных окон")
-        b_hide.clicked.connect(self._hide_all)
-        g2.addWidget(b_hide)
-
-        b_show = QPushButton("Развернуть")
-        b_show.setFixedHeight(26)
-        b_show.setCursor(Qt.PointingHandCursor)
-        b_show.setToolTip("Развернуть панельки у всех расставленных окон")
-        b_show.clicked.connect(self._show_all)
-        g2.addWidget(b_show)
-
-        g2.addStretch(1)
-        ml.addLayout(g2)
-
-        g3 = QHBoxLayout()
-        g3.setSpacing(6)
-        lab_m = QLabel("Режим сетки:")
-        lab_m.setStyleSheet(LAB_STYLE)
-        g3.addWidget(lab_m)
-
-        self.b_narrow = QPushButton("Плотный")
-        self.b_narrow.setCheckable(True)
-        self.b_narrow.setFixedHeight(26)
-        self.b_narrow.setFixedWidth(BTN_W)
-        self.b_narrow.setCursor(Qt.PointingHandCursor)
-        self.b_narrow.setToolTip("Панельки скрываются автоматически, колонка 400 px")
-        self.b_narrow.clicked.connect(lambda: self._set_mode(False))
-        g3.addWidget(self.b_narrow)
-
-        self.b_wide = QPushButton("С панельками")
-        self.b_wide.setCheckable(True)
-        self.b_wide.setFixedHeight(26)
-        self.b_wide.setCursor(Qt.PointingHandCursor)
-        self.b_wide.setToolTip("Панельки остаются видимыми, колонка 456 px")
-        self.b_wide.clicked.connect(lambda: self._set_mode(True))
-        g3.addWidget(self.b_wide)
-
-        self._sync_mode()
-
-        g3.addStretch(1)
-        ml.addLayout(g3)
+        g_main.addStretch(1)
+        ml.addLayout(g_main)
 
         for nick in sorted(self.windows.keys()):
             if nick not in self.assigned_nicks:
@@ -982,3 +944,84 @@ class TilingDialog(QDialog):
                 self.panels.show(hwnd)
             else:
                 self.panels.hide(hwnd)
+
+    def _save_positions(self):
+        """
+        Сохранить текущее расположение окон в cache.
+        Сохраняем сеточные координаты (mon_idx, col, row) — они не зависят
+        от режима плотный/с панельками (pitch_x меняется, но ячейка та же).
+        """
+        positions = {}
+        for cell in self.cells.values():
+            if not cell.nick:
+                continue
+            positions[cell.nick] = {
+                "mon": cell.mon_idx,
+                "col": cell.grid_col,
+                "row": cell.grid_row,
+            }
+        if "tiling" not in self._cache:
+            self._cache["tiling"] = {}
+        self._cache["tiling"]["positions"] = positions
+        save_cache(self._cache)
+        self._refresh()
+        from PyQt5.QtWidgets import QMessageBox
+        QMessageBox.information(self, "Сохранено",
+            f"Расположение {len(positions)} окон запомнено.\n"
+            "Кнопкой «Восстановить» вернёшь их на места + рабочий размер.")
+
+    def _restore_positions(self):
+        """
+        Поставить все окна на сохранённые позиции + рабочий размер 400x225.
+        Используется если окно сдвинулось или после аука не встало на место.
+        """
+        positions = self._cache.get("tiling", {}).get("positions", {})
+        if not positions:
+            from PyQt5.QtWidgets import QMessageBox
+            QMessageBox.warning(self, "Нет сохранения",
+                "Сначала расставь окна drag&drop и нажми «Сохранить».")
+            return
+
+        # Обновляем список окон (могли появиться/исчезнуть)
+        self._refresh()
+
+        moved = 0
+        missing = []
+        for nick, pos in positions.items():
+            info = self.windows.get(nick)
+            if not info:
+                missing.append(nick)
+                continue
+            hwnd = info["ID"]
+            mon_idx = pos.get("mon", 0)
+            col = pos.get("col", 0)
+            row = pos.get("row", 0)
+
+            # Находим монитор (если сохранили на mon_idx=1 а теперь 1 монитор — fallback на 0)
+            mon = None
+            for m in self.monitors:
+                if m["idx"] == mon_idx:
+                    mon = m
+                    break
+            if mon is None and self.monitors:
+                mon = self.monitors[0]
+            if mon is None:
+                continue
+
+            x = mon["x"] + col * self.pitch_x
+            y = mon["y"] + row * CELL_H + TOP_OFFSET
+            if _move_window(hwnd, x, y):
+                moved += 1
+                # Синхронизируем ячейку в UI
+                cell = self.cells.get((mon["idx"], col, row))
+                if cell and not cell.nick:
+                    cell.assign(nick)
+                if not self.keep_panels:
+                    self.panels.hide(hwnd)
+
+        self._refresh_btns()
+        from PyQt5.QtWidgets import QMessageBox
+        msg = f"Восстановлено {moved} окон на сохранённые позиции (400x225)."
+        if missing:
+            msg += f"\n\nНе найдены окна: {missing}"
+        QMessageBox.information(self, "Готово", msg)
