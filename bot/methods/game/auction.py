@@ -93,7 +93,7 @@ OK_CHECK_ZONE = (525, 360, 45, 45) # оранжевая ОК (было 700,480,6
 # База: "5" на (584, 391) при 960×540 (было 778,521 при 1280×720)
 # Шаг 30px (было 40px)
 CALC_DIGITS = {
-    '0': (584, 452),  # было (778, 602)
+    '0': (614, 452),  # справа снизу (под '3'), было (584,452) центр-снизу
     '1': (554, 422),  # было (738, 562)
     '2': (584, 422),  # было (778, 562)
     '3': (614, 422),  # было (819, 562)
@@ -444,152 +444,76 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     async def _resize_work(self) -> bool:
         """
-        Установить окно в 1280x720. До 3 попыток.
-        Авто-выбор позиции: проверяет какие из WORK_POSITIONS уже заняты
-        другим окном L2M (через findAllWindows) и занимает первую свободную.
-        Это позволяет двум ботам в пачке работать рядом, не перекрывая друг друга.
+        Развернуть окно на ФУЛЛСКРИН (maximize) для обслуживания аука.
+        При maximize окно становится на весь экран — лучше видимость цифр/иконок,
+        нет проблем с позициями (одно окно, не перекрывается).
+        Scale (real_w/960, real_h/540) сохраняется в self._au_scale —
+        все координаты в _click/_grab масштабируются.
         """
-        import ctypes
         import pygetwindow as gw
 
-        SWP_NOZORDER = 0x0004
-        SWP_NOACTIVATE = 0x0010
-        SetWindowPos = ctypes.windll.user32.SetWindowPos
-
-        # Сохраняем исходную позицию ДО изменений (один раз за весь цикл)
+        # Сохраняем исходную позицию ДО maximize (один раз за цикл)
         if not hasattr(self.profile, '_au_saved_pos') or self.profile._au_saved_pos is None:
             try:
                 win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
                 self.profile._au_saved_pos = (win.left, win.top, win.width, win.height)
-                log(f"Аук: сохранил позицию окна до resize: "
+                log(f"Аук: сохранил позицию окна до maximize: "
                     f"({win.left},{win.top}) {win.width}x{win.height}",
                     self.window_id)
             except Exception as e:
                 log(f"Аук: не удалось сохранить позицию: {e}",
                     self.window_id, level="WARNING")
 
-        # ── Авто-выбор позиции ─────────────────────────────────────────────
-        # Найти свободную из WORK_POSITIONS.
-        # Проверяем ВСЕ окна (даже 400×225) — если окно уже стоит на позиции,
-        # считаем её занятой (не только 960×540 окна).
-        chosen_pos: Optional[Tuple[int, int]] = None
+        # maximize — развернуть на весь экран
         try:
-            from bot.utils import findAllWindows as _findAll
-            all_wins = _findAll()
-            occupied: set = set()
-            my_title = self.window_info[self.window_id]["Title"]
-
-            # Проверяем все позиции — занята ли любым окном в пределах tolerance
-            for nick, info in all_wins.items():
-                if info.get("Title") == my_title:
-                    continue  # себя не считаем
-                pos = info.get("Position", (0, 0))
-                win_w = info.get("Width", 0)
-                win_h = info.get("Height", 0)
-                # Если окно любого размера стоит близко к рабочей позиции — занято
-                for wp in WORK_POSITIONS:
-                    if (abs(pos[0] - wp[0]) <= POSITION_TOLERANCE and
-                        abs(pos[1] - wp[1]) <= POSITION_TOLERANCE):
-                        occupied.add(wp)
-
-            # Также проверяем окно по hwnd — может быть развёрнуто но не в findAllWindows
-            import pygetwindow as gw
-            try:
-                all_gw_wins = gw.getAllWindows()
-                for w in all_gw_wins:
-                    if "Lineage2M" not in w.title:
-                        continue
-                    if w.title == my_title:
-                        continue
-                    for wp in WORK_POSITIONS:
-                        if (abs(w.left - wp[0]) <= POSITION_TOLERANCE and
-                            abs(w.top - wp[1]) <= POSITION_TOLERANCE):
-                            occupied.add(wp)
-            except Exception:
-                pass
-
-            for pos in WORK_POSITIONS:
-                if pos not in occupied:
-                    chosen_pos = pos
-                    break
-            if chosen_pos is None:
-                chosen_pos = WORK_POSITIONS[0]
-                log(f"Аук: все рабочие позиции заняты, использую {chosen_pos} "
-                    f"(возможно перекрытие)", self.window_id, level="WARNING")
-            else:
-                log(f"Аук: выбрал позицию {chosen_pos} (занято: {occupied})",
-                    self.window_id)
+            win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
+            win.maximize()
+            await asyncio.sleep(T_AFTER_RESIZE)
         except Exception as e:
-            log(f"Аук: не удалось проверить занятость позиций: {e}, "
-                f"использую {WORK_POSITIONS[0]}", self.window_id, level="WARNING")
-            chosen_pos = WORK_POSITIONS[0]
+            log(f"Аук: maximize не сработал: {e}", self.window_id, level="WARNING")
+            return False
 
-        for attempt in range(1, 4):
-            try:
-                win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
-                try:
-                    win.restore()
-                except Exception:
-                    pass
-                if win.isMaximized:
-                    try:
-                        win.unmaximize()
-                    except Exception:
-                        pass
-                await asyncio.sleep(0.3)
+        # Перечитать размер окна после maximize
+        try:
+            win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
+            real_w, real_h = win.width, win.height
+            # Обновить window_info (позиция/размер изменились)
+            self.window_info[self.window_id]["Position"] = (win.left, win.top)
+            self.window_info[self.window_id]["Width"] = real_w
+            self.window_info[self.window_id]["Height"] = real_h
+            self.window_info[self.window_id]["Size"] = f"{real_w}x{real_h}"
 
-                win.moveTo(*chosen_pos)
-                await asyncio.sleep(0.2)
-                win.resizeTo(WORK_W, WORK_H)
-                await asyncio.sleep(0.5)
+            # Scale: координаты 960×540 → real размер
+            sx = real_w / WORK_W
+            sy = real_h / WORK_H
+            self._au_scale = (sx, sy)
+            log(f"Аук: окно maximize {real_w}x{real_h}, scale=({sx:.2f},{sy:.2f})",
+                self.window_id)
 
-                hwnd = win._hWnd
-                SetWindowPos(
-                    ctypes.c_void_p(int(hwnd)), None,
-                    chosen_pos[0], chosen_pos[1], WORK_W, WORK_H,
-                    SWP_NOZORDER | SWP_NOACTIVATE,
-                )
-                await asyncio.sleep(0.4)
-
-                win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
-                # Проверка с допуском POSITION_TOLERANCE — Windows иногда
-                # смещает окно на несколько пикселей (title bar snapping)
-                size_ok = (win.width == WORK_W and win.height == WORK_H)
-                pos_ok = (abs(win.left - chosen_pos[0]) <= POSITION_TOLERANCE and
-                          abs(win.top - chosen_pos[1]) <= POSITION_TOLERANCE)
-                if size_ok and pos_ok:
-                    log(f"Аук: окно в рабочем размере (попытка {attempt}) "
-                        f"на ({win.left},{win.top})", self.window_id)
-                    self.window_info[self.window_id]["Position"] = (win.left, win.top)
-                    self.window_info[self.window_id]["Width"] = win.width
-                    self.window_info[self.window_id]["Height"] = win.height
-                    self.window_info[self.window_id]["Size"] = f"{win.width}x{win.height}"
-                    # Сохранить выбранную позицию для лога в _resize_back
-                    self.profile._au_chosen_pos = chosen_pos
-                    return True
-                else:
-                    log(f"Аук: resize не совпал: got ({win.left},{win.top}) "
-                        f"{win.width}x{win.height}, wanted {chosen_pos} "
-                        f"{WORK_W}x{WORK_H}, retry",
-                        self.window_id, level="WARNING")
-            except Exception as e:
-                log(f"Аук: resize попытка {attempt} неудача: {e}",
+            # Если scale неравномерный (не 16:9) — warn, но работаем
+            if abs(sx - sy) > 0.15:
+                log(f"Аук: ВНИМАНИЕ — масштаб неравномерный (sx={sx:.2f}, sy={sy:.2f}). "
+                    f"Монитор не 16:9? Координаты могут съехать.",
                     self.window_id, level="WARNING")
-
-        log("Аук: РАЗМЕР НЕ ВСТАЛ — СТОП", self.window_id, level="ERROR")
-        return False
+            return True
+        except Exception as e:
+            log(f"Аук: не удалось получить размер после maximize: {e}",
+                self.window_id, level="WARNING")
+            self._au_scale = (1.0, 1.0)
+            return False
 
     async def _resize_back(self) -> None:
         """
-        Вернуть окно в исходное положение (сохранённое до resize_work).
-        Использует SetWindowPos (как _resize_work) — надёжнее чем moveTo+resizeTo,
-        потому что moveTo не сработает если окно перекрыто другим окном 1280x720.
+        Вернуть окно в исходное положение (сохранённое до maximize).
+        restore() снимает maximize. Если не сработало — SetWindowPos.
+        Сбрасывает self._au_scale = (1.0, 1.0).
         """
         import ctypes
         import pygetwindow as gw
 
         SWP_NOZORDER = 0x0004
         SWP_NOACTIVATE = 0x0010
+        SWP_NOSIZE = 0x0001
         SetWindowPos = ctypes.windll.user32.SetWindowPos
 
         saved = getattr(self.profile, '_au_saved_pos', None)
@@ -601,25 +525,23 @@ class Auction(GameAction):
 
         try:
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
-            # restore + unmaximize (иначе SetWindowPos игнорируется)
+            # restore снимает maximize → возвращает в сохранённый размер/позицию
             try:
                 win.restore()
             except Exception:
                 pass
-            if win.isMaximized:
-                try:
-                    win.unmaximize()
-                except Exception:
-                    pass
+            await asyncio.sleep(0.4)
 
-            # SetWindowPos — принудительно, даже если окно перекрыто
-            hwnd = win._hWnd
-            SetWindowPos(
-                ctypes.c_void_p(int(hwnd)), None,
-                left, top, w, h,
-                SWP_NOZORDER | SWP_NOACTIVATE,
-            )
-            await asyncio.sleep(0.5)
+            # Если restore не вернул размер — принудительно SetWindowPos
+            win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
+            if win.width != w or win.height != h or (win.left, win.top) != (left, top):
+                hwnd = win._hWnd
+                SetWindowPos(
+                    ctypes.c_void_p(int(hwnd)), None,
+                    left, top, w, h,
+                    SWP_NOZORDER | SWP_NOACTIVATE,
+                )
+                await asyncio.sleep(0.4)
 
             # Перечитать win (мог сместиться)
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
@@ -632,6 +554,9 @@ class Auction(GameAction):
         except Exception as e:
             log(f"Аук: не удалось вернуть размер окна: {e}",
                 self.window_id, level="WARNING")
+
+        # Сброс scale — координаты снова 1:1
+        self._au_scale = (1.0, 1.0)
 
     # ──────────────────────────────────────────────────────────────────────
     # ОЖИДАНИЕ ЗАГРУЗКИ АУКЦИОНА
@@ -672,19 +597,22 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     def _grab(self, rect: Tuple[int, int, int, int]) -> np.ndarray:
         """
-        Захват зоны rect=(x, y, w, h) в window-relative координатах.
-        Возвращает BGR ndarray. mss отдаёт BGRA — конвертируем.
-
-        Сначала _ensure_foreground — иначе при перекрытии mss.grab снимет
-        другое окно и мы получим чужой кадр (поэтому «страницы не меняются»
-        и matchTemplate матчит одни и те же иконки).
+        Захват зоны rect=(x, y, w, h) в window-relative координатах (960×540 base).
+        Возвращает BGR ndarray РАЗМЕРОМ (h, w) — как будто окно 960×540,
+        независимо от реального размера (после maximize окно может быть
+        1920×1080 — тогда зона захватывается с scale и resize'ится к base).
         """
         win = self.window_info[self.window_id]
         wx, wy = win["Position"]
         x, y, w, h = rect
-        monitor = {"left": wx + x, "top": wy + y, "width": w, "height": h}
-        # mss использует thread-local handles. При вызове из не-главного потока
-        # может крашиться с AttributeError srcdc. Ловим и пересоздаём локально.
+        # Scale: если окно maximize (не 960×540), масштабируем координаты
+        sx, sy = getattr(self, '_au_scale', (1.0, 1.0))
+        monitor = {
+            "left": int(wx + x * sx),
+            "top": int(wy + y * sy),
+            "width": int(w * sx),
+            "height": int(h * sy),
+        }
         try:
             shot = _sct.grab(monitor)
         except Exception as e:
@@ -700,8 +628,12 @@ class Auction(GameAction):
                     pass
             else:
                 raise
-        arr = np.array(shot)  # BGRA
-        return cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
+        arr = np.array(shot)  # BGRA, размер (h*sy, w*sx)
+        bgr = cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
+        # Если окно не 960×540 — resize к base размеру (h, w)
+        if sx != 1.0 or sy != 1.0:
+            bgr = cv2.resize(bgr, (w, h), interpolation=cv2.INTER_AREA)
+        return bgr
 
     async def _save_debug(self, name: str, img: np.ndarray) -> None:
         """Сохранить PNG рядом с auction.py для отладки."""
@@ -818,10 +750,12 @@ class Auction(GameAction):
     # КЛИКИ
     # ──────────────────────────────────────────────────────────────────────
     async def _click(self, x: int, y: int) -> None:
-        """Клик по window-relative координатам через очередь мыши.
-        Сначала _ensure_foreground — гарантия что клик уйдёт в правильное окно."""
+        """Клик по window-relative координатам (960×540 base) через очередь мыши.
+        Сначала _ensure_foreground — гарантия что клик уйдёт в правильное окно.
+        Если окно maximize (не 960×540) — координаты масштабируются."""
         self._ensure_foreground()
-        await self.mouse.click(self.window_info, x, y)
+        sx, sy = getattr(self, '_au_scale', (1.0, 1.0))
+        await self.mouse.click(self.window_info, int(x * sx), int(y * sy))
 
     async def _click_and_verify(self, x: int, y: int, label: str = "",
                                verify_zone: Optional[Tuple[int, int, int, int]] = None) -> bool:
@@ -873,6 +807,8 @@ class Auction(GameAction):
         далеко за пределы («сразу в самый низ»).
         """
         self._ensure_foreground()
+        # Scale для maximize — свайп тоже должен масштабироваться
+        sx, sy = getattr(self, '_au_scale', (1.0, 1.0))
         cx = INV_CX
         top_y = INV_SCAN[1] + 20
         bot_y = INV_SCAN[1] + INV_SCAN[3] - 20
@@ -892,7 +828,8 @@ class Auction(GameAction):
         for i in range(N_STEPS + 1):
             t = i / N_STEPS
             y = int(start_y + (end_y - start_y) * t)
-            points.append((cx, y))
+            # Масштабируем координаты под реальный размер окна
+            points.append((int(cx * sx), int(y * sy)))
 
         await self.mouse.swipe(self.window_info, points,
                                delay_points=STEP_DELAY, no_curve=True)
@@ -1375,13 +1312,14 @@ class Auction(GameAction):
         # Используем pyautogui.click — напрямую через Windows API, просто и надёжно.
         try:
             import pyautogui
-            # item_pos = (win_cx, win_cy) — оконные координаты
-            # Добавляем позицию окна для экранных
+            # item_pos = (win_cx, win_cy) — оконные координаты (960×540 base)
+            # Добавляем позицию окна + scale для экранных
             win = self.window_info[self.window_id]
             wx, wy = win["Position"]
-            screen_x = wx + item_pos[0]
-            screen_y = wy + item_pos[1]
-            log(f"Аук: pyautogui.click({screen_x},{screen_y}) — окно=({wx},{wy}) item=({item_pos[0]},{item_pos[1]})",
+            sx, sy = getattr(self, '_au_scale', (1.0, 1.0))
+            screen_x = int(wx + item_pos[0] * sx)
+            screen_y = int(wy + item_pos[1] * sy)
+            log(f"Аук: pyautogui.click({screen_x},{screen_y}) — окно=({wx},{wy}) item=({item_pos[0]},{item_pos[1]}) scale=({sx:.2f},{sy:.2f})",
                 self.window_id)
             pyautogui.click(screen_x, screen_y)
         except Exception as e:
@@ -1422,8 +1360,11 @@ class Auction(GameAction):
                 await asyncio.sleep(1)
                 return 'error'
 
-        # -1 от опорной цены (подешевле на 1 адену), но не ниже 10
-        my_price = max(min_price - 1, 10)
+        # По макс цене ставим РАВНУЮ (не -1) — не ниже рынка
+        if price_source == "макс":
+            my_price = min_price
+        else:
+            my_price = max(min_price - 1, 10)  # -1 от мин, не ниже 10
         log(f"Аук: моя цена = {my_price} (опора={min_price}, источник={price_source})",
             self.window_id)
 
