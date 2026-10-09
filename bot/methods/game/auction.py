@@ -84,7 +84,8 @@ BTN_FIELD_PRICE = (432, 410)     # "Общая цена" (было 576,547)
 # ── Зоны захвата (window-relative, 960×540) ──────────────────────────────
 LOT_SEARCH = (56, 143, 60, 53)   # иконка лота (было 75,190,80,70)
 INV_SCAN = (686, 130, 259, 318)  # инвентарь (было 915,173,345,424)
-ZONE_PRICE = (651, 230, 60, 15)  # OCR цены (было 868,306,80,20)
+ZONE_PRICE = (651, 230, 60, 15)  # OCR "Текущая минимальная цена" (было 868,306,80,20)
+ZONE_MAX_PRICE = (651, 255, 60, 15)  # OCR "Макс цена" — fallback если мин цена отсутствует
 STATUS_ZONE = (598, 143, 105, 26) # статус лота (было 797,190,140,35)
 OK_CHECK_ZONE = (525, 360, 45, 45) # оранжевая ОК (было 700,480,60,60)
 
@@ -305,6 +306,8 @@ class Auction(GameAction):
 
             # 8b. Вернуть размер окна (если увеличивали) + ПРОВЕРИТЬ что стало 400x225
             #     Если resize_back не сработал — принудительно SetWindowPos ещё раз.
+            #     После возврата — СВЕРНУТЬ окно (minimize), чтобы оно не мешало
+            #     следующему окну в пачке (особенно при batch=1 для Auction).
             if resize_done:
                 try:
                     await self._resize_back()
@@ -379,6 +382,19 @@ class Auction(GameAction):
                 self._take_fullscreen("au_final_fullscreen.png")
             except Exception:
                 pass
+
+            # 8e. СВЕРНУТЬ окно после обслуживания — не мешает следующему окну.
+            #     Решает проблему «окна не встают на свои места»: после resize_back
+            #     окно сворачивается, следующее в пачке работает без перекрытия.
+            try:
+                import pygetwindow as gw
+                win = gw.getWindowsWithTitle(
+                    self.window_info[self.window_id]["Title"])[0]
+                win.minimize()
+                log(f"Аук: окно свёрнуто после обслуживания", self.window_id)
+            except Exception as e:
+                log(f"Аук: не удалось свернуть окно: {e}",
+                    self.window_id, level="DEBUG")
 
             # 9. Уведомление в TG
             try:
@@ -1014,25 +1030,20 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     # OCR ЦЕНЫ
     # ──────────────────────────────────────────────────────────────────────
-    def _ocr_price(self) -> Optional[int]:
+    def _ocr_price_from_zone(self, zone: Tuple[int, int, int, int],
+                              label: str = "мин") -> Optional[int]:
         """
-        OCR 'Текущая минимальная цена' из ZONE_PRICE.
+        OCR цены из указанной зоны.
+        label — 'мин' или 'макс' для логирования.
         Возвращает int или None.
         """
         try:
-            img = self._grab(ZONE_PRICE)
-
-            # ── Tesseract (основной) ───────────────────────────────────────
-            # Увеличиваем x4 — OCR любит крупные буквы
+            img = self._grab(zone)
             h, w = img.shape[:2]
             big = cv2.resize(img, (w * 4, h * 4), interpolation=cv2.INTER_CUBIC)
-            # Ч/б + инверсия (tesseract лучше читает чёрный текст на белом)
             gray = cv2.cvtColor(big, cv2.COLOR_BGR2GRAY)
             inv = cv2.bitwise_not(gray)
-            # Жёсткий контраст
             _, thr = cv2.threshold(inv, 128, 255, cv2.THRESH_BINARY)
-
-            # PSM 7 = одна строка, whitelist = цифры
             pt = _get_pytesseract()
             if pt is None:
                 return None
@@ -1040,19 +1051,26 @@ class Auction(GameAction):
                 thr,
                 config="--psm 7 -c tessedit_char_whitelist=0123456789",
             ).strip()
-            # Убираем запятые/пробелы (12,500 -> 12500)
             digits = text.replace(",", "").replace(" ", "").replace(".", "")
-            # Срезаем ведущие нули (00181 -> 181, но "0" оставляем как 0)
             digits = digits.lstrip('0') or '0'
             if not digits.isdigit():
-                log(f"Аук: OCR вернул не цифры: '{text}'", self.window_id, level="WARNING")
+                log(f"Аук: OCR {label} цена вернула не цифры: '{text}'",
+                    self.window_id, level="WARNING")
                 return None
             price = int(digits)
-            log(f"Аук: OCR цена = {price} (raw='{text}')", self.window_id)
+            log(f"Аук: OCR {label} цена = {price} (raw='{text}')", self.window_id)
             return price
         except Exception as e:
-            log(f"Аук: OCR цена не удался: {e}", self.window_id, level="WARNING")
+            log(f"Аук: OCR {label} цена не удалась: {e}", self.window_id, level="WARNING")
             return None
+
+    def _ocr_price(self) -> Optional[int]:
+        """OCR 'Текущая минимальная цена' из ZONE_PRICE."""
+        return self._ocr_price_from_zone(ZONE_PRICE, "мин")
+
+    def _ocr_max_price(self) -> Optional[int]:
+        """OCR 'Макс цена' из ZONE_MAX_PRICE. Fallback если мин цена отсутствует."""
+        return self._ocr_price_from_zone(ZONE_MAX_PRICE, "макс")
 
     async def _type_price(self, price_str: str) -> None:
         """
@@ -1378,22 +1396,43 @@ class Auction(GameAction):
         # 6. OCR "Текущая минимальная цена"
         # ⚠️ КРИТИЧНО: если OCR не смог прочитать цену — СТОП, не выставлять!
         # Раньше бот ставил 10 аден и «успешно» выставлял предмет за бесценок.
+        # Fallback: если мин цена отсутствует (предмет новый, nobody selling) —
+        # читаем МАКС цену и ставим такую же (не ниже рынка).
         min_price = self._ocr_price()
         MAX_REASONABLE_PRICE = 10_000_000  # 10M — верхняя граница sanity
+        price_source = "мин"
+
         if min_price is None or min_price < 10 or min_price > MAX_REASONABLE_PRICE:
-            log("Аук: не удалось прочитать мин. цену — СТОП, не выставляю "
-                "(защита от продажи за бесценок)", self.window_id, level="ERROR")
-            self.profile.notify("error",
-                               "Аук: OCR цены не сработал — предмет НЕ выставлен")
-            # Закрыть окно цены крестиком (выйти без выставления)
-            await self._click(*BTN_CLOSE)
-            await asyncio.sleep(1)
-            return 'error'
+            log(f"Аук: мин. цена не читается (={min_price}) — пробую макс. цену",
+                self.window_id, level="WARNING")
+            max_price = self._ocr_max_price()
+            if max_price is not None and 10 <= max_price <= MAX_REASONABLE_PRICE:
+                # Ставим по макс цене — не ниже рынка
+                min_price = max_price
+                price_source = "макс"
+                log(f"Аук: использую макс. цену {max_price} как опорную",
+                    self.window_id)
+            else:
+                log(f"Аук: ни мин, ни макс цена не читаются (мин={min_price}, "
+                    f"макс={max_price}) — СТОП, не выставляю",
+                    self.window_id, level="ERROR")
+                self.profile.notify("error",
+                                   "Аук: OCR цены не сработал — предмет НЕ выставлен")
+                await self._click(*BTN_CLOSE)
+                await asyncio.sleep(1)
+                return 'error'
 
-        my_price = max(min_price - 1, 10)  # не ниже 10 (игровой минимум)
-        log(f"Аук: моя цена = {my_price} (мин={min_price})", self.window_id)
+        # -1 от опорной цены (подешевле на 1 адену), но не ниже 10
+        my_price = max(min_price - 1, 10)
+        log(f"Аук: моя цена = {my_price} (опора={min_price}, источник={price_source})",
+            self.window_id)
 
-        # 7. Ввести цену
+        # 7. Ввести цену (дебаг-скриншот numpad ДО ввода — для проверки координат)
+        try:
+            numpad_shot = self._grab((530, 340, 110, 130))
+            await self._save_debug("au_numpad_before_type.png", numpad_shot)
+        except Exception:
+            pass
         await self._type_price(str(my_price))
 
         # 8. Клик "ОК" в окне цены

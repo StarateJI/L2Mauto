@@ -463,7 +463,12 @@ class NedoGui(QWidget):
         # Значения по умолчанию — из cache (запоминаются)
         from gui.cache import load_cache, save_cache as _save_cache
         _cache = load_cache()
-        default_count = self.cache.get(profile_name, 2)
+        # Auction — по умолчанию 1 окно за раз (меньше багов с позициями,
+        # лучше видимость цифр/иконок, окна не перекрывают друг друга)
+        if profile_name == "Auction":
+            default_count = self.cache.get(profile_name, 1)
+        else:
+            default_count = self.cache.get(profile_name, 2)
         default_dungeon = _cache.get("DungeonType", "Пати данж") if dungeon_types else None
 
         selector = WindowSelectorDialog(
