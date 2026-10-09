@@ -383,18 +383,9 @@ class Auction(GameAction):
             except Exception:
                 pass
 
-            # 8e. СВЕРНУТЬ окно после обслуживания — не мешает следующему окну.
-            #     Решает проблему «окна не встают на свои места»: после resize_back
-            #     окно сворачивается, следующее в пачке работает без перекрытия.
-            try:
-                import pygetwindow as gw
-                win = gw.getWindowsWithTitle(
-                    self.window_info[self.window_id]["Title"])[0]
-                win.minimize()
-                log(f"Аук: окно свёрнуто после обслуживания", self.window_id)
-            except Exception as e:
-                log(f"Аук: не удалось свернуть окно: {e}",
-                    self.window_id, level="DEBUG")
+            # Примечание: minimize (сворачивание в трей) убрано — пользователь
+            # не хочет чтобы окно пропадало из вида. _resize_back через
+            # WM_SYSCOMMAND SC_RESTORE уже вернул окно в рабочее положение.
 
             # 9. Уведомление в TG
             try:
@@ -444,14 +435,14 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     async def _resize_work(self) -> bool:
         """
-        Развернуть окно на ФУЛЛСКРИН (maximize) для обслуживания аука.
-        При maximize окно становится на весь экран — лучше видимость цифр/иконок,
-        нет проблем с позициями (одно окно, не перекрывается).
+        Развернуть окно на ФУЛЛСКРИН (maximize) — эквивалент клика по
+        СРЕДНЕЙ кнопке title bar (свернуть/развернуть/закрыть).
+        Использует WM_SYSCOMMAND + SC_MAXIMIZE — нативный Windows API,
+        который срабатывает даже на CEF-окнах (где pygetwindow.maximize()
+        игнорируется). ShowWindow(SW_MAXIMIZE) тоже может не сработать.
+
         Scale (real_w/960, real_h/540) сохраняется в self._au_scale —
         все координаты в _click/_grab масштабируются.
-
-        Реализация: ShowWindow(SW_MAXIMIZE) через Win32 API. pygetwindow
-        .maximize() НЕ сработал на окнах Lineage2M (CEF-обёртка игнорирует).
         """
         import ctypes
         import pygetwindow as gw
@@ -470,8 +461,10 @@ class Auction(GameAction):
                     self.window_id, level="WARNING")
 
         u = ctypes.windll.user32
-        SW_MAXIMIZE = 3
-        SW_RESTORE = 9
+        # WM_SYSCOMMAND — то же самое что клик по кнопке maximize в title bar
+        WM_SYSCOMMAND = 0x0112
+        SC_MAXIMIZE = 0xF030
+        SC_RESTORE = 0xF120
         SWP_NOZORDER = 0x0004
         SWP_NOACTIVATE = 0x0010
         MONITOR_DEFAULTTOPRIMARY = 1
@@ -480,20 +473,20 @@ class Auction(GameAction):
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             hwnd = win._hWnd
 
-            # 1) Снять maximize если уже был (иначе повторный maximize игнорируется)
+            # 1) Если уже maximize — restore сначала (toggle поведение как в Windows)
             if win.isMaximized:
                 try:
-                    u.ShowWindow(ctypes.c_void_p(int(hwnd)), SW_RESTORE)
+                    u.PostMessageW(wintypes.HWND(hwnd), WM_SYSCOMMAND, SC_RESTORE, 0)
                     await asyncio.sleep(0.3)
                 except Exception:
                     pass
 
-            # 2) maximize через ShowWindow(SW_MAXIMIZE) — нативный API
+            # 2) Maximize через WM_SYSCOMMAND SC_MAXIMIZE — клик по средней кнопке
             try:
-                u.ShowWindow(ctypes.c_void_p(int(hwnd)), SW_MAXIMIZE)
+                u.PostMessageW(wintypes.HWND(hwnd), WM_SYSCOMMAND, SC_MAXIMIZE, 0)
                 await asyncio.sleep(T_AFTER_RESIZE)
             except Exception as e:
-                log(f"Аук: ShowWindow(SW_MAXIMIZE) не сработал: {e}",
+                log(f"Аук: WM_SYSCOMMAND SC_MAXIMIZE не сработал: {e}",
                     self.window_id, level="WARNING")
 
             # 3) Проверить размер. Если не maximize — fallback на SetWindowPos
@@ -502,7 +495,6 @@ class Auction(GameAction):
             if not win.isMaximized:
                 log(f"Аук: maximize не сработал, fallback на SetWindowPos",
                     self.window_id, level="WARNING")
-                # Найти монитор где сейчас окно
                 try:
                     MONITORINFO = type('MONITORINFO', (ctypes.Structure,), {
                         '_fields_': [
@@ -513,17 +505,17 @@ class Auction(GameAction):
                         ],
                     })
                     hmon = u.MonitorFromWindow(
-                        ctypes.c_void_p(int(hwnd)),
+                        wintypes.HWND(hwnd),
                         ctypes.c_uint32(MONITOR_DEFAULTTOPRIMARY),
                     )
                     mi = MONITORINFO()
                     mi.cbSize = ctypes.sizeof(MONITORINFO)
-                    u.GetMonitorInfoW(ctypes.c_void_p(int(hmon)), ctypes.byref(mi))
+                    u.GetMonitorInfoW(wintypes.HMONITOR(hmon), ctypes.byref(mi))
                     mx, my = mi.rcMonitor.left, mi.rcMonitor.top
                     mw = mi.rcMonitor.right - mi.rcMonitor.left
                     mh = mi.rcMonitor.bottom - mi.rcMonitor.top
                     u.SetWindowPos(
-                        ctypes.c_void_p(int(hwnd)), None,
+                        wintypes.HWND(hwnd), None,
                         mx, my, mw, mh,
                         SWP_NOZORDER | SWP_NOACTIVATE,
                     )
@@ -560,17 +552,20 @@ class Auction(GameAction):
 
     async def _resize_back(self) -> None:
         """
-        Вернуть окно в исходное положение (сохранённое до maximize).
-        restore() снимает maximize. Если не сработало — SetWindowPos.
+        Вернуть окно в исходное положение — клик по средней кнопке title bar
+        (toggle restore). Использует WM_SYSCOMMAND + SC_RESTORE — нативный
+        Windows API. Если не сработало — SetWindowPos до сохранённой позиции.
         Сбрасывает self._au_scale = (1.0, 1.0).
         """
         import ctypes
         import pygetwindow as gw
+        from ctypes import wintypes
 
+        WM_SYSCOMMAND = 0x0112
+        SC_RESTORE = 0xF120
         SWP_NOZORDER = 0x0004
         SWP_NOACTIVATE = 0x0010
-        SWP_NOSIZE = 0x0001
-        SetWindowPos = ctypes.windll.user32.SetWindowPos
+        u = ctypes.windll.user32
 
         saved = getattr(self.profile, '_au_saved_pos', None)
         if saved:
@@ -581,19 +576,21 @@ class Auction(GameAction):
 
         try:
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
-            # restore снимает maximize → возвращает в сохранённый размер/позицию
-            try:
-                win.restore()
-            except Exception:
-                pass
-            await asyncio.sleep(0.4)
+            hwnd = win._hWnd
 
-            # Если restore не вернул размер — принудительно SetWindowPos
+            # 1) WM_SYSCOMMAND SC_RESTORE — клик по средней кнопке (toggle)
+            if win.isMaximized:
+                try:
+                    u.PostMessageW(wintypes.HWND(hwnd), WM_SYSCOMMAND, SC_RESTORE, 0)
+                    await asyncio.sleep(0.4)
+                except Exception:
+                    pass
+
+            # 2) Проверить — если restore не вернул сохранённый размер, SetWindowPos
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             if win.width != w or win.height != h or (win.left, win.top) != (left, top):
-                hwnd = win._hWnd
-                SetWindowPos(
-                    ctypes.c_void_p(int(hwnd)), None,
+                u.SetWindowPos(
+                    wintypes.HWND(hwnd), None,
                     left, top, w, h,
                     SWP_NOZORDER | SWP_NOACTIVATE,
                 )
