@@ -449,8 +449,13 @@ class Auction(GameAction):
         нет проблем с позициями (одно окно, не перекрывается).
         Scale (real_w/960, real_h/540) сохраняется в self._au_scale —
         все координаты в _click/_grab масштабируются.
+
+        Реализация: ShowWindow(SW_MAXIMIZE) через Win32 API. pygetwindow
+        .maximize() НЕ сработал на окнах Lineage2M (CEF-обёртка игнорирует).
         """
+        import ctypes
         import pygetwindow as gw
+        from ctypes import wintypes
 
         # Сохраняем исходную позицию ДО maximize (один раз за цикл)
         if not hasattr(self.profile, '_au_saved_pos') or self.profile._au_saved_pos is None:
@@ -464,41 +469,92 @@ class Auction(GameAction):
                 log(f"Аук: не удалось сохранить позицию: {e}",
                     self.window_id, level="WARNING")
 
-        # maximize — развернуть на весь экран
+        u = ctypes.windll.user32
+        SW_MAXIMIZE = 3
+        SW_RESTORE = 9
+        SWP_NOZORDER = 0x0004
+        SWP_NOACTIVATE = 0x0010
+        MONITOR_DEFAULTTOPRIMARY = 1
+
         try:
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
-            win.maximize()
-            await asyncio.sleep(T_AFTER_RESIZE)
-        except Exception as e:
-            log(f"Аук: maximize не сработал: {e}", self.window_id, level="WARNING")
-            return False
+            hwnd = win._hWnd
 
-        # Перечитать размер окна после maximize
-        try:
+            # 1) Снять maximize если уже был (иначе повторный maximize игнорируется)
+            if win.isMaximized:
+                try:
+                    u.ShowWindow(ctypes.c_void_p(int(hwnd)), SW_RESTORE)
+                    await asyncio.sleep(0.3)
+                except Exception:
+                    pass
+
+            # 2) maximize через ShowWindow(SW_MAXIMIZE) — нативный API
+            try:
+                u.ShowWindow(ctypes.c_void_p(int(hwnd)), SW_MAXIMIZE)
+                await asyncio.sleep(T_AFTER_RESIZE)
+            except Exception as e:
+                log(f"Аук: ShowWindow(SW_MAXIMIZE) не сработал: {e}",
+                    self.window_id, level="WARNING")
+
+            # 3) Проверить размер. Если не maximize — fallback на SetWindowPos
+            #    до полного размера монитора (через MonitorFromWindow).
+            win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
+            if not win.isMaximized:
+                log(f"Аук: maximize не сработал, fallback на SetWindowPos",
+                    self.window_id, level="WARNING")
+                # Найти монитор где сейчас окно
+                try:
+                    MONITORINFO = type('MONITORINFO', (ctypes.Structure,), {
+                        '_fields_': [
+                            ('cbSize', ctypes.c_uint32),
+                            ('rcMonitor', wintypes.RECT),
+                            ('rcWork', wintypes.RECT),
+                            ('dwFlags', ctypes.c_uint32),
+                        ],
+                    })
+                    hmon = u.MonitorFromWindow(
+                        ctypes.c_void_p(int(hwnd)),
+                        ctypes.c_uint32(MONITOR_DEFAULTTOPRIMARY),
+                    )
+                    mi = MONITORINFO()
+                    mi.cbSize = ctypes.sizeof(MONITORINFO)
+                    u.GetMonitorInfoW(ctypes.c_void_p(int(hmon)), ctypes.byref(mi))
+                    mx, my = mi.rcMonitor.left, mi.rcMonitor.top
+                    mw = mi.rcMonitor.right - mi.rcMonitor.left
+                    mh = mi.rcMonitor.bottom - mi.rcMonitor.top
+                    u.SetWindowPos(
+                        ctypes.c_void_p(int(hwnd)), None,
+                        mx, my, mw, mh,
+                        SWP_NOZORDER | SWP_NOACTIVATE,
+                    )
+                    await asyncio.sleep(T_AFTER_RESIZE)
+                    log(f"Аук: SetWindowPos до {mw}x{mh} на ({mx},{my})",
+                        self.window_id)
+                except Exception as e:
+                    log(f"Аук: SetWindowPos fallback не сработал: {e}",
+                        self.window_id, level="ERROR")
+
+            # Перечитать размер окна после maximize
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             real_w, real_h = win.width, win.height
-            # Обновить window_info (позиция/размер изменились)
             self.window_info[self.window_id]["Position"] = (win.left, win.top)
             self.window_info[self.window_id]["Width"] = real_w
             self.window_info[self.window_id]["Height"] = real_h
             self.window_info[self.window_id]["Size"] = f"{real_w}x{real_h}"
 
-            # Scale: координаты 960×540 → real размер
             sx = real_w / WORK_W
             sy = real_h / WORK_H
             self._au_scale = (sx, sy)
             log(f"Аук: окно maximize {real_w}x{real_h}, scale=({sx:.2f},{sy:.2f})",
                 self.window_id)
 
-            # Если scale неравномерный (не 16:9) — warn, но работаем
             if abs(sx - sy) > 0.15:
                 log(f"Аук: ВНИМАНИЕ — масштаб неравномерный (sx={sx:.2f}, sy={sy:.2f}). "
                     f"Монитор не 16:9? Координаты могут съехать.",
                     self.window_id, level="WARNING")
             return True
         except Exception as e:
-            log(f"Аук: не удалось получить размер после maximize: {e}",
-                self.window_id, level="WARNING")
+            log(f"Аук: maximize не удался: {e}", self.window_id, level="WARNING")
             self._au_scale = (1.0, 1.0)
             return False
 
