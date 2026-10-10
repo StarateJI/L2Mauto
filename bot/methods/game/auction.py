@@ -506,13 +506,9 @@ class Auction(GameAction):
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             hwnd = win._hWnd
 
-            # Снять maximize если был (иначе SetWindowPos игнорируется)
-            if win.isMaximized:
-                try:
-                    u.ShowWindow(wintypes.HWND(hwnd), 9)  # SW_RESTORE
-                    await asyncio.sleep(0.4)
-                except Exception:
-                    pass
+            # НЕ СНИМАТЬ maximize через ShowWindow(SW_RESTORE) — может
+            # вернуть окно в свёрнутое состояние (трей). SetWindowPos
+            # ниже работает на maximize окне напрямую.
 
             # Найти монитор где сейчас окно → его рабочая область (без taskbar)
             MONITORINFO = type('MONITORINFO', (ctypes.Structure,), {
@@ -574,6 +570,9 @@ class Auction(GameAction):
     async def _resize_back(self) -> None:
         """
         Вернуть окно в исходное положение через SetWindowPos (не клик).
+        НИКАКИХ ShowWindow(SW_RESTORE) — restore на maximize окне может
+        вернуть окно в свёрнутое состояние (если до maximize было minimize).
+        SetWindowPos работает на maximize окне напрямую.
         Сбрасывает self._au_scale = (1.0, 1.0).
         """
         import ctypes
@@ -595,14 +594,9 @@ class Auction(GameAction):
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             hwnd = win._hWnd
 
-            # Снять maximize если был
-            if win.isMaximized:
-                try:
-                    u.ShowWindow(wintypes.HWND(hwnd), 9)  # SW_RESTORE
-                    await asyncio.sleep(0.4)
-                except Exception:
-                    pass
-
+            # SetWindowPos напрямую до сохранённой позиции (без ShowWindow!)
+            # ShowWindow(SW_RESTORE) на maximize окне может вернуть окно в
+            # свёрнутое состояние → бот «сворачивает в трей».
             u.SetWindowPos(
                 wintypes.HWND(hwnd), None,
                 left, top, w, h,
