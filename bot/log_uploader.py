@@ -187,26 +187,54 @@ def _tail_file(path: str, n_lines: int) -> bytes:
 
 
 def _list_debug_pngs() -> list:
-    """Список debug PNG-файлов в DEBUG_DIR с префиксом au_ или cmp_.
-    Включает фулл-скрины (au_final_fullscreen.png, au_after_tab_sell.png)."""
+    """Список ВСЕХ debug PNG-файлов в проекте.
+
+    Ищет во ВСЕХ папках:
+    - bot/methods/game/ (au_*.png, cmp_*.png — аук)
+    - profiles/Dungeon/ (blessed_*.png, party_*.png — данжи)
+    - profiles/*/ (любые *.png — другие профили)
+
+    Возвращает [(name, full_path, size), ...]
+    """
     out = []
+    seen = set()  # по полному пути — не дублируем
+
+    # Папки где могут лежать debug PNG
+    project_root = _PROJECT_ROOT
+    search_dirs = [
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "methods", "game"),  # bot/methods/game
+        os.path.join(project_root, "profiles", "Dungeon"),
+        os.path.join(project_root, "profiles", "Auction"),
+        os.path.join(project_root, "profiles", "PvpProfile"),
+        os.path.join(project_root, "profiles", "RewardsProfile"),
+        os.path.join(project_root, "profiles", "BuyerProfile"),
+        os.path.join(project_root, "profiles", "Scheduler"),
+        os.path.join(project_root, "profiles", "MainAlch"),
+        os.path.join(project_root, "profiles"),
+    ]
+
     try:
-        if not os.path.isdir(DEBUG_DIR):
-            return out
-        for name in sorted(os.listdir(DEBUG_DIR)):
-            if not name.lower().endswith(".png"):
+        for d in search_dirs:
+            if not os.path.isdir(d):
                 continue
-            if not name.startswith(DEBUG_PREFIXES):
-                continue
-            full = os.path.join(DEBUG_DIR, name)
-            try:
-                size = os.path.getsize(full)
-            except Exception:
-                continue
-            # Лимит 10 МБ — фулл-скрин 2560×1440 может быть ~3 МБ
-            if size > 10_000_000:
-                continue
-            out.append((name, full, size))
+            for name in sorted(os.listdir(d)):
+                if not name.lower().endswith(".png"):
+                    continue
+                # Префиксы debug-скринов: au_, cmp_, blessed_, party_, debug_
+                # или любые .png в папках профилей
+                full = os.path.join(d, name)
+                if full in seen:
+                    continue
+                try:
+                    size = os.path.getsize(full)
+                except Exception:
+                    continue
+                if size > 10_000_000:  # 10 МБ лимит
+                    continue
+                # Относительный путь для уникальности имени в bot-logs
+                rel = os.path.relpath(full, project_root).replace("\\", "/").replace("/", "_")
+                seen.add(full)
+                out.append((rel, full, size))
     except Exception as e:
         log(f"log_uploader: list PNGs exception: {e}", level="WARNING")
     return out
