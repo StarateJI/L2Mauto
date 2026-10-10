@@ -457,18 +457,14 @@ class NedoGui(QWidget):
         from gui.window_selector import WindowSelectorDialog
 
         # PvPDodge — без количества (запускает все сразу)
-        show_count = (profile_name != "PvPDodge")
+        # Auction — всегда 1 окно в пачке (hide спиннер, фикс 1)
+        show_count = (profile_name not in ("PvPDodge", "Auction"))
         dungeon_types = ["Пати данж", "Благословенная Земля"] if profile_name == "Dungeon" else None
 
         # Значения по умолчанию — из cache (запоминаются)
         from gui.cache import load_cache, save_cache as _save_cache
         _cache = load_cache()
-        # Auction — по умолчанию 1 окно за раз (меньше багов с позициями,
-        # лучше видимость цифр/иконок, окна не перекрывают друг друга)
-        if profile_name == "Auction":
-            default_count = self.cache.get(profile_name, 1)
-        else:
-            default_count = self.cache.get(profile_name, 2)
+        default_count = self.cache.get(profile_name, 2) if profile_name != "Auction" else 1
         default_dungeon = _cache.get("DungeonType", "Пати данж") if dungeon_types else None
 
         selector = WindowSelectorDialog(
@@ -485,10 +481,14 @@ class NedoGui(QWidget):
             return
 
         # Сохраняем количество и тип данжа (запоминаются для следующего раза)
-        num = selector.get_count()
-        if show_count:
-            self.cache[profile_name] = num
-            save_cache(self.cache)
+        # Auction — фикс 1 окно, игнорируем что в cache
+        if profile_name == "Auction":
+            num = 1
+        else:
+            num = selector.get_count()
+            if show_count:
+                self.cache[profile_name] = num
+                save_cache(self.cache)
 
         batch_kwargs = {}
         if dungeon_types:

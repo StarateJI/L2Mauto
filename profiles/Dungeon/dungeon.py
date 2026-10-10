@@ -200,6 +200,9 @@ class Dungeon(EventDrivenProfile):
                     f"OCR={'да' if ocr_found else 'нет'}", window_id, level="DEBUG")
 
                 if ocr_found:
+                    # Сохраняем координату ДО возможной доп. прокрутки
+                    first_x = list_x_rel + int(list_w * 0.15)
+                    first_y = list_y_rel + min(max(ocr_y, 10), list_h - 10)
                     # Если OCR нашёл но текст в самом низу (виден краешек)
                     if ocr_y > int(list_h * 0.85):
                         log(f"Данги: OCR нашёл но в самом низу (ocr_y={ocr_y}, "
@@ -219,6 +222,20 @@ class Dungeon(EventDrivenProfile):
                         found = True
                         log(f"Данги: найден через OCR ({click_x_rel},{click_y_rel})", window_id)
                         self._save_debug("blessed_found_ocr.png", scene_bgr)
+                        break
+                    else:
+                        # OCR потерял текст после доп. прокрутки (проскроллил мимо).
+                        # Кликаем по сохранённым координатам ДО прокрутки —
+                        # OCR уже нашёл, значит строка была видна.
+                        click_x_rel = first_x
+                        click_y_rel = first_y
+                        found = True
+                        log(f"Данги: OCR потерял после прокрутки — кликаю по старым "
+                            f"координатам ({click_x_rel},{click_y_rel})", window_id, level="WARNING")
+                        # Переснимаем сцену до клика (для дебага)
+                        scene_bgr = self._grab_window_rect(wx, wy, list_x_rel, list_y_rel, list_w, list_h)
+                        if scene_bgr is not None:
+                            self._save_debug("blessed_found_fallback.png", scene_bgr)
                         break
 
                 await self.mouse.wheel(self.window_info, [scroll_center],
