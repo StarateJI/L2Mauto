@@ -435,66 +435,41 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     def _click_titlebar_button(self, hwnd: int, button: str) -> bool:
         """
-        Простой реальный клик мышью по кнопке title bar через pyautogui
-        (как просил пользователь — обычный клик, не API-аналоги).
-
-        pyautogui.click(x, y) делает SetCursorPos + SendInput — это
-        работает с любым окном, доказано в _find_item (клик по предмету).
-
-        button: 'maximize' | 'minimize' | 'close'
-        (restore = повторный клик maximize — toggle)
+        Простой реальный клик мышью по кнопке title bar через pyautogui.
         """
         import pyautogui
         import pygetwindow as gw
 
+        # Отключить FAILSAFE — pyautogui бросает exception если курсор в углу
+        pyautogui.FAILSAFE = False
+
+        log(f"Аук: >>> _click_titlebar_button({button}) ВХОД", self.window_id)
+
         try:
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
-            # Координаты title bar:
-            # Стандартный Windows title bar = 30px высота.
-            # Кнопки справа: close (правый край), maximize/minimize (левее).
-            # Ширина кнопки ~45px.
-            #
-            # Для CEF-окна Lineage2M title bar может быть ~30px.
-            # Кнопка maximize ≈ 45-60px от правого края, ~15px от верха.
             title_h = 30
             btn_w = 45
-
             btn_order = ['close', 'maximize', 'minimize']
             idx = btn_order.index(button) if button in btn_order else 1
 
             screen_x = win.right - (idx + 1) * btn_w + btn_w // 2
             screen_y = win.top + title_h // 2
 
-            log(f"Аук: клик по title bar '{button}' на ({screen_x},{screen_y}) "
-                f"окно=({win.left},{win.top}) {win.width}x{win.height}",
+            log(f"Аук: клик pyautogui по title bar '{button}' на ({screen_x},{screen_y}) "
+                f"окно=({win.left},{win.top},{win.right},{win.bottom}) {win.width}x{win.height}",
                 self.window_id)
 
-            # Дебаг-скриншот title bar — видно окно с кнопками до клика
-            try:
-                import mss as _mss
-                _sct_local = _mss.mss()
-                mon = {"left": win.left, "top": win.top,
-                       "width": win.width, "height": 40}
-                _shot = _sct_local.grab(mon)
-                import numpy as _np
-                import cv2 as _cv2
-                _arr = _np.array(_shot)
-                _bgr = _cv2.cvtColor(_arr, _cv2.COLOR_BGRA2BGR)
-                _out = os.path.dirname(os.path.abspath(__file__))
-                _cv2.imwrite(os.path.join(_out, "au_titlebar_before_click.png"), _bgr)
-                _sct_local.close()
-            except Exception:
-                pass
-
-            # pyautogui.moveTo + click — реальный клик через SendInput
-            pyautogui.moveTo(screen_x, screen_y, duration=0.1)
-            pyautogui.click(screen_x, screen_y)
+            # Реальный клик — pyautogui.click(x, y) = SetCursorPos + SendInput
+            pyautogui.click(screen_x, screen_y, _pause=False)
             import time as _t
             _t.sleep(0.3)
+            log(f"Аук: <<< _click_titlebar_button({button}) ВЫХОД OK", self.window_id)
             return True
         except Exception as e:
-            log(f"Аук: _click_titlebar_button({button}) не сработал: {e}",
+            log(f"Аук: _click_titlebar_button({button}) EXCEPTION: {type(e).__name__}: {e}",
                 self.window_id, level="WARNING")
+            import traceback
+            log(traceback.format_exc(), self.window_id, level="ERROR")
             return False
 
     async def _resize_work(self) -> bool:
@@ -527,17 +502,22 @@ class Auction(GameAction):
         MONITOR_DEFAULTTOPRIMARY = 1
 
         try:
+            log(f"Аук: >>> _resize_work ВХОД", self.window_id)
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             hwnd = win._hWnd
+            log(f"Аук: окно найдено: ({win.left},{win.top}) {win.width}x{win.height} "
+                f"isMaximized={win.isMaximized}", self.window_id)
 
             # 1) Если уже maximize — restore (toggle)
             if win.isMaximized:
-                self._click_titlebar_button(hwnd, 'restore')
-                await asyncio.sleep(0.4)
+                log(f"Аук: окно уже maximize — кликаю restore", self.window_id)
+                self._click_titlebar_button(hwnd, 'maximize')  # toggle restore
+                await asyncio.sleep(0.5)
 
             # 2) КЛИК по средней кнопке (maximize) в title bar
-            self._ensure_foreground()
+            log(f"Аук: кликаю maximize...", self.window_id)
             ok = self._click_titlebar_button(hwnd, 'maximize')
+            log(f"Аук: _click_titlebar_button вернул {ok}", self.window_id)
             await asyncio.sleep(T_AFTER_RESIZE)
 
             # 3) Проверить размер. Если не maximize — fallback на SetWindowPos
