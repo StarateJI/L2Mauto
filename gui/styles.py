@@ -16,27 +16,27 @@ QWidget {
     font-size: 11pt;
 }
 
-/* Заголовок — крупный, с подзаголовком версии */
+/* Заголовок — компактный */
 QLabel#title {
     color: #f4f4f5;
-    font-size: 20pt;
+    font-size: 13pt;
     font-weight: 700;
-    padding: 12px 4px 4px 4px;
+    padding: 6px 4px 2px 4px;
+    qproperty-alignment: AlignCenter;
+    letter-spacing: 1px;
+}
+
+/* Подзаголовок — мелкий, без отступов */
+QLabel#subtitle {
+    color: #52525b;
+    font-size: 7pt;
+    font-weight: 400;
+    padding: 0px 4px 4px 4px;
     qproperty-alignment: AlignCenter;
     letter-spacing: 2px;
 }
 
-/* Подзаголовок под названием */
-QLabel#subtitle {
-    color: #71717a;
-    font-size: 8pt;
-    font-weight: 400;
-    padding: 0px 4px 10px 4px;
-    qproperty-alignment: AlignCenter;
-    letter-spacing: 3px;
-}
-
-/* Кнопки профилей — выпуклые, с объёмом */
+/* Кнопки профилей — выпуклые, курсив, крупнее */
 QPushButton {
     /* Градиент сверху-вниз: верх светлее → объём */
     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -46,7 +46,9 @@ QPushButton {
     border-bottom: 1px solid #1f1f30;
     border-radius: 10px;
     color: #d4d4d8;
-    font-weight: 600;
+    font-weight: 700;
+    font-style: italic;
+    font-size: 12pt;
     padding: 8px 12px;
     text-align: center;
 }

@@ -209,7 +209,6 @@ class NedoGui(QWidget):
         self.layout_main.addWidget(self.subtitle_label)
 
         self.btn_otdel = QPushButton("▤  Отдельное управление")
-        self.btn_otdel.setFont(font_btn)
         self.btn_otdel.setCursor(Qt.PointingHandCursor)
         self.btn_otdel.setFixedHeight(34)
         self.btn_otdel.clicked.connect(self.open_otdel)
@@ -231,7 +230,6 @@ class NedoGui(QWidget):
         for name, cls in self.profiles.items():
             icon, label = PROFILE_LABELS.get(name, ("▶", name))
             btn = QPushButton(f"{icon}   {label}")
-            btn.setFont(font_btn)
             btn.setCursor(Qt.PointingHandCursor)
             btn.setFixedHeight(34)
             # Сохраняем имя класса профиля в свойстве кнопки — для подсчёта
