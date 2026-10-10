@@ -474,22 +474,23 @@ class Auction(GameAction):
 
     async def _resize_work(self) -> bool:
         """
-        Развернуть окно на ФУЛЛСКРИН — КЛИК по средней кнопке title bar
-        (как пользователь просил, не 'аналоги' через ShowWindow/SYSCOMMAND).
+        Resize окна в большой рабочий размер через SetWindowPos.
+        Использует rcWork монитора (рабочая область без taskbar) — окно
+        не уезжает за экран. Scale (real_w/960, real_h/540) для координат.
 
-        Scale (real_w/960, real_h/540) сохраняется в self._au_scale —
-        все координаты в _click/_grab масштабируются.
+        Это надёжный механизм — работал до v5.13.27. Никаких кликов по
+        кнопкам title bar (не сработали на CEF-окне Lineage2M).
         """
         import ctypes
         import pygetwindow as gw
         from ctypes import wintypes
 
-        # Сохраняем исходную позицию ДО maximize (один раз за цикл)
+        # Сохраняем исходную позицию ДО resize (один раз за цикл)
         if not hasattr(self.profile, '_au_saved_pos') or self.profile._au_saved_pos is None:
             try:
                 win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
                 self.profile._au_saved_pos = (win.left, win.top, win.width, win.height)
-                log(f"Аук: сохранил позицию окна до maximize: "
+                log(f"Аук: сохранил позицию окна до resize: "
                     f"({win.left},{win.top}) {win.width}x{win.height}",
                     self.window_id)
             except Exception as e:
@@ -502,64 +503,51 @@ class Auction(GameAction):
         MONITOR_DEFAULTTOPRIMARY = 1
 
         try:
-            log(f"Аук: >>> _resize_work ВХОД", self.window_id)
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             hwnd = win._hWnd
-            log(f"Аук: окно найдено: ({win.left},{win.top}) {win.width}x{win.height} "
-                f"isMaximized={win.isMaximized}", self.window_id)
 
-            # 1) Если уже maximize — restore (toggle)
+            # Снять maximize если был (иначе SetWindowPos игнорируется)
             if win.isMaximized:
-                log(f"Аук: окно уже maximize — кликаю restore", self.window_id)
-                self._click_titlebar_button(hwnd, 'maximize')  # toggle restore
-                await asyncio.sleep(0.5)
+                try:
+                    u.ShowWindow(wintypes.HWND(hwnd), 9)  # SW_RESTORE
+                    await asyncio.sleep(0.4)
+                except Exception:
+                    pass
 
-            # 2) КЛИК по средней кнопке (maximize) в title bar
-            log(f"Аук: кликаю maximize...", self.window_id)
-            ok = self._click_titlebar_button(hwnd, 'maximize')
-            log(f"Аук: _click_titlebar_button вернул {ok}", self.window_id)
+            # Найти монитор где сейчас окно → его рабочая область (без taskbar)
+            MONITORINFO = type('MONITORINFO', (ctypes.Structure,), {
+                '_fields_': [
+                    ('cbSize', ctypes.c_uint32),
+                    ('rcMonitor', wintypes.RECT),
+                    ('rcWork', wintypes.RECT),
+                    ('dwFlags', ctypes.c_uint32),
+                ],
+            })
+            hmon = u.MonitorFromWindow(
+                wintypes.HWND(hwnd),
+                ctypes.c_uint32(MONITOR_DEFAULTTOPRIMARY),
+            )
+            mi = MONITORINFO()
+            mi.cbSize = ctypes.sizeof(MONITORINFO)
+            u.GetMonitorInfoW(wintypes.HMONITOR(hmon), ctypes.byref(mi))
+            # rcWork — рабочая область (без taskbar). НЕ rcMonitor (весь экран).
+            mx = mi.rcWork.left
+            my = mi.rcWork.top
+            mw = mi.rcWork.right - mi.rcWork.left
+            mh = mi.rcWork.bottom - mi.rcWork.top
+
+            log(f"Аук: монитор рабочая область {mw}x{mh} на ({mx},{my})",
+                self.window_id)
+
+            # SetWindowPos до полного размера рабочей области
+            u.SetWindowPos(
+                wintypes.HWND(hwnd), None,
+                mx, my, mw, mh,
+                SWP_NOZORDER | SWP_NOACTIVATE,
+            )
             await asyncio.sleep(T_AFTER_RESIZE)
 
-            # 3) Проверить размер. Если не maximize — fallback на SetWindowPos
-            win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
-            if not win.isMaximized:
-                log(f"Аук: клик по maximize не сработал, fallback на SetWindowPos",
-                    self.window_id, level="WARNING")
-                try:
-                    MONITORINFO = type('MONITORINFO', (ctypes.Structure,), {
-                        '_fields_': [
-                            ('cbSize', ctypes.c_uint32),
-                            ('rcMonitor', wintypes.RECT),
-                            ('rcWork', wintypes.RECT),
-                            ('dwFlags', ctypes.c_uint32),
-                        ],
-                    })
-                    hmon = u.MonitorFromWindow(
-                        wintypes.HWND(hwnd),
-                        ctypes.c_uint32(MONITOR_DEFAULTTOPRIMARY),
-                    )
-                    mi = MONITORINFO()
-                    mi.cbSize = ctypes.sizeof(MONITORINFO)
-                    u.GetMonitorInfoW(wintypes.HMONITOR(hmon), ctypes.byref(mi))
-                    # rcWork — рабочая область (без taskbar), НЕ rcMonitor!
-                    # rcMonitor = весь экран включая taskbar.
-                    # Используем rcWork чтобы окно не уезжало за экран.
-                    mx, my = mi.rcWork.left, mi.rcWork.top
-                    mw = mi.rcWork.right - mi.rcWork.left
-                    mh = mi.rcWork.bottom - mi.rcWork.top
-                    u.SetWindowPos(
-                        wintypes.HWND(hwnd), None,
-                        mx, my, mw, mh,
-                        SWP_NOZORDER | SWP_NOACTIVATE,
-                    )
-                    await asyncio.sleep(T_AFTER_RESIZE)
-                    log(f"Аук: SetWindowPos до {mw}x{mh} на ({mx},{my}) — рабочая область",
-                        self.window_id)
-                except Exception as e:
-                    log(f"Аук: SetWindowPos fallback не сработал: {e}",
-                        self.window_id, level="ERROR")
-
-            # Перечитать размер окна после maximize
+            # Перечитать размер окна
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             real_w, real_h = win.width, win.height
             self.window_info[self.window_id]["Position"] = (win.left, win.top)
@@ -570,24 +558,23 @@ class Auction(GameAction):
             sx = real_w / WORK_W
             sy = real_h / WORK_H
             self._au_scale = (sx, sy)
-            log(f"Аук: окно maximize {real_w}x{real_h}, scale=({sx:.2f},{sy:.2f})",
-                self.window_id)
+            log(f"Аук: окно resize {real_w}x{real_h} на ({win.left},{win.top}), "
+                f"scale=({sx:.2f},{sy:.2f})", self.window_id)
 
             if abs(sx - sy) > 0.15:
                 log(f"Аук: ВНИМАНИЕ — масштаб неравномерный (sx={sx:.2f}, sy={sy:.2f}). "
-                    f"Монитор не 16:9? Координаты могут съехать.",
+                    f"Монитор не 16:9?",
                     self.window_id, level="WARNING")
             return True
         except Exception as e:
-            log(f"Аук: maximize не удался: {e}", self.window_id, level="WARNING")
+            log(f"Аук: resize не удался: {e}", self.window_id, level="WARNING")
             self._au_scale = (1.0, 1.0)
             return False
 
     async def _resize_back(self) -> None:
         """
-        Вернуть окно в исходное положение — КЛИК по средней кнопке title bar
-        (toggle restore). Если не сработало — SetWindowPos до сохранённой
-        позиции. Сбрасывает self._au_scale = (1.0, 1.0).
+        Вернуть окно в исходное положение через SetWindowPos (не клик).
+        Сбрасывает self._au_scale = (1.0, 1.0).
         """
         import ctypes
         import pygetwindow as gw
@@ -608,24 +595,22 @@ class Auction(GameAction):
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             hwnd = win._hWnd
 
-            # 1) Клик по средней кнопке (toggle restore) если окно maximize
+            # Снять maximize если был
             if win.isMaximized:
-                self._ensure_foreground()
-                # maximize кнопка в toggle режиме: клик = restore
-                self._click_titlebar_button(hwnd, 'maximize')
-                await asyncio.sleep(0.5)
+                try:
+                    u.ShowWindow(wintypes.HWND(hwnd), 9)  # SW_RESTORE
+                    await asyncio.sleep(0.4)
+                except Exception:
+                    pass
 
-            # 2) Проверить — если restore не вернул сохранённый размер, SetWindowPos
-            win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
-            if win.width != w or win.height != h or (win.left, win.top) != (left, top):
-                u.SetWindowPos(
-                    wintypes.HWND(hwnd), None,
-                    left, top, w, h,
-                    SWP_NOZORDER | SWP_NOACTIVATE,
-                )
-                await asyncio.sleep(0.4)
+            u.SetWindowPos(
+                wintypes.HWND(hwnd), None,
+                left, top, w, h,
+                SWP_NOZORDER | SWP_NOACTIVATE,
+            )
+            await asyncio.sleep(0.4)
 
-            # Перечитать win (мог сместиться)
+            # Перечитать win
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             self.window_info[self.window_id]["Position"] = (win.left, win.top)
             self.window_info[self.window_id]["Width"] = win.width
@@ -637,7 +622,7 @@ class Auction(GameAction):
             log(f"Аук: не удалось вернуть размер окна: {e}",
                 self.window_id, level="WARNING")
 
-        # Сброс scale — координаты снова 1:1
+        # Сброс scale
         self._au_scale = (1.0, 1.0)
 
     # ──────────────────────────────────────────────────────────────────────
