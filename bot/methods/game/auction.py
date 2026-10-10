@@ -435,88 +435,70 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     def _click_titlebar_button(self, hwnd: int, button: str) -> bool:
         """
-        Имитация клика по кнопке title bar (как пользователь просил — кликнуть
-        на среднюю кнопку, а не 'аналоги' через ShowWindow/SYSCOMMAND).
+        Реальный клик мышью по кнопке title bar (как просил пользователь —
+        обычный клик, не 'аналоги' через SendMessage/SYSCOMMAND).
 
-        WM_NCHITTEST находит координаты нужной кнопки в title bar,
-        WM_NCLBUTTONDOWN/UP с HT* эмулирует клик.
+        SendMessage(WM_NCLBUTTONDOWN) НЕ работает — окно в другом процессе.
+        Поэтому: SetCursorPos + mouse_event (реальный ввод через Windows
+        input system). Windows сам обработает клик по NC-области title bar.
 
-        button: 'maximize' | 'restore' | 'minimize' | 'close'
+        button: 'maximize' | 'minimize' | 'close'
+        (restore = повторный клик maximize когда окно уже maximize — toggle)
         """
         import ctypes
         from ctypes import wintypes
 
         u = ctypes.windll.user32
 
-        # HT-коды для WM_NCLBUTTON*
-        HT_MAP = {
-            'minimize': 8,    # HTMINBUTTON
-            'maximize': 9,    # HTMAXBUTTON
-            'restore': 2,     # HTCAPTION — restore не имеет своей HT, идёт через SYSCOMMAND
-            'close': 20,      # HTCLOSE
-        }
-        ht = HT_MAP.get(button)
-        if ht is None:
-            return False
+        # Системные метрики для расчёта координат кнопок title bar
+        SM_CXSIZEFRAME = 32   # ширина рамки окна (по X)
+        SM_CYSIZEFRAME = 33   # высота рамки окна (по Y)
+        SM_CYCAPTION = 4      # высота title bar
+        SM_CXSMSIZE = 52      # ширина small button (minimize/maximize)
 
-        # Найти координаты кнопки в title bar
-        # SM_CXSIZEFRAME = рамка вокруг окна, SM_CYCAPTION = высота title bar
-        # SM_CXSMSIZE = ширина кнопок
+        # mouse_event флаги
+        MOUSEEVENTF_LEFTDOWN = 0x0002
+        MOUSEEVENTF_LEFTUP = 0x0004
+
         try:
-            SM_CXSIZEFRAME = 32  # SM_CXSIZEFRAME
-            SM_CYSIZEFRAME = 33  # SM_CYSIZEFRAME
-            SM_CYCAPTION = 4     # SM_CYCAPTION
-            SM_CXSMSIZE = 52     # SM_CXSMSIZE (ширина small button)
-
             cxframe = u.GetSystemMetrics(SM_CXSIZEFRAME)
             cyframe = u.GetSystemMetrics(SM_CYSIZEFRAME)
             cy_caption = u.GetSystemMetrics(SM_CYCAPTION)
             cx_btn = u.GetSystemMetrics(SM_CXSMSIZE) or 30
 
-            # Получить rect окна
+            # Rect окна (экранные координаты)
             class RECT(ctypes.Structure):
                 _fields_ = [('left', ctypes.c_long), ('top', ctypes.c_long),
                             ('right', ctypes.c_long), ('bottom', ctypes.c_long)]
             rect = RECT()
             u.GetWindowRect(wintypes.HWND(hwnd), ctypes.byref(rect))
 
-            # Y кнопки = центр title bar
-            btn_y = cyframe + cy_caption // 2
-            # Кнопки идут справа налево: close, restore, minimize
-            # Close = правый край, restore = следующий, minimize = следующий
+            # Кнопки справа налево: close(0), maximize(1), minimize(2)
             btn_order = ['close', 'maximize', 'minimize']
-            if button in btn_order:
-                idx = btn_order.index(button)
-            else:
-                idx = 1
-            # X = отступ от правого края (cxframe) + позиция кнопки
+            idx = btn_order.index(button) if button in btn_order else 1
+
+            # Y = центр title bar
+            btn_y = rect.top + cyframe + cy_caption // 2
+            # X = правый край - рамка - половина кнопки - позиция
             btn_x = rect.right - cxframe - cx_btn // 2 - idx * cx_btn
 
-            # Перевести в экранные координаты (rect уже в экранных)
-            screen_x = btn_x
-            screen_y = rect.top + btn_y
-
-            # Сохранить текущую позицию курсора, восстановить после
+            # Сохранить курсор, восстановить после
             class POINT(ctypes.Structure):
                 _fields_ = [('x', ctypes.c_long), ('y', ctypes.c_long)]
             old_pt = POINT()
             u.GetCursorPos(ctypes.byref(old_pt))
 
-            # Передвинуть курсор на кнопку
-            u.SetCursorPos(screen_x, screen_y)
+            # Реальный клик мышью:
+            # 1. Двигаем курсор на кнопку
+            u.SetCursorPos(btn_x, btn_y)
             import time as _t
+            _t.sleep(0.08)
+            # 2. mouse_event — реальный ввод через Windows input system.
+            #    Windows сам разнесёт клик в NC-область нужного окна.
+            u.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
             _t.sleep(0.05)
-
-            WM_NCHITTEST = 0x0084
-            WM_NCLBUTTONDOWN = 0x00A1
-            WM_NCLBUTTONUP = 0x00A2
-            MK_LBUTTON = 0x0001
-
-            # Клик: NC left button down + up, lParam = MAKELONG(x, y)
-            lparam = (screen_y << 16) | (screen_x & 0xFFFF)
-            u.SendMessageW(wintypes.HWND(hwnd), WM_NCLBUTTONDOWN, ht, lparam)
-            _t.sleep(0.03)
-            u.SendMessageW(wintypes.HWND(hwnd), WM_NCLBUTTONUP, ht, lparam)
+            u.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+            _t.sleep(0.1)
 
             # Восстановить курсор
             u.SetCursorPos(old_pt.x, old_pt.y)
@@ -657,10 +639,11 @@ class Auction(GameAction):
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             hwnd = win._hWnd
 
-            # 1) Клик по средней кнопке (restore) если окно maximize
+            # 1) Клик по средней кнопке (toggle restore) если окно maximize
             if win.isMaximized:
                 self._ensure_foreground()
-                self._click_titlebar_button(hwnd, 'restore')
+                # maximize кнопка в toggle режиме: клик = restore
+                self._click_titlebar_button(hwnd, 'maximize')
                 await asyncio.sleep(0.5)
 
             # 2) Проверить — если restore не вернул сохранённый размер, SetWindowPos
