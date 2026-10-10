@@ -435,73 +435,62 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     def _click_titlebar_button(self, hwnd: int, button: str) -> bool:
         """
-        Реальный клик мышью по кнопке title bar (как просил пользователь —
-        обычный клик, не 'аналоги' через SendMessage/SYSCOMMAND).
+        Простой реальный клик мышью по кнопке title bar через pyautogui
+        (как просил пользователь — обычный клик, не API-аналоги).
 
-        SendMessage(WM_NCLBUTTONDOWN) НЕ работает — окно в другом процессе.
-        Поэтому: SetCursorPos + mouse_event (реальный ввод через Windows
-        input system). Windows сам обработает клик по NC-области title bar.
+        pyautogui.click(x, y) делает SetCursorPos + SendInput — это
+        работает с любым окном, доказано в _find_item (клик по предмету).
 
         button: 'maximize' | 'minimize' | 'close'
-        (restore = повторный клик maximize когда окно уже maximize — toggle)
+        (restore = повторный клик maximize — toggle)
         """
-        import ctypes
-        from ctypes import wintypes
-
-        u = ctypes.windll.user32
-
-        # Системные метрики для расчёта координат кнопок title bar
-        SM_CXSIZEFRAME = 32   # ширина рамки окна (по X)
-        SM_CYSIZEFRAME = 33   # высота рамки окна (по Y)
-        SM_CYCAPTION = 4      # высота title bar
-        SM_CXSMSIZE = 52      # ширина small button (minimize/maximize)
-
-        # mouse_event флаги
-        MOUSEEVENTF_LEFTDOWN = 0x0002
-        MOUSEEVENTF_LEFTUP = 0x0004
+        import pyautogui
+        import pygetwindow as gw
 
         try:
-            cxframe = u.GetSystemMetrics(SM_CXSIZEFRAME)
-            cyframe = u.GetSystemMetrics(SM_CYSIZEFRAME)
-            cy_caption = u.GetSystemMetrics(SM_CYCAPTION)
-            cx_btn = u.GetSystemMetrics(SM_CXSMSIZE) or 30
+            win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
+            # Координаты title bar:
+            # Стандартный Windows title bar = 30px высота.
+            # Кнопки справа: close (правый край), maximize/minimize (левее).
+            # Ширина кнопки ~45px.
+            #
+            # Для CEF-окна Lineage2M title bar может быть ~30px.
+            # Кнопка maximize ≈ 45-60px от правого края, ~15px от верха.
+            title_h = 30
+            btn_w = 45
 
-            # Rect окна (экранные координаты)
-            class RECT(ctypes.Structure):
-                _fields_ = [('left', ctypes.c_long), ('top', ctypes.c_long),
-                            ('right', ctypes.c_long), ('bottom', ctypes.c_long)]
-            rect = RECT()
-            u.GetWindowRect(wintypes.HWND(hwnd), ctypes.byref(rect))
-
-            # Кнопки справа налево: close(0), maximize(1), minimize(2)
             btn_order = ['close', 'maximize', 'minimize']
             idx = btn_order.index(button) if button in btn_order else 1
 
-            # Y = центр title bar
-            btn_y = rect.top + cyframe + cy_caption // 2
-            # X = правый край - рамка - половина кнопки - позиция
-            btn_x = rect.right - cxframe - cx_btn // 2 - idx * cx_btn
+            screen_x = win.right - (idx + 1) * btn_w + btn_w // 2
+            screen_y = win.top + title_h // 2
 
-            # Сохранить курсор, восстановить после
-            class POINT(ctypes.Structure):
-                _fields_ = [('x', ctypes.c_long), ('y', ctypes.c_long)]
-            old_pt = POINT()
-            u.GetCursorPos(ctypes.byref(old_pt))
+            log(f"Аук: клик по title bar '{button}' на ({screen_x},{screen_y}) "
+                f"окно=({win.left},{win.top}) {win.width}x{win.height}",
+                self.window_id)
 
-            # Реальный клик мышью:
-            # 1. Двигаем курсор на кнопку
-            u.SetCursorPos(btn_x, btn_y)
+            # Дебаг-скриншот title bar — видно окно с кнопками до клика
+            try:
+                import mss as _mss
+                _sct_local = _mss.mss()
+                mon = {"left": win.left, "top": win.top,
+                       "width": win.width, "height": 40}
+                _shot = _sct_local.grab(mon)
+                import numpy as _np
+                import cv2 as _cv2
+                _arr = _np.array(_shot)
+                _bgr = _cv2.cvtColor(_arr, _cv2.COLOR_BGRA2BGR)
+                _out = os.path.dirname(os.path.abspath(__file__))
+                _cv2.imwrite(os.path.join(_out, "au_titlebar_before_click.png"), _bgr)
+                _sct_local.close()
+            except Exception:
+                pass
+
+            # pyautogui.moveTo + click — реальный клик через SendInput
+            pyautogui.moveTo(screen_x, screen_y, duration=0.1)
+            pyautogui.click(screen_x, screen_y)
             import time as _t
-            _t.sleep(0.08)
-            # 2. mouse_event — реальный ввод через Windows input system.
-            #    Windows сам разнесёт клик в NC-область нужного окна.
-            u.mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0)
-            _t.sleep(0.05)
-            u.mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
-            _t.sleep(0.1)
-
-            # Восстановить курсор
-            u.SetCursorPos(old_pt.x, old_pt.y)
+            _t.sleep(0.3)
             return True
         except Exception as e:
             log(f"Аук: _click_titlebar_button({button}) не сработал: {e}",
