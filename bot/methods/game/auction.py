@@ -155,6 +155,9 @@ class Auction(GameAction):
         notify_screenshot (слать скрин в TG) и upload_run_logs (логи в GitHub).
         """
         log("Аук: запущен relist (снять+найти+поставить)", self.window_id)
+        # Печать загруженной координаты '0' — диагностика какой код реально работает
+        log(f"Аук: CALC_DIGITS['0']={CALC_DIGITS['0']} '3'={CALC_DIGITS['3']} "
+            f"_au_scale={getattr(self, '_au_scale', 'none')}", self.window_id)
 
         # Очистка старых debug PNG от прошлых прогонов
         try:
