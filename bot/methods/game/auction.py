@@ -433,13 +433,103 @@ class Auction(GameAction):
     # ──────────────────────────────────────────────────────────────────────
     # РАЗМЕР ОКНА
     # ──────────────────────────────────────────────────────────────────────
+    def _click_titlebar_button(self, hwnd: int, button: str) -> bool:
+        """
+        Имитация клика по кнопке title bar (как пользователь просил — кликнуть
+        на среднюю кнопку, а не 'аналоги' через ShowWindow/SYSCOMMAND).
+
+        WM_NCHITTEST находит координаты нужной кнопки в title bar,
+        WM_NCLBUTTONDOWN/UP с HT* эмулирует клик.
+
+        button: 'maximize' | 'restore' | 'minimize' | 'close'
+        """
+        import ctypes
+        from ctypes import wintypes
+
+        u = ctypes.windll.user32
+
+        # HT-коды для WM_NCLBUTTON*
+        HT_MAP = {
+            'minimize': 8,    # HTMINBUTTON
+            'maximize': 9,    # HTMAXBUTTON
+            'restore': 2,     # HTCAPTION — restore не имеет своей HT, идёт через SYSCOMMAND
+            'close': 20,      # HTCLOSE
+        }
+        ht = HT_MAP.get(button)
+        if ht is None:
+            return False
+
+        # Найти координаты кнопки в title bar
+        # SM_CXSIZEFRAME = рамка вокруг окна, SM_CYCAPTION = высота title bar
+        # SM_CXSMSIZE = ширина кнопок
+        try:
+            SM_CXSIZEFRAME = 32  # SM_CXSIZEFRAME
+            SM_CYSIZEFRAME = 33  # SM_CYSIZEFRAME
+            SM_CYCAPTION = 4     # SM_CYCAPTION
+            SM_CXSMSIZE = 52     # SM_CXSMSIZE (ширина small button)
+
+            cxframe = u.GetSystemMetrics(SM_CXSIZEFRAME)
+            cyframe = u.GetSystemMetrics(SM_CYSIZEFRAME)
+            cy_caption = u.GetSystemMetrics(SM_CYCAPTION)
+            cx_btn = u.GetSystemMetrics(SM_CXSMSIZE) or 30
+
+            # Получить rect окна
+            class RECT(ctypes.Structure):
+                _fields_ = [('left', ctypes.c_long), ('top', ctypes.c_long),
+                            ('right', ctypes.c_long), ('bottom', ctypes.c_long)]
+            rect = RECT()
+            u.GetWindowRect(wintypes.HWND(hwnd), ctypes.byref(rect))
+
+            # Y кнопки = центр title bar
+            btn_y = cyframe + cy_caption // 2
+            # Кнопки идут справа налево: close, restore, minimize
+            # Close = правый край, restore = следующий, minimize = следующий
+            btn_order = ['close', 'maximize', 'minimize']
+            if button in btn_order:
+                idx = btn_order.index(button)
+            else:
+                idx = 1
+            # X = отступ от правого края (cxframe) + позиция кнопки
+            btn_x = rect.right - cxframe - cx_btn // 2 - idx * cx_btn
+
+            # Перевести в экранные координаты (rect уже в экранных)
+            screen_x = btn_x
+            screen_y = rect.top + btn_y
+
+            # Сохранить текущую позицию курсора, восстановить после
+            class POINT(ctypes.Structure):
+                _fields_ = [('x', ctypes.c_long), ('y', ctypes.c_long)]
+            old_pt = POINT()
+            u.GetCursorPos(ctypes.byref(old_pt))
+
+            # Передвинуть курсор на кнопку
+            u.SetCursorPos(screen_x, screen_y)
+            import time as _t
+            _t.sleep(0.05)
+
+            WM_NCHITTEST = 0x0084
+            WM_NCLBUTTONDOWN = 0x00A1
+            WM_NCLBUTTONUP = 0x00A2
+            MK_LBUTTON = 0x0001
+
+            # Клик: NC left button down + up, lParam = MAKELONG(x, y)
+            lparam = (screen_y << 16) | (screen_x & 0xFFFF)
+            u.SendMessageW(wintypes.HWND(hwnd), WM_NCLBUTTONDOWN, ht, lparam)
+            _t.sleep(0.03)
+            u.SendMessageW(wintypes.HWND(hwnd), WM_NCLBUTTONUP, ht, lparam)
+
+            # Восстановить курсор
+            u.SetCursorPos(old_pt.x, old_pt.y)
+            return True
+        except Exception as e:
+            log(f"Аук: _click_titlebar_button({button}) не сработал: {e}",
+                self.window_id, level="WARNING")
+            return False
+
     async def _resize_work(self) -> bool:
         """
-        Развернуть окно на ФУЛЛСКРИН (maximize) — эквивалент клика по
-        СРЕДНЕЙ кнопке title bar (свернуть/развернуть/закрыть).
-        Использует WM_SYSCOMMAND + SC_MAXIMIZE — нативный Windows API,
-        который срабатывает даже на CEF-окнах (где pygetwindow.maximize()
-        игнорируется). ShowWindow(SW_MAXIMIZE) тоже может не сработать.
+        Развернуть окно на ФУЛЛСКРИН — КЛИК по средней кнопке title bar
+        (как пользователь просил, не 'аналоги' через ShowWindow/SYSCOMMAND).
 
         Scale (real_w/960, real_h/540) сохраняется в self._au_scale —
         все координаты в _click/_grab масштабируются.
@@ -461,10 +551,6 @@ class Auction(GameAction):
                     self.window_id, level="WARNING")
 
         u = ctypes.windll.user32
-        # WM_SYSCOMMAND — то же самое что клик по кнопке maximize в title bar
-        WM_SYSCOMMAND = 0x0112
-        SC_MAXIMIZE = 0xF030
-        SC_RESTORE = 0xF120
         SWP_NOZORDER = 0x0004
         SWP_NOACTIVATE = 0x0010
         MONITOR_DEFAULTTOPRIMARY = 1
@@ -473,27 +559,20 @@ class Auction(GameAction):
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             hwnd = win._hWnd
 
-            # 1) Если уже maximize — restore сначала (toggle поведение как в Windows)
+            # 1) Если уже maximize — restore (toggle)
             if win.isMaximized:
-                try:
-                    u.PostMessageW(wintypes.HWND(hwnd), WM_SYSCOMMAND, SC_RESTORE, 0)
-                    await asyncio.sleep(0.3)
-                except Exception:
-                    pass
+                self._click_titlebar_button(hwnd, 'restore')
+                await asyncio.sleep(0.4)
 
-            # 2) Maximize через WM_SYSCOMMAND SC_MAXIMIZE — клик по средней кнопке
-            try:
-                u.PostMessageW(wintypes.HWND(hwnd), WM_SYSCOMMAND, SC_MAXIMIZE, 0)
-                await asyncio.sleep(T_AFTER_RESIZE)
-            except Exception as e:
-                log(f"Аук: WM_SYSCOMMAND SC_MAXIMIZE не сработал: {e}",
-                    self.window_id, level="WARNING")
+            # 2) КЛИК по средней кнопке (maximize) в title bar
+            self._ensure_foreground()
+            ok = self._click_titlebar_button(hwnd, 'maximize')
+            await asyncio.sleep(T_AFTER_RESIZE)
 
             # 3) Проверить размер. Если не maximize — fallback на SetWindowPos
-            #    до полного размера монитора (через MonitorFromWindow).
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             if not win.isMaximized:
-                log(f"Аук: maximize не сработал, fallback на SetWindowPos",
+                log(f"Аук: клик по maximize не сработал, fallback на SetWindowPos",
                     self.window_id, level="WARNING")
                 try:
                     MONITORINFO = type('MONITORINFO', (ctypes.Structure,), {
@@ -511,16 +590,19 @@ class Auction(GameAction):
                     mi = MONITORINFO()
                     mi.cbSize = ctypes.sizeof(MONITORINFO)
                     u.GetMonitorInfoW(wintypes.HMONITOR(hmon), ctypes.byref(mi))
-                    mx, my = mi.rcMonitor.left, mi.rcMonitor.top
-                    mw = mi.rcMonitor.right - mi.rcMonitor.left
-                    mh = mi.rcMonitor.bottom - mi.rcMonitor.top
+                    # rcWork — рабочая область (без taskbar), НЕ rcMonitor!
+                    # rcMonitor = весь экран включая taskbar.
+                    # Используем rcWork чтобы окно не уезжало за экран.
+                    mx, my = mi.rcWork.left, mi.rcWork.top
+                    mw = mi.rcWork.right - mi.rcWork.left
+                    mh = mi.rcWork.bottom - mi.rcWork.top
                     u.SetWindowPos(
                         wintypes.HWND(hwnd), None,
                         mx, my, mw, mh,
                         SWP_NOZORDER | SWP_NOACTIVATE,
                     )
                     await asyncio.sleep(T_AFTER_RESIZE)
-                    log(f"Аук: SetWindowPos до {mw}x{mh} на ({mx},{my})",
+                    log(f"Аук: SetWindowPos до {mw}x{mh} на ({mx},{my}) — рабочая область",
                         self.window_id)
                 except Exception as e:
                     log(f"Аук: SetWindowPos fallback не сработал: {e}",
@@ -552,17 +634,14 @@ class Auction(GameAction):
 
     async def _resize_back(self) -> None:
         """
-        Вернуть окно в исходное положение — клик по средней кнопке title bar
-        (toggle restore). Использует WM_SYSCOMMAND + SC_RESTORE — нативный
-        Windows API. Если не сработало — SetWindowPos до сохранённой позиции.
-        Сбрасывает self._au_scale = (1.0, 1.0).
+        Вернуть окно в исходное положение — КЛИК по средней кнопке title bar
+        (toggle restore). Если не сработало — SetWindowPos до сохранённой
+        позиции. Сбрасывает self._au_scale = (1.0, 1.0).
         """
         import ctypes
         import pygetwindow as gw
         from ctypes import wintypes
 
-        WM_SYSCOMMAND = 0x0112
-        SC_RESTORE = 0xF120
         SWP_NOZORDER = 0x0004
         SWP_NOACTIVATE = 0x0010
         u = ctypes.windll.user32
@@ -578,13 +657,11 @@ class Auction(GameAction):
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
             hwnd = win._hWnd
 
-            # 1) WM_SYSCOMMAND SC_RESTORE — клик по средней кнопке (toggle)
+            # 1) Клик по средней кнопке (restore) если окно maximize
             if win.isMaximized:
-                try:
-                    u.PostMessageW(wintypes.HWND(hwnd), WM_SYSCOMMAND, SC_RESTORE, 0)
-                    await asyncio.sleep(0.4)
-                except Exception:
-                    pass
+                self._ensure_foreground()
+                self._click_titlebar_button(hwnd, 'restore')
+                await asyncio.sleep(0.5)
 
             # 2) Проверить — если restore не вернул сохранённый размер, SetWindowPos
             win = gw.getWindowsWithTitle(self.window_info[self.window_id]["Title"])[0]
