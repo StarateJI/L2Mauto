@@ -61,9 +61,22 @@ class Dungeon(EventDrivenProfile):
         log("_Анлука, помер во время пати данжа. оффаюсь", self.window_id)
 
     async def main_loop(self):
-        if self.dungeon_type == "Благословенная Земля":
-            return await self._blessed_land_loop()
-        return await self._party_dungeon_loop()
+        try:
+            if self.dungeon_type == "Благословенная Земля":
+                result = await self._blessed_land_loop()
+            else:
+                result = await self._party_dungeon_loop()
+        finally:
+            # Залить логи в bot-logs (как после аука) — чтобы видеть Данги OCR
+            try:
+                from bot.log_uploader import upload_run_logs
+                import asyncio as _aio
+                _aio.get_event_loop().run_in_executor(
+                    None, upload_run_logs, self.window_id, 0, None
+                )
+            except Exception:
+                pass
+        return result
 
     # ── Утилиты захвата ──
     def _grab_window_rect(self, wx, wy, x_rel, y_rel, w, h):
