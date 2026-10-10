@@ -12,7 +12,7 @@ STYLE = """
 QWidget {
     background-color: #1a1a26;
     color: #e4e4e7;
-    font-family: 'Trebuchet MS', 'Segoe UI', 'Segoe UI Emoji', sans-serif;
+    font-family: 'Verdana', 'Tahoma', sans-serif;
     font-size: 11pt;
 }
 
