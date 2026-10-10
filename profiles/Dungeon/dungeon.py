@@ -115,24 +115,36 @@ class Dungeon(EventDrivenProfile):
         pt = _get_pytesseract()
         if pt is None or gray_img is None:
             return False, 0
-        try:
-            big = cv2.resize(gray_img, (gray_img.shape[1] * 2, gray_img.shape[0] * 2),
-                             interpolation=cv2.INTER_CUBIC)
-            _, thresh = cv2.threshold(big, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            text = pt.image_to_string(thresh, lang="rus+eng", config="--psm 6").lower()
-            text_oneline = " | ".join(text.split())
-            log(f"Данги OCR: '{text_oneline[:200]}'", self.window_id)
-            for n in needles:
-                if n in text:
-                    data = pt.image_to_data(thresh, lang="rus+eng", config="--psm 6",
-                                            output_type=pt.Output.DICT)
-                    for i, word in enumerate(data["text"]):
-                        if n in word.lower():
-                            y_orig = data["top"][i] // 2 + data["height"][i] // 4
-                            return True, y_orig
-                    return True, gray_img.shape[0] // 2
-        except Exception as e:
-            log(f"Данги: OCR ошибка: {e}", level="DEBUG")
+        h, w = gray_img.shape[:2]
+        # Пробуем несколько конфигураций OCR — после ребута ПК tesseract
+        # стал плохо читать мелкий текст 220×146. Разные psm + resize дают
+        # разный результат. Берём первый который найдёт needle.
+        configs = [
+            ("--psm 11", 4),   # sparse text — лучше для списков, resize x4
+            ("--psm 6", 4),    # uniform block, resize x4 (старый вариант с x2)
+            ("--psm 12", 4),   # sparse text + OSD
+            ("--psm 3", 4),    # auto, resize x4
+        ]
+        for psm, scale in configs:
+            try:
+                big = cv2.resize(gray_img, (w * scale, h * scale),
+                                 interpolation=cv2.INTER_CUBIC)
+                _, thresh = cv2.threshold(big, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                text = pt.image_to_string(thresh, lang="rus+eng", config=psm).lower()
+                text_oneline = " | ".join(text.split())
+                log(f"Данги OCR [{psm}]: '{text_oneline[:150]}'", self.window_id)
+                for n in needles:
+                    if n in text:
+                        data = pt.image_to_data(thresh, lang="rus+eng", config=psm,
+                                                output_type=pt.Output.DICT)
+                        for i, word in enumerate(data["text"]):
+                            if n in word.lower():
+                                y_orig = data["top"][i] // scale + data["height"][i] // (scale * 2)
+                                return True, y_orig
+                        return True, h // 2
+            except Exception as e:
+                log(f"Данги: OCR {psm} ошибка: {e}", level="DEBUG")
+                continue
         return False, 0
 
     async def _blessed_land_loop(self):
@@ -155,6 +167,18 @@ class Dungeon(EventDrivenProfile):
             ww, wh = window["Width"], window["Height"]
 
             log(f"Данги: окно wx={wx} wy={wy} {ww}x{wh}", window_id)
+
+            # Очистка старых debug PNG от прошлых прогонов (как в auction.py)
+            try:
+                out_dir = os.path.dirname(os.path.abspath(__file__))
+                for fname in os.listdir(out_dir):
+                    if fname.startswith("blessed_") and fname.endswith(".png"):
+                        try:
+                            os.remove(os.path.join(out_dir, fname))
+                        except Exception:
+                            pass
+            except Exception:
+                pass
 
             # 1. Выйти из сна
             await self._wake_up(max_attempts=3)
