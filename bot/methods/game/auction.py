@@ -93,7 +93,7 @@ OK_CHECK_ZONE = (525, 360, 45, 45) # оранжевая ОК (было 700,480,6
 # База: "5" на (584, 391) при 960×540 (было 778,521 при 1280×720)
 # Шаг 30px (было 40px)
 CALC_DIGITS = {
-    '0': (650, 422),  # справа от '3' с зазором, центр кнопки
+    '0': (644, 422),  # справа от '3', обычная ячейка (как 1-2-3, шаг 30px)
     '1': (554, 422),  # было (738, 562)
     '2': (584, 422),  # было (778, 562)
     '3': (614, 422),  # было (819, 562)
@@ -1113,6 +1113,14 @@ class Auction(GameAction):
                 log(f"Аук: неизвестная цифра '{digit}' — пропускаю",
                     self.window_id, level="WARNING")
                 continue
+            if digit == '0':
+                sx, sy = getattr(self, '_au_scale', (1.0, 1.0))
+                win = self.window_info[self.window_id]
+                wx, wy = win["Position"]
+                log(f"Аук: ВВОД '0' — base=({coord[0]},{coord[1]}) "
+                    f"scale=({sx:.2f},{sy:.2f}) → "
+                    f"screen=({int(wx + coord[0]*sx)},{int(wy + coord[1]*sy)})",
+                    self.window_id)
             await self._click(*coord)
             await asyncio.sleep(0.15)
         log(f"Аук: введена цена {price_str}", self.window_id)
