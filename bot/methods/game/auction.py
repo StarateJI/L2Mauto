@@ -93,7 +93,7 @@ OK_CHECK_ZONE = (525, 360, 45, 45) # оранжевая ОК (было 700,480,6
 # База: "5" на (584, 391) при 960×540 (было 778,521 при 1280×720)
 # Шаг 30px (было 40px)
 CALC_DIGITS = {
-    '0': (660, 422),  # справа от '3', широкая кнопка (2 ячейки), центр ~660
+    '0': (644, 422),  # справа от '3' (1 шаг), обычная кнопка, не широкая
     '1': (554, 422),  # было (738, 562)
     '2': (584, 422),  # было (778, 562)
     '3': (614, 422),  # было (819, 562)
@@ -1084,6 +1084,28 @@ class Auction(GameAction):
         # Фокус на поле "Общая цена" (иначе цифры уйдут в "Количество")
         await self._click(*BTN_FIELD_PRICE)
         await asyncio.sleep(0.4)
+
+        # Дебаг-скриншот numpad с крестиком на '0' — видно реальную позицию кнопки
+        try:
+            import cv2 as _cv2
+            import numpy as _np
+            # Зона numpad: 530-680 по X, 350-470 по Y (покрывает 3×4 сетку + '0')
+            numpad = self._grab((530, 350, 150, 120))
+            # Нарисовать крестик на координате '0' (644-530, 422-350 = 114, 72)
+            ox, oy = CALC_DIGITS['0']
+            rx = ox - 530
+            ry = oy - 350
+            _cv2.drawMarker(numpad, (rx, ry), (0, 0, 255),
+                            markerType=_cv2.MARKER_CROSS, markerSize=20, thickness=2)
+            # Также отметить '3' для сравнения
+            x3, y3 = CALC_DIGITS['3']
+            _cv2.drawMarker(numpad, (x3 - 530, y3 - 350), (255, 0, 0),
+                            markerType=_cv2.MARKER_CROSS, markerSize=20, thickness=2)
+            await self._save_debug("au_numpad_zero_marker.png", numpad)
+            log(f"Аук: '0' координата ({ox},{oy}) относительно numpad zone "
+                f"({rx},{ry}); '3' ({x3},{y3})", self.window_id)
+        except Exception as e:
+            log(f"Аук: дебаг numpad не сработал: {e}", self.window_id, level="DEBUG")
 
         for digit in price_str:
             coord = CALC_DIGITS.get(digit)
