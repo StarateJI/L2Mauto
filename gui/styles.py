@@ -36,7 +36,7 @@ QLabel#subtitle {
     letter-spacing: 2px;
 }
 
-/* Кнопки профилей — выпуклые, курсив, крупнее */
+/* Кнопки профилей — выпуклые, пожирнее */
 QPushButton {
     /* Градиент сверху-вниз: верх светлее → объём */
     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -47,7 +47,6 @@ QPushButton {
     border-radius: 10px;
     color: #d4d4d8;
     font-weight: 700;
-    font-style: italic;
     font-size: 12pt;
     padding: 8px 12px;
     text-align: center;
@@ -70,17 +69,17 @@ QPushButton:pressed {
     color: #a5b4fc;
 }
 
-/* STOP — выпуклая красная */
+/* STOP — синий, как кнопка обновы (была красная) */
 QPushButton#stop_all {
     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #ef4444, stop:1 #dc2626);
-    border: 1px solid #f87171;
-    border-top: 1px solid #fca5a5;
-    border-bottom: 1px solid #991b1b;
+        stop:0 #818cf8, stop:1 #6366f1);
+    border: 1px solid #a5b4fc;
+    border-top: 1px solid #c7d2fe;
+    border-bottom: 1px solid #4f46e5;
     border-radius: 10px;
     color: #ffffff;
     font-weight: 700;
-    font-size: 12pt;
+    font-size: 13pt;
     padding: 10px 12px;
     text-align: center;
     letter-spacing: 1px;
@@ -88,14 +87,14 @@ QPushButton#stop_all {
 
 QPushButton#stop_all:hover {
     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #f87171, stop:1 #ef4444);
-    border: 1px solid #fca5a5;
+        stop:0 #a5b4fc, stop:1 #818cf8);
+    border: 1px solid #c7d2fe;
 }
 
 QPushButton#stop_all:pressed {
     background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #dc2626, stop:1 #ef4444);
-    color: #fef2f2;
+        stop:0 #6366f1, stop:1 #818cf8);
+    color: #ffffff;
 }
 
 /* Активные кнопки профилей (счётчик > 0) — зелёный, выпуклые */
