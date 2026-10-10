@@ -93,7 +93,7 @@ OK_CHECK_ZONE = (525, 360, 45, 45) # оранжевая ОК (было 700,480,6
 # База: "5" на (584, 391) при 960×540 (было 778,521 при 1280×720)
 # Шаг 30px (было 40px)
 CALC_DIGITS = {
-    '0': (644, 422),  # справа от '3', обычная ячейка (как 1-2-3, шаг 30px)
+    '0': (664, 422),  # справа от '3', шаг больше 30px (644 кликал '3')
     '1': (554, 422),  # было (738, 562)
     '2': (584, 422),  # было (778, 562)
     '3': (614, 422),  # было (819, 562)
@@ -155,9 +155,6 @@ class Auction(GameAction):
         notify_screenshot (слать скрин в TG) и upload_run_logs (логи в GitHub).
         """
         log("Аук: запущен relist (снять+найти+поставить)", self.window_id)
-        # Печать загруженной координаты '0' — диагностика какой код реально работает
-        log(f"Аук: CALC_DIGITS['0']={CALC_DIGITS['0']} '3'={CALC_DIGITS['3']} "
-            f"_au_scale={getattr(self, '_au_scale', 'none')}", self.window_id)
 
         # Очистка старых debug PNG от прошлых прогонов
         try:
@@ -1080,35 +1077,9 @@ class Auction(GameAction):
         return self._ocr_price_from_zone(ZONE_MAX_PRICE, "макс")
 
     async def _type_price(self, price_str: str) -> None:
-        """
-        Ввести цену кликами по калькулятору.
-        Сначала клик по полю 'Общая цена' (фокус), потом цифры по очереди.
-        """
-        # Фокус на поле "Общая цена" (иначе цифры уйдут в "Количество")
+        """Ввести цену кликами по калькулятору."""
         await self._click(*BTN_FIELD_PRICE)
         await asyncio.sleep(0.4)
-
-        # Дебаг-скриншот numpad с крестиком на '0' — видно реальную позицию кнопки
-        try:
-            import cv2 as _cv2
-            import numpy as _np
-            # Зона numpad: 530-680 по X, 350-470 по Y (покрывает 3×4 сетку + '0')
-            numpad = self._grab((530, 350, 150, 120))
-            # Нарисовать крестик на координате '0' (644-530, 422-350 = 114, 72)
-            ox, oy = CALC_DIGITS['0']
-            rx = ox - 530
-            ry = oy - 350
-            _cv2.drawMarker(numpad, (rx, ry), (0, 0, 255),
-                            markerType=_cv2.MARKER_CROSS, markerSize=20, thickness=2)
-            # Также отметить '3' для сравнения
-            x3, y3 = CALC_DIGITS['3']
-            _cv2.drawMarker(numpad, (x3 - 530, y3 - 350), (255, 0, 0),
-                            markerType=_cv2.MARKER_CROSS, markerSize=20, thickness=2)
-            await self._save_debug("au_numpad_zero_marker.png", numpad)
-            log(f"Аук: '0' координата ({ox},{oy}) относительно numpad zone "
-                f"({rx},{ry}); '3' ({x3},{y3})", self.window_id)
-        except Exception as e:
-            log(f"Аук: дебаг numpad не сработал: {e}", self.window_id, level="DEBUG")
 
         for digit in price_str:
             coord = CALC_DIGITS.get(digit)
@@ -1116,14 +1087,6 @@ class Auction(GameAction):
                 log(f"Аук: неизвестная цифра '{digit}' — пропускаю",
                     self.window_id, level="WARNING")
                 continue
-            if digit == '0':
-                sx, sy = getattr(self, '_au_scale', (1.0, 1.0))
-                win = self.window_info[self.window_id]
-                wx, wy = win["Position"]
-                log(f"Аук: ВВОД '0' — base=({coord[0]},{coord[1]}) "
-                    f"scale=({sx:.2f},{sy:.2f}) → "
-                    f"screen=({int(wx + coord[0]*sx)},{int(wy + coord[1]*sy)})",
-                    self.window_id)
             await self._click(*coord)
             await asyncio.sleep(0.15)
         log(f"Аук: введена цена {price_str}", self.window_id)
