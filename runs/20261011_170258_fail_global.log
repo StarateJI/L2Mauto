@@ -1,0 +1,201 @@
+=== Log tail 2026-10-11T17:03:09.772490 | last 200 lines ===
+2026-10-11 16:58:32,664 - INFO - [global] needs_update: local=(5, 13, 51) remote=(5, 13, 51) -> has_update=False
+2026-10-11 16:58:32,665 - INFO - [global] Установлена последняя версия бота | 5.13.51
+2026-10-11 16:59:02,680 - INFO - [global] Проверяю обновы...
+2026-10-11 16:59:03,461 - DEBUG - [global] needs_update: raw → 5.13.51
+2026-10-11 16:59:03,688 - DEBUG - [global] needs_update: API → 5.13.51
+2026-10-11 16:59:03,689 - DEBUG - [global] needs_update: лучший источник raw → 5.13.51 (из 2)
+2026-10-11 16:59:03,689 - INFO - [global] needs_update: local=(5, 13, 51) remote=(5, 13, 51) -> has_update=False
+2026-10-11 16:59:03,689 - INFO - [global] Установлена последняя версия бота | 5.13.51
+2026-10-11 16:59:19,257 - DEBUG - [global] log_uploader: START window=Tommi made=0 token=...Rjnfq
+2026-10-11 16:59:20,167 - DEBUG - [global] _api_put: GET runs/20261011_165919_fail_Tommi.log -> 404
+2026-10-11 16:59:22,309 - DEBUG - [global] _api_put: PUT runs/20261011_165919_fail_Tommi.log -> 201 (53582 bytes)
+2026-10-11 16:59:22,310 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_165919_fail_Tommi.log
+2026-10-11 16:59:23,185 - DEBUG - [global] _api_put: GET debug/Tommi/bot_methods_game_au_lot_zone.png -> 404
+2026-10-11 16:59:24,411 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-11 16:59:24,411 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-11 16:59:24,815 - DEBUG - [global] _api_put: PUT debug/Tommi/bot_methods_game_au_lot_zone.png -> 201 (1148 bytes)
+2026-10-11 16:59:25,343 - DEBUG - [global] _api_put: GET runs/20261011_165924_fail_periodic.log -> 404
+2026-10-11 16:59:25,668 - DEBUG - [global] _api_put: GET debug/Tommi/bot_methods_game_au_sample.png -> 404
+2026-10-11 16:59:27,250 - DEBUG - [global] _api_put: PUT debug/Tommi/bot_methods_game_au_sample.png -> 409 (1148 bytes)
+2026-10-11 16:59:27,250 - WARNING - [global] _api_put: PUT failed body: {"message":"is at dbacf02f22d320b82983a40a8e04ed3e958d9d86 but expected 3b2b3404c2327d2b2b69f5453799103143b80252","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-11 16:59:27,256 - DEBUG - [global] _api_put: PUT runs/20261011_165924_fail_periodic.log -> 201 (8462 bytes)
+2026-10-11 16:59:27,258 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_165924_fail_periodic.log
+2026-10-11 16:59:28,238 - DEBUG - [global] _api_put: GET debug/Tommi/bot_methods_game_au_status.png -> 404
+2026-10-11 16:59:28,279 - DEBUG - [global] _api_put: GET debug/periodic/bot_methods_game_au_sample.png -> 200
+2026-10-11 16:59:29,386 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-11 16:59:29,906 - DEBUG - [global] _api_put: PUT debug/periodic/bot_methods_game_au_sample.png -> 200 (1148 bytes)
+2026-10-11 16:59:29,954 - DEBUG - [global] _api_put: PUT debug/Tommi/bot_methods_game_au_status.png -> 409 (756 bytes)
+2026-10-11 16:59:29,954 - WARNING - [global] _api_put: PUT failed body: {"message":"is at f159d2d5987da745522c5fff02d891237bb9be0c but expected dbacf02f22d320b82983a40a8e04ed3e958d9d86","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-11 16:59:29,956 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 1/3 (удалено с диска: 1)
+2026-10-11 16:59:30,078 - INFO - [global] Пачка 7/12: завершена за 64с
+2026-10-11 16:59:30,876 - DEBUG - [global] _api_put: GET debug/periodic/bot_methods_game_au_status.png -> 200
+2026-10-11 16:59:31,070 - DEBUG - [global] _api_put: GET runs/20261011_165919_fail_global.log -> 404
+2026-10-11 16:59:31,078 - INFO - [global] Пачка 8/12: старт (1 окон: ['Фанфурье'])
+2026-10-11 16:59:31,078 - INFO - [global] Запуск через 3 сек. | ['Фанфурье']
+2026-10-11 16:59:32,302 - DEBUG - [global] _api_put: PUT debug/periodic/bot_methods_game_au_status.png -> 200 (756 bytes)
+2026-10-11 16:59:32,304 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 2/2 (удалено с диска: 2)
+2026-10-11 16:59:33,115 - DEBUG - [global] _api_put: PUT runs/20261011_165919_fail_global.log -> 409 (22712 bytes)
+2026-10-11 16:59:33,115 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 162839126ed615b75c49b1b929d82b64e1afa1c2 but expected f159d2d5987da745522c5fff02d891237bb9be0c","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-11 16:59:33,117 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-11 16:59:33,117 - DEBUG - [global] log_uploader: END window=Tommi
+2026-10-11 16:59:33,310 - DEBUG - [global] _api_put: GET runs/20261011_165924_fail_global.log -> 404
+2026-10-11 16:59:33,705 - INFO - [global] Проверяю обновы...
+2026-10-11 16:59:34,543 - DEBUG - [global] needs_update: raw → 5.13.51
+2026-10-11 16:59:34,735 - DEBUG - [global] needs_update: API → 5.13.51
+2026-10-11 16:59:34,735 - DEBUG - [global] needs_update: лучший источник raw → 5.13.51 (из 2)
+2026-10-11 16:59:34,735 - INFO - [global] needs_update: local=(5, 13, 51) remote=(5, 13, 51) -> has_update=False
+2026-10-11 16:59:34,736 - INFO - [global] Установлена последняя версия бота | 5.13.51
+2026-10-11 16:59:35,503 - DEBUG - [global] _api_put: PUT runs/20261011_165924_fail_global.log -> 201 (22774 bytes)
+2026-10-11 16:59:35,506 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_165924_fail_global.log
+2026-10-11 16:59:35,506 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-11 16:59:35,506 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-11 17:00:04,752 - INFO - [global] Проверяю обновы...
+2026-10-11 17:00:05,527 - DEBUG - [global] needs_update: raw → 5.13.51
+2026-10-11 17:00:05,770 - DEBUG - [global] needs_update: API → 5.13.51
+2026-10-11 17:00:05,770 - DEBUG - [global] needs_update: лучший источник raw → 5.13.51 (из 2)
+2026-10-11 17:00:05,770 - INFO - [global] needs_update: local=(5, 13, 51) remote=(5, 13, 51) -> has_update=False
+2026-10-11 17:00:05,771 - INFO - [global] Установлена последняя версия бота | 5.13.51
+2026-10-11 17:00:32,124 - DEBUG - [global] log_uploader: START window=Фанфурье made=1 token=...Rjnfq
+2026-10-11 17:00:33,044 - DEBUG - [global] _api_put: GET runs/20261011_170032_ok_Фанфурье.log -> 404
+2026-10-11 17:00:35,118 - DEBUG - [global] _api_put: PUT runs/20261011_170032_ok_Фанфурье.log -> 201 (57253 bytes)
+2026-10-11 17:00:35,120 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_170032_ok_%D0%A4%D0%B0%D0%BD%D1%84%D1%83%D1%80%D1%8C%D0%B5.log
+2026-10-11 17:00:35,532 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-11 17:00:35,532 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-11 17:00:35,785 - INFO - [global] Проверяю обновы...
+2026-10-11 17:00:36,176 - DEBUG - [global] _api_put: GET debug/Фанфурье/bot_methods_game_au_after_click.png -> 404
+2026-10-11 17:00:36,592 - DEBUG - [global] _api_put: GET runs/20261011_170035_fail_periodic.log -> 404
+2026-10-11 17:00:36,698 - DEBUG - [global] needs_update: raw → 5.13.51
+2026-10-11 17:00:36,885 - DEBUG - [global] needs_update: API → 5.13.51
+2026-10-11 17:00:36,885 - DEBUG - [global] needs_update: лучший источник raw → 5.13.51 (из 2)
+2026-10-11 17:00:36,885 - INFO - [global] needs_update: local=(5, 13, 51) remote=(5, 13, 51) -> has_update=False
+2026-10-11 17:00:36,886 - INFO - [global] Установлена последняя версия бота | 5.13.51
+2026-10-11 17:00:38,192 - DEBUG - [global] _api_put: PUT debug/Фанфурье/bot_methods_game_au_after_click.png -> 201 (101736 bytes)
+2026-10-11 17:00:38,560 - DEBUG - [global] _api_put: PUT runs/20261011_170035_fail_periodic.log -> 409 (8462 bytes)
+2026-10-11 17:00:38,560 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 409cb84e8c615603ae82d38541465aebf8a3fb81 but expected ca75d640f783d8f5623f0b320dd7f1191d1dc649","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-11 17:00:38,562 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-11 17:00:39,069 - DEBUG - [global] _api_put: GET debug/Фанфурье/bot_methods_game_au_after_item_click.png -> 404
+2026-10-11 17:00:39,629 - DEBUG - [global] _api_put: GET debug/periodic/bot_methods_game_au_after_item_click.png -> 200
+2026-10-11 17:00:40,172 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-11 17:00:40,617 - INFO - [global] Пачка 8/12: завершена за 70с
+2026-10-11 17:00:40,836 - DEBUG - [global] _api_put: PUT debug/Фанфурье/bot_methods_game_au_after_item_click.png -> 201 (50857 bytes)
+2026-10-11 17:00:41,436 - DEBUG - [global] _api_put: PUT debug/periodic/bot_methods_game_au_after_item_click.png -> 200 (50857 bytes)
+2026-10-11 17:00:41,617 - INFO - [global] Пачка 9/12: старт (1 окон: ['Монгол'])
+2026-10-11 17:00:41,617 - INFO - [global] Запуск через 3 сек. | ['Монгол']
+2026-10-11 17:00:41,686 - DEBUG - [global] _api_put: GET debug/Фанфурье/bot_methods_game_au_lot_zone.png -> 404
+2026-10-11 17:00:42,370 - DEBUG - [global] _api_put: GET debug/periodic/bot_methods_game_au_lot_zone.png -> 200
+2026-10-11 17:00:43,297 - DEBUG - [global] _api_put: PUT debug/Фанфурье/bot_methods_game_au_lot_zone.png -> 201 (6698 bytes)
+2026-10-11 17:00:43,860 - DEBUG - [global] _api_put: PUT debug/periodic/bot_methods_game_au_lot_zone.png -> 200 (6698 bytes)
+2026-10-11 17:00:44,152 - DEBUG - [global] _api_put: GET debug/Фанфурье/bot_methods_game_au_numpad_before_type.png -> 404
+2026-10-11 17:00:44,784 - DEBUG - [global] _api_put: GET debug/periodic/bot_methods_game_au_numpad_before_type.png -> 200
+2026-10-11 17:00:45,801 - DEBUG - [global] _api_put: PUT debug/Фанфурье/bot_methods_game_au_numpad_before_type.png -> 201 (5732 bytes)
+2026-10-11 17:00:46,265 - DEBUG - [global] _api_put: PUT debug/periodic/bot_methods_game_au_numpad_before_type.png -> 200 (5732 bytes)
+2026-10-11 17:00:46,630 - DEBUG - [global] _api_put: GET debug/Фанфурье/bot_methods_game_au_page_1.png -> 404
+2026-10-11 17:00:47,438 - DEBUG - [global] _api_put: GET debug/periodic/bot_methods_game_au_page_1.png -> 200
+2026-10-11 17:00:48,499 - DEBUG - [global] _api_put: PUT debug/Фанфурье/bot_methods_game_au_page_1.png -> 201 (101736 bytes)
+2026-10-11 17:00:48,501 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 5/7 (удалено с диска: 5)
+2026-10-11 17:00:49,285 - DEBUG - [global] _api_put: PUT debug/periodic/bot_methods_game_au_page_1.png -> 200 (101736 bytes)
+2026-10-11 17:00:49,288 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 4/6 (удалено с диска: 4)
+2026-10-11 17:00:49,567 - DEBUG - [global] _api_put: GET runs/20261011_170032_ok_global.log -> 404
+2026-10-11 17:00:50,458 - DEBUG - [global] _api_put: GET runs/20261011_170035_fail_global.log -> 404
+2026-10-11 17:00:51,782 - DEBUG - [global] _api_put: PUT runs/20261011_170032_ok_global.log -> 201 (23014 bytes)
+2026-10-11 17:00:51,785 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_170032_ok_global.log
+2026-10-11 17:00:51,785 - DEBUG - [global] log_uploader: END window=Фанфурье
+2026-10-11 17:00:52,421 - DEBUG - [global] _api_put: PUT runs/20261011_170035_fail_global.log -> 409 (22948 bytes)
+2026-10-11 17:00:52,421 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 786d41ced6712f36dcee19b185d08b8e562d048a but expected 645beb1cbd61abea0cff3689205c829668810a7b","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-11 17:00:52,423 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-11 17:00:52,423 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-11 17:00:52,423 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-11 17:01:06,900 - INFO - [global] Проверяю обновы...
+2026-10-11 17:01:07,733 - DEBUG - [global] needs_update: raw → 5.13.51
+2026-10-11 17:01:07,940 - DEBUG - [global] needs_update: API → 5.13.51
+2026-10-11 17:01:07,940 - DEBUG - [global] needs_update: лучший источник raw → 5.13.51 (из 2)
+2026-10-11 17:01:07,940 - INFO - [global] needs_update: local=(5, 13, 51) remote=(5, 13, 51) -> has_update=False
+2026-10-11 17:01:07,940 - INFO - [global] Установлена последняя версия бота | 5.13.51
+2026-10-11 17:01:33,908 - DEBUG - [global] log_uploader: START window=Монгол made=0 token=...Rjnfq
+2026-10-11 17:01:34,831 - DEBUG - [global] _api_put: GET runs/20261011_170133_fail_Монгол.log -> 404
+2026-10-11 17:01:37,143 - DEBUG - [global] _api_put: PUT runs/20261011_170133_fail_Монгол.log -> 201 (57062 bytes)
+2026-10-11 17:01:37,145 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_170133_fail_%D0%9C%D0%BE%D0%BD%D0%B3%D0%BE%D0%BB.log
+2026-10-11 17:01:37,958 - INFO - [global] Проверяю обновы...
+2026-10-11 17:01:38,042 - DEBUG - [global] _api_put: GET debug/Монгол/bot_methods_game_au_lot_zone.png -> 404
+2026-10-11 17:01:38,902 - DEBUG - [global] needs_update: raw → 5.13.51
+2026-10-11 17:01:39,076 - DEBUG - [global] needs_update: API → 5.13.51
+2026-10-11 17:01:39,076 - DEBUG - [global] needs_update: лучший источник raw → 5.13.51 (из 2)
+2026-10-11 17:01:39,076 - INFO - [global] needs_update: local=(5, 13, 51) remote=(5, 13, 51) -> has_update=False
+2026-10-11 17:01:39,076 - INFO - [global] Установлена последняя версия бота | 5.13.51
+2026-10-11 17:01:39,906 - DEBUG - [global] _api_put: PUT debug/Монгол/bot_methods_game_au_lot_zone.png -> 201 (1139 bytes)
+2026-10-11 17:01:40,787 - DEBUG - [global] _api_put: GET debug/Монгол/bot_methods_game_au_sample.png -> 404
+2026-10-11 17:01:42,450 - DEBUG - [global] _api_put: PUT debug/Монгол/bot_methods_game_au_sample.png -> 201 (1139 bytes)
+2026-10-11 17:01:43,301 - DEBUG - [global] _api_put: GET debug/Монгол/bot_methods_game_au_status.png -> 404
+2026-10-11 17:01:44,030 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-11 17:01:44,151 - INFO - [global] Пачка 9/12: завершена за 63с
+2026-10-11 17:01:44,772 - DEBUG - [global] _api_put: PUT debug/Монгол/bot_methods_game_au_status.png -> 201 (756 bytes)
+2026-10-11 17:01:44,774 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 3/3 (удалено с диска: 3)
+2026-10-11 17:01:45,151 - INFO - [global] Пачка 10/12: старт (1 окон: ['Жмышенко'])
+2026-10-11 17:01:45,151 - INFO - [global] Запуск через 3 сек. | ['Жмышенко']
+2026-10-11 17:01:45,803 - DEBUG - [global] _api_put: GET runs/20261011_170133_fail_global.log -> 404
+2026-10-11 17:01:47,782 - DEBUG - [global] _api_put: PUT runs/20261011_170133_fail_global.log -> 201 (23172 bytes)
+2026-10-11 17:01:47,783 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_170133_fail_global.log
+2026-10-11 17:01:47,783 - DEBUG - [global] log_uploader: END window=Монгол
+2026-10-11 17:01:52,450 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-11 17:01:52,450 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-11 17:01:53,427 - DEBUG - [global] _api_put: GET runs/20261011_170152_fail_periodic.log -> 404
+2026-10-11 17:01:55,325 - DEBUG - [global] _api_put: PUT runs/20261011_170152_fail_periodic.log -> 201 (8912 bytes)
+2026-10-11 17:01:55,326 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_170152_fail_periodic.log
+2026-10-11 17:01:55,328 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-11 17:01:56,305 - DEBUG - [global] _api_put: GET runs/20261011_170152_fail_global.log -> 404
+2026-10-11 17:01:58,550 - DEBUG - [global] _api_put: PUT runs/20261011_170152_fail_global.log -> 201 (23011 bytes)
+2026-10-11 17:01:58,553 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_170152_fail_global.log
+2026-10-11 17:01:58,553 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-11 17:01:58,553 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-11 17:02:09,090 - INFO - [global] Проверяю обновы...
+2026-10-11 17:02:09,981 - DEBUG - [global] needs_update: raw → 5.13.51
+2026-10-11 17:02:11,435 - DEBUG - [global] needs_update: API → 5.13.51
+2026-10-11 17:02:11,435 - DEBUG - [global] needs_update: лучший источник raw → 5.13.51 (из 2)
+2026-10-11 17:02:11,435 - INFO - [global] needs_update: local=(5, 13, 51) remote=(5, 13, 51) -> has_update=False
+2026-10-11 17:02:11,435 - INFO - [global] Установлена последняя версия бота | 5.13.51
+2026-10-11 17:02:19,096 - DEBUG - [global] log_uploader: START window=Жмышенко made=0 token=...Rjnfq
+2026-10-11 17:02:20,059 - DEBUG - [global] _api_put: GET runs/20261011_170219_fail_Жмышенко.log -> 404
+2026-10-11 17:02:22,265 - DEBUG - [global] _api_put: PUT runs/20261011_170219_fail_Жмышенко.log -> 201 (59432 bytes)
+2026-10-11 17:02:22,268 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_170219_fail_%D0%96%D0%BC%D1%8B%D1%88%D0%B5%D0%BD%D0%BA%D0%BE.log
+2026-10-11 17:02:23,157 - DEBUG - [global] _api_put: GET debug/Жмышенко/bot_methods_game_au_lot_zone.png -> 404
+2026-10-11 17:02:24,779 - DEBUG - [global] _api_put: PUT debug/Жмышенко/bot_methods_game_au_lot_zone.png -> 201 (1148 bytes)
+2026-10-11 17:02:25,684 - DEBUG - [global] _api_put: GET debug/Жмышенко/bot_methods_game_au_sample.png -> 404
+2026-10-11 17:02:27,208 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-11 17:02:27,301 - DEBUG - [global] _api_put: PUT debug/Жмышенко/bot_methods_game_au_sample.png -> 201 (1148 bytes)
+2026-10-11 17:02:27,673 - INFO - [global] Пачка 10/12: завершена за 43с
+2026-10-11 17:02:28,173 - DEBUG - [global] _api_put: GET debug/Жмышенко/bot_methods_game_au_status.png -> 404
+2026-10-11 17:02:28,674 - INFO - [global] Пачка 11/12: старт (1 окон: ['JoePeach'])
+2026-10-11 17:02:28,674 - INFO - [global] Запуск через 3 сек. | ['JoePeach']
+2026-10-11 17:02:29,784 - DEBUG - [global] _api_put: PUT debug/Жмышенко/bot_methods_game_au_status.png -> 201 (2841 bytes)
+2026-10-11 17:02:29,787 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 3/3 (удалено с диска: 3)
+2026-10-11 17:02:30,781 - DEBUG - [global] _api_put: GET runs/20261011_170219_fail_global.log -> 404
+2026-10-11 17:02:32,823 - DEBUG - [global] _api_put: PUT runs/20261011_170219_fail_global.log -> 201 (23011 bytes)
+2026-10-11 17:02:32,824 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_170219_fail_global.log
+2026-10-11 17:02:32,824 - DEBUG - [global] log_uploader: END window=Жмышенко
+2026-10-11 17:02:41,449 - INFO - [global] Проверяю обновы...
+2026-10-11 17:02:42,452 - DEBUG - [global] needs_update: API → 5.13.51
+2026-10-11 17:02:42,471 - DEBUG - [global] needs_update: raw → 5.13.51
+2026-10-11 17:02:42,471 - DEBUG - [global] needs_update: лучший источник API → 5.13.51 (из 2)
+2026-10-11 17:02:42,471 - INFO - [global] needs_update: local=(5, 13, 51) remote=(5, 13, 51) -> has_update=False
+2026-10-11 17:02:42,472 - INFO - [global] Установлена последняя версия бота | 5.13.51
+2026-10-11 17:02:58,580 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-11 17:02:58,580 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-11 17:02:59,475 - DEBUG - [global] _api_put: GET runs/20261011_170258_fail_periodic.log -> 404
+2026-10-11 17:03:01,407 - DEBUG - [global] _api_put: PUT runs/20261011_170258_fail_periodic.log -> 201 (8912 bytes)
+2026-10-11 17:03:01,410 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261011_170258_fail_periodic.log
+2026-10-11 17:03:02,555 - DEBUG - [global] log_uploader: START window=JoePeach made=0 token=...Rjnfq
+2026-10-11 17:03:03,277 - DEBUG - [global] _api_put: GET debug/periodic/bot_methods_game_au_lot_zone.png -> 200
+2026-10-11 17:03:03,488 - DEBUG - [global] _api_put: GET runs/20261011_170302_fail_JoePeach.log -> 404
+2026-10-11 17:03:04,848 - DEBUG - [global] _api_put: PUT debug/periodic/bot_methods_game_au_lot_zone.png -> 200 (1148 bytes)
+2026-10-11 17:03:05,566 - DEBUG - [global] _api_put: PUT runs/20261011_170302_fail_JoePeach.log -> 409 (56074 bytes)
+2026-10-11 17:03:05,566 - WARNING - [global] _api_put: PUT failed body: {"message":"is at c139bc3307e250248c8839c5e919f50df140a9cc but expected adf0138c44b4e4265113320aa75ab52de00e4b1e","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-11 17:03:05,567 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-11 17:03:05,741 - DEBUG - [global] _api_put: GET debug/periodic/bot_methods_game_au_sample.png -> 200
+2026-10-11 17:03:06,541 - DEBUG - [global] _api_put: GET debug/JoePeach/bot_methods_game_au_sample.png -> 404
+2026-10-11 17:03:07,269 - DEBUG - [global] _api_put: PUT debug/periodic/bot_methods_game_au_sample.png -> 200 (1148 bytes)
+2026-10-11 17:03:08,044 - DEBUG - [global] _api_put: PUT debug/JoePeach/bot_methods_game_au_sample.png -> 201 (1148 bytes)
+2026-10-11 17:03:08,127 - DEBUG - [global] _api_put: GET debug/periodic/bot_methods_game_au_status.png -> 200
+2026-10-11 17:03:09,018 - DEBUG - [global] _api_put: GET debug/JoePeach/bot_methods_game_au_status.png -> 404
+2026-10-11 17:03:09,697 - DEBUG - [global] _api_put: PUT debug/periodic/bot_methods_game_au_status.png -> 200 (3040 bytes)
+2026-10-11 17:03:09,700 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 3/3 (удалено с диска: 3)
