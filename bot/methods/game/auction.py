@@ -285,6 +285,8 @@ class Auction(GameAction):
         finally:
             # ── ВСЁ что ниже — выполняется ВСЕГДА ──────────────────────────
             # Даже если бот упал, даже если пользователь стопнул (CancelledError).
+            log(f"Аук: FINALLY блок — made={made} window={self.window_id}",
+                self.window_id)
 
             # 8a. Закрыть аук/меню ДО resize_back (кнопка 1218,46 в окне 1280x720,
             #     после resize_back окно станет 400x225 и клик не попадёт).
