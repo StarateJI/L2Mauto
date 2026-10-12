@@ -197,16 +197,11 @@ class NedoGui(QWidget):
         self.layout_main = QVBoxLayout()
         font_btn = QFont("Segoe UI", 9, QFont.Bold)
 
-        # ── Заголовок + подзаголовок — типографическая иерархия ──────────
+        # ── Заголовок — компактный (подзаголовок убран, экономим место) ──
         self.title_label = QLabel("L2Mauto")
         self.title_label.setObjectName("title")
         self.title_label.setAlignment(Qt.AlignCenter)
         self.layout_main.addWidget(self.title_label)
-
-        self.subtitle_label = QLabel("AUTOMATION SUITE")
-        self.subtitle_label.setObjectName("subtitle")
-        self.subtitle_label.setAlignment(Qt.AlignCenter)
-        self.layout_main.addWidget(self.subtitle_label)
 
         self.btn_otdel = QPushButton("▤  Отдельное управление")
         self.btn_otdel.setCursor(Qt.PointingHandCursor)

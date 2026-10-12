@@ -21,17 +21,17 @@ QLabel#title {
     color: #f4f4f5;
     font-size: 13pt;
     font-weight: 700;
-    padding: 6px 4px 2px 4px;
+    padding: 4px 4px 2px 4px;
     qproperty-alignment: AlignCenter;
     letter-spacing: 1px;
 }
 
-/* Подзаголовок — мелкий, без отступов */
+/* Подзаголовок — мелкий, без отступов (зарезервировано, не используется) */
 QLabel#subtitle {
     color: #52525b;
     font-size: 7pt;
     font-weight: 400;
-    padding: 0px 4px 4px 4px;
+    padding: 0px 4px 2px 4px;
     qproperty-alignment: AlignCenter;
     letter-spacing: 2px;
 }
