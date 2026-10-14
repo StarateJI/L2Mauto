@@ -263,12 +263,11 @@ class Auction(GameAction):
                     break
                 else:  # 'error'
                     # Предмет снят с продажи, но не найден в инвентаре.
-                    # Раньше: continue (пытался следующий лот — но предмет уже
-                    # снят, и если дальше тоже не найдёт — куча предметов в инвенте).
-                    # Теперь: break — стопаем это окно, идём к следующему в пачке.
-                    # finally вернёт окно (resize_back, закрытие аука, сон).
-                    log(f"Аук: предмет {i} не найден — стопаю окно, иду к следующему",
+                    # Стопаем это окно БЕЗ закрытия аука и БЕЗ сна —
+                    # просто переходим к следующему окну в пачке.
+                    log(f"Аук: предмет {i} не найден — стопаю окно (без закрытия аука/сна), иду к следующему",
                         self.window_id, level="WARNING")
+                    self._skip_close_and_sleep = True
                     break
 
         except asyncio.CancelledError:
@@ -291,23 +290,30 @@ class Auction(GameAction):
             # ── ВСЁ что ниже — выполняется ВСЕГДА ──────────────────────────
             # Даже если бот упал, даже если пользователь стопнул (CancelledError).
 
+            # Если предмет не найден — НЕ закрываем аук и НЕ усыпляем (skip).
+            skip_close = getattr(self, '_skip_close_and_sleep', False)
+
             # 8a. Закрыть аук/меню ДО resize_back (кнопка 1218,46 в окне 1280x720,
             #     после resize_back окно станет 400x225 и клик не попадёт).
             #     Используем SetForegroundWindow для надёжности.
             #     Ждём T_AUCTION_CLOSE после клика — аук должен успеть закрыться.
-            try:
-                import ctypes
-                hwnd_val = self.window_info[self.window_id].get("ID")
-                if hwnd_val:
-                    try:
-                        ctypes.windll.user32.SetForegroundWindow(int(hwnd_val))
-                    except Exception:
-                        pass
-                await self._click(*BTN_CLOSE)
-                await asyncio.sleep(T_AUCTION_CLOSE)  # 2.5 сек — аук закрывается
-                log("Аук: аук закрыт", self.window_id)
-            except Exception as e:
-                log(f"Аук: не удалось закрыть аук: {e}", self.window_id, level="WARNING")
+            #     При skip_close (предмет не найден) — НЕ закрываем.
+            if not skip_close:
+                try:
+                    import ctypes
+                    hwnd_val = self.window_info[self.window_id].get("ID")
+                    if hwnd_val:
+                        try:
+                            ctypes.windll.user32.SetForegroundWindow(int(hwnd_val))
+                        except Exception:
+                            pass
+                    await self._click(*BTN_CLOSE)
+                    await asyncio.sleep(T_AUCTION_CLOSE)  # 2.5 сек — аук закрывается
+                    log("Аук: аук закрыт", self.window_id)
+                except Exception as e:
+                    log(f"Аук: не удалось закрыть аук: {e}", self.window_id, level="WARNING")
+            else:
+                log("Аук: предмет не найден — аук НЕ закрываю (skip)", self.window_id)
 
             # 8b. Вернуть размер окна (если увеличивали) + ПРОВЕРИТЬ что стало 400x225
             #     Если resize_back не сработал — принудительно SetWindowPos ещё раз.
@@ -368,17 +374,21 @@ class Auction(GameAction):
                         self.window_id, level="WARNING")
 
             # 8c. Включить энергорежим — 1 попытка, без 3×8сек ожидания.
-            try:
-                if not await self.profile.energo.is_on():
-                    await self.profile.energo.turn_on()
-                    await asyncio.sleep(2.0)
-                if await self.profile.energo.is_on():
-                    log("Аук: окно уложено спать", self.window_id)
-                else:
-                    log("Аук: энерго не включился (не критично)", self.window_id, level="WARNING")
-            except Exception as e:
-                log(f"Аук: не удалось включить энерго: {e}",
-                    self.window_id, level="WARNING")
+            #     При skip_close (предмет не найден) — НЕ усыпляем.
+            if not skip_close:
+                try:
+                    if not await self.profile.energo.is_on():
+                        await self.profile.energo.turn_on()
+                        await asyncio.sleep(2.0)
+                    if await self.profile.energo.is_on():
+                        log("Аук: окно уложено спать", self.window_id)
+                    else:
+                        log("Аук: энерго не включился (не критично)", self.window_id, level="WARNING")
+                except Exception as e:
+                    log(f"Аук: не удалось включить энерго: {e}",
+                        self.window_id, level="WARNING")
+            else:
+                log("Аук: предмет не найден — энерго НЕ включаю (skip)", self.window_id)
 
             # 8d. ФУЛЛ-СКРИН в конце прогона — видно реальное состояние ВСЕХ окон.
             #     Логи могут врать (бот пишет «окно возвращено» а по факту нет),
