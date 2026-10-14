@@ -1,0 +1,201 @@
+=== Log tail 2026-10-15T01:31:07.135095 | last 200 lines ===
+2026-10-15 01:09:14,891 - DEBUG - [global] _api_put: GET runs/20261015_010847_fail_global.log -> 404
+2026-10-15 01:09:30,505 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_010847_fail_global.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:09:30,522 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-15 01:09:30,523 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-15 01:09:30,525 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-15 01:09:30,998 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:09:35,182 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:09:35,220 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:10:06,400 - INFO - [global] Проверяю обновы...
+2026-10-15 01:10:19,534 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:10:20,983 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:10:21,047 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:10:35,240 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-15 01:10:35,303 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-15 01:10:41,982 - DEBUG - [global] _api_put: GET runs/20261015_011035_fail_periodic.log -> 404
+2026-10-15 01:10:50,418 - DEBUG - [global] _api_put: PUT runs/20261015_011035_fail_periodic.log -> 201 (50097 bytes)
+2026-10-15 01:10:50,601 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261015_011035_fail_periodic.log
+2026-10-15 01:10:50,661 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-15 01:10:52,261 - INFO - [global] Проверяю обновы...
+2026-10-15 01:11:13,336 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_011035_fail_global.log?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:11:32,271 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_011035_fail_global.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:11:32,317 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-15 01:11:32,474 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-15 01:11:32,484 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-15 01:11:45,482 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:11:46,898 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:11:46,940 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:12:18,027 - INFO - [global] Проверяю обновы...
+2026-10-15 01:12:26,085 - DEBUG - [global] needs_update: raw → 5.13.57
+2026-10-15 01:12:26,461 - DEBUG - [global] needs_update: API → 5.13.57
+2026-10-15 01:12:26,663 - DEBUG - [global] needs_update: лучший источник raw → 5.13.57 (из 2)
+2026-10-15 01:12:26,688 - INFO - [global] needs_update: local=(5, 13, 57) remote=(5, 13, 57) -> has_update=False
+2026-10-15 01:12:26,711 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:12:34,846 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-15 01:12:34,902 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-15 01:12:41,473 - DEBUG - [global] _api_put: GET runs/20261015_011234_fail_periodic.log -> 404
+2026-10-15 01:12:50,232 - DEBUG - [global] _api_put: PUT runs/20261015_011234_fail_periodic.log -> 201 (50097 bytes)
+2026-10-15 01:12:50,382 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261015_011234_fail_periodic.log
+2026-10-15 01:12:50,535 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-15 01:12:58,882 - INFO - [global] Проверяю обновы...
+2026-10-15 01:13:01,298 - DEBUG - [global] _api_put: GET runs/20261015_011234_fail_global.log -> 404
+2026-10-15 01:13:10,494 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:13:11,621 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:13:11,726 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:13:21,646 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_011234_fail_global.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:13:21,691 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-15 01:13:21,694 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-15 01:13:21,695 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-15 01:13:42,876 - INFO - [global] Проверяю обновы...
+2026-10-15 01:13:52,921 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:13:53,109 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:14:24,317 - INFO - [global] Проверяю обновы...
+2026-10-15 01:14:24,313 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-15 01:14:24,392 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-15 01:14:37,003 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:14:38,678 - DEBUG - [global] _api_put: GET runs/20261015_011424_fail_periodic.log -> 404
+2026-10-15 01:14:38,808 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:14:39,004 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:14:58,387 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_011424_fail_periodic.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:14:58,400 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-15 01:14:58,606 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-15 01:15:10,613 - INFO - [global] Проверяю обновы...
+2026-10-15 01:15:11,082 - DEBUG - [global] _api_put: GET runs/20261015_011424_fail_global.log -> 404
+2026-10-15 01:15:23,830 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:15:25,262 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:15:25,348 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:15:28,065 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_011424_fail_global.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:15:28,161 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-15 01:15:28,191 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-15 01:15:28,208 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-15 01:15:56,639 - INFO - [global] Проверяю обновы...
+2026-10-15 01:16:18,102 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:16:19,388 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:16:19,477 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:16:30,360 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-15 01:16:30,430 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-15 01:16:38,542 - DEBUG - [global] _api_put: GET runs/20261015_011630_fail_periodic.log -> 404
+2026-10-15 01:16:46,991 - DEBUG - [global] _api_put: PUT runs/20261015_011630_fail_periodic.log -> 409 (50097 bytes)
+2026-10-15 01:16:47,006 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 0be305e93e0a322d026874f2c73844827edb483a but expected 6dc60339e4806e9be091dca690a73237fe36d034","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-15 01:16:47,158 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-15 01:16:47,211 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-15 01:16:50,671 - INFO - [global] Проверяю обновы...
+2026-10-15 01:17:04,170 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_011630_fail_global.log?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:17:09,283 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:17:09,343 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:17:09,402 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:17:19,680 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_011630_fail_global.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:17:19,700 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-15 01:17:19,702 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-15 01:17:19,704 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-15 01:17:40,826 - INFO - [global] Проверяю обновы...
+2026-10-15 01:18:07,392 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:18:07,435 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:18:07,616 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:18:26,866 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-15 01:18:27,117 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-15 01:18:39,092 - DEBUG - [global] _api_put: GET runs/20261015_011827_fail_periodic.log -> 404
+2026-10-15 01:18:41,558 - INFO - [global] Проверяю обновы...
+2026-10-15 01:18:56,612 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_011827_fail_periodic.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:18:56,626 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-15 01:18:56,723 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-15 01:19:22,206 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_011827_fail_global.log?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:19:41,467 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_011827_fail_global.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:19:41,501 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-15 01:19:41,504 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-15 01:19:41,508 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-15 01:20:06,980 - DEBUG - [global] needs_update: raw failed: SSLError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/main/bot/version.txt?ts=1792016321 (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:20:07,631 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:20:07,721 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:20:07,877 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:20:41,754 - INFO - [global] Проверяю обновы...
+2026-10-15 01:20:48,286 - DEBUG - [global] needs_update: raw → 5.13.57
+2026-10-15 01:20:48,582 - DEBUG - [global] needs_update: API → 5.13.57
+2026-10-15 01:20:48,670 - DEBUG - [global] needs_update: лучший источник raw → 5.13.57 (из 2)
+2026-10-15 01:20:48,704 - INFO - [global] needs_update: local=(5, 13, 57) remote=(5, 13, 57) -> has_update=False
+2026-10-15 01:20:48,778 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:20:49,617 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-15 01:20:49,946 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-15 01:21:03,527 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012049_fail_periodic.log?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:21:15,271 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012049_fail_periodic.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:21:15,284 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-15 01:21:15,721 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-15 01:21:24,158 - INFO - [global] Проверяю обновы...
+2026-10-15 01:21:41,849 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:21:42,058 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012049_fail_global.log?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:21:43,067 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:21:43,139 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:22:02,240 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012049_fail_global.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:22:02,487 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-15 01:22:02,603 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-15 01:22:02,611 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-15 01:22:18,438 - INFO - [global] Проверяю обновы...
+2026-10-15 01:22:32,435 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:22:32,507 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:22:32,634 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:23:05,932 - INFO - [global] Проверяю обновы...
+2026-10-15 01:23:09,465 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-15 01:23:09,566 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-15 01:23:24,607 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:23:24,668 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:23:24,764 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:23:26,733 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012309_fail_periodic.log?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:23:49,954 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012309_fail_periodic.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:23:50,036 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-15 01:23:50,347 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-15 01:24:00,169 - INFO - [global] Проверяю обновы...
+2026-10-15 01:24:16,401 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012309_fail_global.log?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:24:18,050 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:24:19,269 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:24:19,351 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:24:36,302 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012309_fail_global.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:24:36,336 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-15 01:24:36,336 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-15 01:24:36,337 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-15 01:24:53,082 - INFO - [global] Проверяю обновы...
+2026-10-15 01:25:13,563 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:25:14,018 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:25:14,121 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:25:45,426 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-15 01:25:45,540 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-15 01:25:50,291 - INFO - [global] Проверяю обновы...
+2026-10-15 01:26:03,315 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012545_fail_periodic.log?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:26:30,718 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:26:30,787 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012545_fail_periodic.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:26:30,829 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-15 01:26:30,930 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-15 01:26:31,491 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:26:31,537 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:26:43,766 - DEBUG - [global] _api_put: GET runs/20261015_012545_fail_global.log -> 404
+2026-10-15 01:26:55,395 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-10-15 01:26:55,412 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-15 01:26:55,413 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-15 01:26:55,414 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-15 01:27:04,999 - INFO - [global] Проверяю обновы...
+2026-10-15 01:27:22,848 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:27:26,569 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:27:26,683 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:27:59,698 - INFO - [global] Проверяю обновы...
+2026-10-15 01:28:02,629 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-15 01:28:02,752 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-15 01:28:17,639 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012802_fail_periodic.log?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:28:38,029 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012802_fail_periodic.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:28:38,033 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-15 01:28:38,354 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-15 01:29:07,185 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012802_fail_global.log?ref=bot-logs (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:29:25,316 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261015_012802_fail_global.log (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:29:25,391 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-15 01:29:25,411 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-15 01:29:25,413 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-15 01:29:36,127 - DEBUG - [global] needs_update: API failed: SSLError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:29:36,317 - DEBUG - [global] needs_update: raw failed: SSLError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/main/bot/version.txt?ts=1792016879 (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)')))
+2026-10-15 01:29:36,339 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:29:36,378 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:30:10,891 - INFO - [global] Проверяю обновы...
+2026-10-15 01:30:21,283 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-15 01:30:21,366 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-15 01:30:34,902 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-15 01:30:35,033 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-15 01:30:46,484 - DEBUG - [global] _api_put: GET runs/20261015_013035_fail_periodic.log -> 404
+2026-10-15 01:30:55,187 - INFO - [global] Проверяю обновы...
