@@ -1,0 +1,201 @@
+=== Log tail 2026-10-16T16:36:12.993961 | last 200 lines ===
+2026-10-16 16:26:39,455 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-16 16:26:39,456 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:26:47,464 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-16 16:26:47,465 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-16 16:26:47,469 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162647_fail_periodic.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:26:47,471 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162647_fail_periodic.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:26:47,471 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-16 16:26:47,474 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-16 16:26:47,499 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162647_fail_global.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:26:47,502 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162647_fail_global.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:26:47,502 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-16 16:26:47,502 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-16 16:26:47,502 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-16 16:27:09,472 - INFO - [global] Проверяю обновы...
+2026-10-16 16:27:09,476 - DEBUG - [global] needs_update: raw failed: ConnectionError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/main/bot/version.txt?ts=1792157229 (Caused by NameResolutionError("HTTPSConnection(host='raw.githubusercontent.com', port=443): Failed to resolve 'raw.githubusercontent.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:27:09,476 - DEBUG - [global] needs_update: API failed: ConnectionError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:27:09,476 - WARNING - [global] needs_update: все источники версии упали — пропускаю проверку
+2026-10-16 16:27:09,476 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:27:39,491 - INFO - [global] Проверяю обновы...
+2026-10-16 16:27:39,497 - DEBUG - [global] needs_update: raw failed: ConnectionError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/main/bot/version.txt?ts=1792157259 (Caused by NameResolutionError("HTTPSConnection(host='raw.githubusercontent.com', port=443): Failed to resolve 'raw.githubusercontent.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:27:39,497 - DEBUG - [global] needs_update: API failed: ConnectionError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:27:39,497 - WARNING - [global] needs_update: все источники версии упали — пропускаю проверку
+2026-10-16 16:27:39,498 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:27:47,536 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-16 16:27:47,536 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-16 16:27:47,541 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162747_fail_periodic.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:27:47,544 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162747_fail_periodic.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:27:47,544 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-16 16:27:47,546 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-16 16:27:47,568 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162747_fail_global.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:27:47,570 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162747_fail_global.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:27:47,570 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-16 16:27:47,570 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-16 16:27:47,570 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-16 16:28:09,511 - INFO - [global] Проверяю обновы...
+2026-10-16 16:28:09,518 - DEBUG - [global] needs_update: raw failed: ConnectionError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/main/bot/version.txt?ts=1792157289 (Caused by NameResolutionError("HTTPSConnection(host='raw.githubusercontent.com', port=443): Failed to resolve 'raw.githubusercontent.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:28:09,519 - DEBUG - [global] needs_update: API failed: ConnectionError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:28:09,519 - WARNING - [global] needs_update: все источники версии упали — пропускаю проверку
+2026-10-16 16:28:09,519 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:28:39,536 - INFO - [global] Проверяю обновы...
+2026-10-16 16:28:39,540 - DEBUG - [global] needs_update: raw failed: ConnectionError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/main/bot/version.txt?ts=1792157319 (Caused by NameResolutionError("HTTPSConnection(host='raw.githubusercontent.com', port=443): Failed to resolve 'raw.githubusercontent.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:28:39,540 - DEBUG - [global] needs_update: API failed: ConnectionError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:28:39,541 - WARNING - [global] needs_update: все источники версии упали — пропускаю проверку
+2026-10-16 16:28:39,542 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:28:47,599 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-16 16:28:47,600 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-16 16:28:47,603 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162847_fail_periodic.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:28:47,606 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162847_fail_periodic.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:28:47,606 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-16 16:28:47,609 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-16 16:28:47,634 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162847_fail_global.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:28:47,636 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162847_fail_global.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:28:47,636 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-16 16:28:47,636 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-16 16:28:47,636 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-16 16:29:09,554 - INFO - [global] Проверяю обновы...
+2026-10-16 16:29:20,628 - DEBUG - [global] needs_update: API failed: ConnectionError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:29:20,629 - DEBUG - [global] needs_update: raw failed: ConnectionError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/main/bot/version.txt?ts=1792157349 (Caused by NameResolutionError("HTTPSConnection(host='raw.githubusercontent.com', port=443): Failed to resolve 'raw.githubusercontent.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:29:20,629 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-16 16:29:20,630 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:29:47,664 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-16 16:29:47,666 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-16 16:29:47,672 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162947_fail_periodic.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:29:47,674 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162947_fail_periodic.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:29:47,674 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-16 16:29:47,676 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-16 16:29:47,718 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162947_fail_global.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:29:47,722 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_162947_fail_global.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:29:47,722 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-16 16:29:47,722 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-16 16:29:47,722 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-16 16:29:50,647 - INFO - [global] Проверяю обновы...
+2026-10-16 16:29:50,655 - DEBUG - [global] needs_update: raw failed: ConnectionError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/main/bot/version.txt?ts=1792157390 (Caused by NameResolutionError("HTTPSConnection(host='raw.githubusercontent.com', port=443): Failed to resolve 'raw.githubusercontent.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:29:50,656 - DEBUG - [global] needs_update: API failed: ConnectionError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:29:50,656 - WARNING - [global] needs_update: все источники версии упали — пропускаю проверку
+2026-10-16 16:29:50,657 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:30:20,670 - INFO - [global] Проверяю обновы...
+2026-10-16 16:30:31,740 - DEBUG - [global] needs_update: raw failed: ConnectionError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/main/bot/version.txt?ts=1792157420 (Caused by NameResolutionError("HTTPSConnection(host='raw.githubusercontent.com', port=443): Failed to resolve 'raw.githubusercontent.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:30:31,740 - DEBUG - [global] needs_update: API failed: ConnectionError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:30:31,741 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-16 16:30:31,741 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:30:47,752 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-16 16:30:47,753 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-16 16:30:47,756 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_163047_fail_periodic.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:30:47,759 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_163047_fail_periodic.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:30:47,759 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-16 16:30:47,762 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-16 16:30:47,788 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_163047_fail_global.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:30:47,791 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_163047_fail_global.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:30:47,791 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-16 16:30:47,791 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-16 16:30:47,791 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-16 16:31:01,755 - INFO - [global] Проверяю обновы...
+2026-10-16 16:31:01,761 - DEBUG - [global] needs_update: raw failed: ConnectionError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/main/bot/version.txt?ts=1792157461 (Caused by NameResolutionError("HTTPSConnection(host='raw.githubusercontent.com', port=443): Failed to resolve 'raw.githubusercontent.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:31:01,761 - DEBUG - [global] needs_update: API failed: ConnectionError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:31:01,762 - WARNING - [global] needs_update: все источники версии упали — пропускаю проверку
+2026-10-16 16:31:01,762 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:31:31,776 - INFO - [global] Проверяю обновы...
+2026-10-16 16:31:42,852 - DEBUG - [global] needs_update: API failed: ConnectionError: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:31:42,853 - DEBUG - [global] needs_update: raw failed: ConnectionError: HTTPSConnectionPool(host='raw.githubusercontent.com', port=443): Max retries exceeded with url: /StarateJI/L2Mauto/main/bot/version.txt?ts=1792157491 (Caused by NameResolutionError("HTTPSConnection(host='raw.githubusercontent.com', port=443): Failed to resolve 'raw.githubusercontent.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:31:42,853 - WARNING - [global] needs_update: ошибка проверки обновы: TimeoutError: 2 (of 2) futures unfinished
+2026-10-16 16:31:42,854 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:31:47,820 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-16 16:31:47,821 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-16 16:31:47,824 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_163147_fail_periodic.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:31:47,827 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_163147_fail_periodic.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:31:47,827 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-16 16:31:47,829 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-16 16:31:47,853 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_163147_fail_global.log?ref=bot-logs (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:31:47,856 - WARNING - [global] _api_put: PUT exception: HTTPSConnectionPool(host='api.github.com', port=443): Max retries exceeded with url: /repos/StarateJI/L2Mauto/contents/runs/20261016_163147_fail_global.log (Caused by NameResolutionError("HTTPSConnection(host='api.github.com', port=443): Failed to resolve 'api.github.com' ([Errno 11001] getaddrinfo failed)"))
+2026-10-16 16:31:47,856 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-16 16:31:47,856 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-16 16:31:47,856 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-16 16:32:12,867 - INFO - [global] Проверяю обновы...
+2026-10-16 16:32:14,042 - DEBUG - [global] needs_update: API → 5.13.57
+2026-10-16 16:32:14,045 - DEBUG - [global] needs_update: raw → 5.13.57
+2026-10-16 16:32:14,046 - DEBUG - [global] needs_update: лучший источник API → 5.13.57 (из 2)
+2026-10-16 16:32:14,046 - INFO - [global] needs_update: local=(5, 13, 57) remote=(5, 13, 57) -> has_update=False
+2026-10-16 16:32:14,047 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:32:44,059 - INFO - [global] Проверяю обновы...
+2026-10-16 16:32:44,942 - DEBUG - [global] needs_update: raw → 5.13.57
+2026-10-16 16:32:45,157 - DEBUG - [global] needs_update: API → 5.13.57
+2026-10-16 16:32:45,158 - DEBUG - [global] needs_update: лучший источник raw → 5.13.57 (из 2)
+2026-10-16 16:32:45,158 - INFO - [global] needs_update: local=(5, 13, 57) remote=(5, 13, 57) -> has_update=False
+2026-10-16 16:32:45,159 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:32:47,884 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-16 16:32:47,885 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-16 16:32:48,864 - DEBUG - [global] _api_put: GET runs/20261016_163247_fail_periodic.log -> 404
+2026-10-16 16:32:51,572 - DEBUG - [global] _api_put: PUT runs/20261016_163247_fail_periodic.log -> 201 (60242 bytes)
+2026-10-16 16:32:51,573 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261016_163247_fail_periodic.log
+2026-10-16 16:32:51,576 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-16 16:32:52,556 - DEBUG - [global] _api_put: GET runs/20261016_163247_fail_global.log -> 404
+2026-10-16 16:32:55,063 - DEBUG - [global] _api_put: PUT runs/20261016_163247_fail_global.log -> 201 (39732 bytes)
+2026-10-16 16:32:55,064 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261016_163247_fail_global.log
+2026-10-16 16:32:55,064 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-16 16:32:55,064 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-16 16:33:15,172 - INFO - [global] Проверяю обновы...
+2026-10-16 16:33:16,100 - DEBUG - [global] needs_update: raw → 5.13.57
+2026-10-16 16:33:16,205 - DEBUG - [global] needs_update: API → 5.13.57
+2026-10-16 16:33:16,206 - DEBUG - [global] needs_update: лучший источник raw → 5.13.57 (из 2)
+2026-10-16 16:33:16,206 - INFO - [global] needs_update: local=(5, 13, 57) remote=(5, 13, 57) -> has_update=False
+2026-10-16 16:33:16,207 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:33:46,220 - INFO - [global] Проверяю обновы...
+2026-10-16 16:33:47,098 - DEBUG - [global] needs_update: raw → 5.13.57
+2026-10-16 16:33:47,308 - DEBUG - [global] needs_update: API → 5.13.57
+2026-10-16 16:33:47,308 - DEBUG - [global] needs_update: лучший источник raw → 5.13.57 (из 2)
+2026-10-16 16:33:47,308 - INFO - [global] needs_update: local=(5, 13, 57) remote=(5, 13, 57) -> has_update=False
+2026-10-16 16:33:47,309 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:33:55,093 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-16 16:33:55,094 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-16 16:33:56,086 - DEBUG - [global] _api_put: GET runs/20261016_163355_fail_periodic.log -> 404
+2026-10-16 16:33:58,922 - DEBUG - [global] _api_put: PUT runs/20261016_163355_fail_periodic.log -> 201 (60242 bytes)
+2026-10-16 16:33:58,924 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261016_163355_fail_periodic.log
+2026-10-16 16:33:58,925 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-16 16:33:59,914 - DEBUG - [global] _api_put: GET runs/20261016_163355_fail_global.log -> 404
+2026-10-16 16:34:02,332 - DEBUG - [global] _api_put: PUT runs/20261016_163355_fail_global.log -> 201 (37466 bytes)
+2026-10-16 16:34:02,334 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261016_163355_fail_global.log
+2026-10-16 16:34:02,334 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-16 16:34:02,334 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-16 16:34:17,326 - INFO - [global] Проверяю обновы...
+2026-10-16 16:34:18,263 - DEBUG - [global] needs_update: raw → 5.13.57
+2026-10-16 16:34:18,399 - DEBUG - [global] needs_update: API → 5.13.57
+2026-10-16 16:34:18,400 - DEBUG - [global] needs_update: лучший источник raw → 5.13.57 (из 2)
+2026-10-16 16:34:18,400 - INFO - [global] needs_update: local=(5, 13, 57) remote=(5, 13, 57) -> has_update=False
+2026-10-16 16:34:18,400 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:34:48,417 - INFO - [global] Проверяю обновы...
+2026-10-16 16:34:49,318 - DEBUG - [global] needs_update: raw → 5.13.57
+2026-10-16 16:34:49,492 - DEBUG - [global] needs_update: API → 5.13.57
+2026-10-16 16:34:49,492 - DEBUG - [global] needs_update: лучший источник raw → 5.13.57 (из 2)
+2026-10-16 16:34:49,492 - INFO - [global] needs_update: local=(5, 13, 57) remote=(5, 13, 57) -> has_update=False
+2026-10-16 16:34:49,493 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:35:02,358 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-16 16:35:02,359 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-16 16:35:03,316 - DEBUG - [global] _api_put: GET runs/20261016_163502_fail_periodic.log -> 404
+2026-10-16 16:35:05,873 - DEBUG - [global] _api_put: PUT runs/20261016_163502_fail_periodic.log -> 201 (60242 bytes)
+2026-10-16 16:35:05,874 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261016_163502_fail_periodic.log
+2026-10-16 16:35:05,876 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-16 16:35:06,881 - DEBUG - [global] _api_put: GET runs/20261016_163502_fail_global.log -> 404
+2026-10-16 16:35:09,462 - DEBUG - [global] _api_put: PUT runs/20261016_163502_fail_global.log -> 201 (35209 bytes)
+2026-10-16 16:35:09,464 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261016_163502_fail_global.log
+2026-10-16 16:35:09,464 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-16 16:35:09,464 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-16 16:35:19,508 - INFO - [global] Проверяю обновы...
+2026-10-16 16:35:20,343 - DEBUG - [global] needs_update: raw → 5.13.57
+2026-10-16 16:35:20,627 - DEBUG - [global] needs_update: API → 5.13.57
+2026-10-16 16:35:20,627 - DEBUG - [global] needs_update: лучший источник raw → 5.13.57 (из 2)
+2026-10-16 16:35:20,627 - INFO - [global] needs_update: local=(5, 13, 57) remote=(5, 13, 57) -> has_update=False
+2026-10-16 16:35:20,628 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:35:50,641 - INFO - [global] Проверяю обновы...
+2026-10-16 16:35:51,534 - DEBUG - [global] needs_update: raw → 5.13.57
+2026-10-16 16:35:51,693 - DEBUG - [global] needs_update: API → 5.13.57
+2026-10-16 16:35:51,693 - DEBUG - [global] needs_update: лучший источник raw → 5.13.57 (из 2)
+2026-10-16 16:35:51,693 - INFO - [global] needs_update: local=(5, 13, 57) remote=(5, 13, 57) -> has_update=False
+2026-10-16 16:35:51,694 - INFO - [global] Установлена последняя версия бота | 5.13.57
+2026-10-16 16:36:09,487 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-16 16:36:09,488 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-16 16:36:10,464 - DEBUG - [global] _api_put: GET runs/20261016_163609_fail_periodic.log -> 404
+2026-10-16 16:36:12,970 - DEBUG - [global] _api_put: PUT runs/20261016_163609_fail_periodic.log -> 201 (60242 bytes)
+2026-10-16 16:36:12,972 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261016_163609_fail_periodic.log
+2026-10-16 16:36:12,974 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
