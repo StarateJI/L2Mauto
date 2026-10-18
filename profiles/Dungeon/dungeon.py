@@ -939,11 +939,21 @@ class Dungeon(EventDrivenProfile):
             if after_load is not None:
                 self._save_debug("island_after_load.png", after_load)
 
-            # Усыпляем через свайп (НЕ через energo.turn_on — он кликает по
-            # иконке энергорежима которая после загрузки данжа открывает меню)
+            # Усыпляем окно. turn_on кликает по energo_mode_gui (13,132) —
+            # после загрузки данжа интерфейс изменился, клик попадает мимо
+            # (на иконку меню в правом верхнем). Используем turn_on но с
+            # проверкой — если is_on() уже True, не кликаем.
             if not await self.energo.is_on():
                 await self.energo.turn_on()
                 await asyncio.sleep(1)
+                # Проверяем — если не уснул, пробуем ещё раз через свайп
+                if not await self.energo.is_on():
+                    log("Данги: энергорежим не включился с 1-й попытки, "
+                        "пробую через свайп", window_id, level="WARNING")
+                    await self.energo.turn_off(ignore=True)
+                    await asyncio.sleep(1)
+                    await self.energo.turn_on()
+                    await asyncio.sleep(1)
             log("Данги: Остров Неистовства запущен, окно в сне", window_id)
             return True
 
