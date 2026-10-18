@@ -466,8 +466,8 @@ class Dungeon(EventDrivenProfile):
             scene_bgr = None
 
             ocr_needles = [
-                "разоренн", "разорен", "замок", "замка",
-                "ruined", "castle",
+                "разоренн", "разорен", "разор", "замок", "замка", "замом",
+                "замом", "замо", "зам", "ruined", "castle",
             ]
 
             MAX_SCROLL_ATTEMPTS = 15
