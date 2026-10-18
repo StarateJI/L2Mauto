@@ -124,7 +124,7 @@ class Synthesis(BaseProfile):
             # Проверяем — есть ли кнопка «Показать все»/«Перейти к результату»
             show_all_mean = self._check_brightness(wx, wy, ww, wh, *BTN_SHOW_ALL)
 
-            if show_all_mean > 30:
+            if show_all_mean > 20:
                 # Жмём «Показать все» / «Перейти к результату»
                 log(f"Синтез: Показать все/Перейти (mean={show_all_mean:.0f})",
                     self.window_id)
@@ -135,7 +135,7 @@ class Synthesis(BaseProfile):
             # Проверяем — есть ли кнопка «Повтор»
             repeat_mean = self._check_brightness(wx, wy, ww, wh, *BTN_REPEAT)
 
-            if repeat_mean > 30:
+            if repeat_mean > 20:
                 # Жмём «Повтор»
                 log(f"Синтез: Повтор (mean={repeat_mean:.0f})", self.window_id)
                 await self._click_pct(*BTN_REPEAT, "Повтор")
@@ -241,8 +241,11 @@ class Synthesis(BaseProfile):
             SW_RESTORE = 9
             MONITOR_DEFAULTTOPRIMARY = 1
             maximize_done = False
+            _saved_pos = None  # позиция ДО maximize
             try:
                 win = gw.getWindowsWithTitle(self.window_info[window_id]["Title"])[0]
+                _saved_pos = (win.left, win.top, win.width, win.height)
+                log(f"Синтез: сохранил позицию: {_saved_pos}", window_id)
                 hwnd = win._hWnd
                 log(f"Синтез: окно ДО maximize: {win.width}x{win.height} isMaximized={win.isMaximized}", window_id)
                 if win.isMaximized:
@@ -306,21 +309,23 @@ class Synthesis(BaseProfile):
             await self._click_pct(*BTN_CLOSE_MENU, "Закрыть меню")
             await asyncio.sleep(1)
 
-            # 6. Restore окно
-            if maximize_done:
+            # 6. Restore окно на СОХРАНЁННУЮ позицию
+            if maximize_done and _saved_pos:
                 try:
                     win = gw.getWindowsWithTitle(self.window_info[window_id]["Title"])[0]
                     hwnd = win._hWnd
                     u.ShowWindow(ctypes.c_void_p(int(hwnd)), SW_RESTORE)
                     await asyncio.sleep(0.5)
+                    sl, st, sw, sh = _saved_pos
                     u.SetWindowPos(ctypes.c_void_p(int(hwnd)), None,
-                                   0, 40, 400, 225, 0x0004 | 0x0010)
+                                   sl, st, sw, sh, 0x0004 | 0x0010)
                     await asyncio.sleep(0.5)
                     win = gw.getWindowsWithTitle(self.window_info[window_id]["Title"])[0]
                     self.window_info[window_id]["Position"] = (win.left, win.top)
                     self.window_info[window_id]["Width"] = win.width
                     self.window_info[window_id]["Height"] = win.height
-                    log(f"Синтез: окно восстановлено {win.width}x{win.height}", window_id)
+                    log(f"Синтез: окно возвращено на ({win.left},{win.top}) {win.width}x{win.height}",
+                        window_id)
                 except Exception as e:
                     log(f"Синтез: restore не сработал: {e}", window_id, level="WARNING")
 
