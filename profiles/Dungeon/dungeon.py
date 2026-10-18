@@ -668,6 +668,19 @@ class Dungeon(EventDrivenProfile):
                 else:
                     log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
                         f"{level_name} не сработал", window_id, level="WARNING")
+                    # Данж мог запуститься но экран ещё не белый — ждём ещё
+                    await asyncio.sleep(5)
+                    after_click2 = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+                    if after_click2 is not None:
+                        gray2 = cv2.cvtColor(after_click2, cv2.COLOR_BGR2GRAY)
+                        mean2 = float(gray2.mean())
+                        if mean2 > 60:
+                            log(f"Данги: светлый экран (mean={mean2:.0f}) — "
+                                f"Замок запущен через {level_name} (2-я проверка)", window_id)
+                            arrow_clicked = True
+                        else:
+                            log(f"Данги: всё ещё тёмно (mean={mean2:.0f}) — "
+                                f"{level_name} не сработал", window_id, level="WARNING")
 
             if not arrow_clicked:
                 log("Данги: не смог кликнуть по стрелке Замка", window_id, level="WARNING")
@@ -925,6 +938,19 @@ class Dungeon(EventDrivenProfile):
                 else:
                     log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
                         f"{level_name} не сработал", window_id, level="WARNING")
+                    # Данж мог запуститься но экран ещё не белый — ждём ещё
+                    await asyncio.sleep(5)
+                    after_click2 = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+                    if after_click2 is not None:
+                        gray2 = cv2.cvtColor(after_click2, cv2.COLOR_BGR2GRAY)
+                        mean2 = float(gray2.mean())
+                        if mean2 > 60:
+                            log(f"Данги: светлый экран (mean={mean2:.0f}) — "
+                                f"Остров запущен через {level_name} (2-я проверка)", window_id)
+                            arrow_clicked = True
+                        else:
+                            log(f"Данги: всё ещё тёмно (mean={mean2:.0f}) — "
+                                f"{level_name} не сработал", window_id, level="WARNING")
 
             if not arrow_clicked:
                 log("Данги: не смог кликнуть по стрелке Острова", window_id, level="WARNING")
