@@ -452,7 +452,7 @@ class NedoGui(QWidget):
         # PvPDodge — без количества (запускает все сразу)
         # Auction — всегда 1 окно в пачке (hide спиннер, фикс 1)
         show_count = (profile_name not in ("PvPDodge", "Auction"))
-        dungeon_types = ["Пати данж", "Благословенная Земля"] if profile_name == "Dungeon" else None
+        dungeon_types = ["Пати данж", "Благословенная Земля", "Разоренный Замок"] if profile_name == "Dungeon" else None
 
         # Значения по умолчанию — из cache (запоминаются)
         from gui.cache import load_cache, save_cache as _save_cache
