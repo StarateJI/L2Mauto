@@ -165,11 +165,9 @@ class Synthesis(BaseProfile):
         """
         log(f"Синтез: === Категория: {category_name} ===", self.window_id)
 
-        # 0. Нажать кнопку меню — только если это НЕ первая категория
-        # (первая категория уже открыта в main_loop)
-        if category_name != "Класс":
-            await self._click_pct(0.953, 0.060, "Кнопка меню (категории)")
-            await asyncio.sleep(1)
+        # 0. Нажать кнопку меню — открыть вкладки категорий
+        await self._click_pct(0.953, 0.060, "Кнопка меню (категории)")
+        await asyncio.sleep(1)
 
         # 1. Клик по вкладке категории
         await self._click_pct(tab_x, tab_y, f"Вкладка {category_name}")
