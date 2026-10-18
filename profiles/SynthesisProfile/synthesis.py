@@ -158,10 +158,9 @@ class Synthesis(BaseProfile):
         """
         Обработать одну категорию (Класс, Агатионы, ...).
         1. Клик по вкладке категории
-        2. Клик по подвкладке «Синтез»
-        3. Цикл: Автовыбор → Синтез → спам Повтор/Показать все → Выход
-        4. Клик «Все» (фильтр) → повтор
-        5. Пока Синтез активна — повторяем
+        2. Клик по подвкладке «Синтез» (один раз, не в цикле)
+        3. Цикл: Автовыбор → проверка Синтез → Синтез → спам → Все
+        4. Если Синтез тусклая → return (следующая категория)
         """
         log(f"Синтез: === Категория: {category_name} ===", self.window_id)
 
@@ -169,7 +168,7 @@ class Synthesis(BaseProfile):
         await self._click_pct(tab_x, tab_y, f"Вкладка {category_name}")
         await asyncio.sleep(1)
 
-        # 2. Клик по подвкладке «Синтез»
+        # 2. Клик по подвкладке «Синтез» — ОДИН РАЗ, не в цикле
         await self._click_pct(*TAB_SYNTHESIS, "Вкладка Синтез")
         await asyncio.sleep(1)
 
@@ -180,32 +179,31 @@ class Synthesis(BaseProfile):
 
         # 3. Главный цикл синтеза
         synth_round = 0
-        while synth_round < 10:  # максимум 10 раундов на категорию
+        while synth_round < 10:
             synth_round += 1
             log(f"Синтез: {category_name} — раунд {synth_round}", self.window_id)
 
             # Автовыбор
             await self._click_pct(*BTN_AUTO_SELECT, "Автовыбор")
-            await asyncio.sleep(0.5 + random.uniform(0, 0.2))
+            await asyncio.sleep(1 + random.uniform(0, 0.3))
 
-            # Проверить — активна ли кнопка Синтез
+            # Проверить — активна ли кнопка Синтез (после Автовыбора)
             if not await self._is_synthesize_active(wx, wy, ww, wh):
                 log(f"Синтез: {category_name} — кнопка Синтез тусклая, "
                     f"нет материалов. Переходим к следующей категории.",
                     self.window_id)
-                return
+                return  # return = следующая категория, НЕ завершение сценария
 
-            # Синтез (нажать кнопку)
+            # Синтез (нажать КНОПКУ, не вкладку)
             await self._click_pct(*BTN_SYNTHESIZE, "Синтез (кнопка)")
-            await asyncio.sleep(2 + random.uniform(0, 0.5))
+            await asyncio.sleep(3 + random.uniform(0, 0.5))
 
-            # Спам «Показать все» → «Повтор» пока есть → Выход
+            # Спам «Показать все» / «Повтор» пока есть → Выход
             await self._spam_repeat(wx, wy, ww, wh)
 
             # Нажать «Все» (фильтр слева вверху) — сбросить выбор
-            log(f"Синтез: {category_name} — нажимаю фильтр 'Все'", self.window_id)
             await self._click_pct(*BTN_ALL_FILTER, "Фильтр Все")
-            await asyncio.sleep(0.5 + random.uniform(0, 0.2))
+            await asyncio.sleep(1 + random.uniform(0, 0.3))
 
         log(f"Синтез: {category_name} — достигнут лимит раундов (10), "
             f"переходим к следующей категории.", self.window_id, level="WARNING")
