@@ -544,42 +544,12 @@ class Dungeon(EventDrivenProfile):
                         await self.energo.turn_on()
                     return False
 
-            # 6. Нажать «Вход»
-            # Сначала пробуем CBT-триггер (как в blessed). Если не сработал —
-            # кликаем по координатам: кнопка «Вход» центр-низ X~44%, Y~85%.
-            entered = await game.wait_and_click("dungeon_enter_button", timeout=5)
-            if not entered:
-                log("Данги: CBT-кнопка Вход не найдена — кликаю по координатам",
-                    window_id, level="WARNING")
-                # Кнопка «Вход» — X~83%, Y~89% (по скрину 2560×1440: 2127,1280)
-                enter_x = int(ww * 0.83)
-                enter_y = int(wh * 0.89)
-                await self._activate()
-                await asyncio.sleep(0.3)
-                await self.mouse.click(self.window_info, enter_x, enter_y)
-                await asyncio.sleep(2)
-                # Проверяем — снял ли окно выбора уровня
-                level_check = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-                if level_check is not None:
-                    gray = cv2.cvtColor(level_check, cv2.COLOR_BGR2GRAY)
-                    mean_b = float(gray.mean())
-                    if mean_b > 200:
-                        log(f"Данги: белый экран после координатного клика — Замок запущен",
-                            window_id)
-                        # Пропусем окно уровней — данж запущен напрямую
-                        await asyncio.sleep(8)
-                        if not await self.energo.is_on():
-                            await self.energo.turn_on()
-                            await asyncio.sleep(1)
-                        log("Данги: Разоренный Замок запущен (без выбора уровня), окно в сне",
-                            window_id)
-                        return True
-                    else:
-                        log("Данги: клик по координатной кнопке Вход — продолжаю к уровням",
-                            window_id)
-            else:
-                await asyncio.sleep(2)
-                log("Данги: нажал Вход (CBT)", window_id)
+            # 6. Нажать «Вход» — по координатам (как в Blessed Land, без CBT)
+            # Кнопка «Вход» — X~83%, Y~89% (по скрину 2560×1440: 2127,1280)
+            await asyncio.sleep(1)
+            await self.mouse.click(self.window_info, int(ww * 0.83), int(wh * 0.89))
+            await asyncio.sleep(2)
+            log("Данги: нажал Вход (координаты)", window_id)
 
             # 7. Окно выбора уровня — выбрать ПРЕДПОСЛЕДНИЙ открытый.
             # Уровни НЕ все открыты — закрытые (Ур.83, 85) серые/тусклые.
