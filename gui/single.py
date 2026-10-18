@@ -251,7 +251,7 @@ class WindowControlDialog(QDialog):
             from gui.cache import load_cache, save_cache
             cache = load_cache()
             last_dungeon = cache.get("DungeonType", "Пати данж")
-            items = ["Пати данж", "Благословенная Земля"]
+            items = ["Пати данж", "Благословенная Земля", "Разоренный Замок"]
             dungeon_type, dok = QInputDialog.getItem(
                 self, "Выбор данжа",
                 "Какой данж запускать?", items,
