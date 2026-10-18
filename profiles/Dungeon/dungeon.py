@@ -325,8 +325,7 @@ class Dungeon(EventDrivenProfile):
                 self._save_debug("blessed_level_window.png", level_window)
 
             # 6. Кликнуть по стрелке последнего открытого уровня.
-            # Благ Земля: кликаем ПОСЛЕДНИЙ открытый (Ур.75 = верхний).
-            # Без цикла перебора — один клик, один уровень. Если не сработал — стоп.
+            # Благ Земля: определяем последний открытый по яркости (как Замок/Остров).
             LEVELS_Y = [
                 ("Ур.75", 0.733),
                 ("Ур.70", 0.649),
@@ -338,8 +337,33 @@ class Dungeon(EventDrivenProfile):
             ]
             ARROW_X_PCT = 0.652
 
-            # Кликаем только первый (Ур.75 = последний открытый). Без fallback.
-            level_name, level_y_pct = LEVELS_Y[0]
+            # Определяем открытые уровни по яркости
+            open_levels = []
+            for level_name, level_y_pct in LEVELS_Y:
+                ax = int(ww * ARROW_X_PCT)
+                ay = int(wh * level_y_pct)
+                arrow_zone = self._grab_window_rect(wx, wy, ax - 15, ay - 10, 30, 20)
+                if arrow_zone is not None:
+                    gray = cv2.cvtColor(arrow_zone, cv2.COLOR_BGR2GRAY)
+                    mean_brightness = float(gray.mean())
+                    is_open = mean_brightness > 22
+                    log(f"Данги: {level_name} mean={mean_brightness:.0f} "
+                        f"{'ОТКРЫТ' if is_open else 'закрыт'}", window_id)
+                    if is_open:
+                        open_levels.append((level_name, level_y_pct))
+                else:
+                    open_levels.append((level_name, level_y_pct))
+
+            if not open_levels:
+                log(f"Данги: нет открытых уровней", window_id, level="WARNING")
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+                return False
+
+            # Кликаем последний открытый (open_levels[0] — сверху вниз, первый = последний)
+            target_level = open_levels[0]
+            log(f"Данги: кликаю последний открытый = {target_level[0]}", window_id)
+
+            level_name, level_y_pct = target_level
             import random as _rnd
             rx = _rnd.randint(-3, 3)
             ry = _rnd.randint(-2, 2)
@@ -915,6 +939,8 @@ class Dungeon(EventDrivenProfile):
             if after_load is not None:
                 self._save_debug("island_after_load.png", after_load)
 
+            # Усыпляем через свайп (НЕ через energo.turn_on — он кликает по
+            # иконке энергорежима которая после загрузки данжа открывает меню)
             if not await self.energo.is_on():
                 await self.energo.turn_on()
                 await asyncio.sleep(1)
