@@ -603,8 +603,16 @@ class NedoGui(QWidget):
             if hasattr(self, '_alchemy_running'):
                 self._alchemy_running.clear()
 
-            # 3. Остановить ВСЕ запущенные боты — копируем список, т.к. он меняется
-            nicks = list(self.controller.bot_manager.bots.copy())
+            # 3. Остановить ВСЕ боты — и запущенные, и те что стартуют.
+            # bot_manager.bots может быть пустым если боты ещё регистрируются.
+            # Поэтому берём ВСЕ окна из findAllWindows + из bot_manager.
+            nicks_running = list(self.controller.bot_manager.bots.copy())
+            try:
+                all_wins = list(findAllWindows().keys())
+            except Exception:
+                all_wins = []
+            # Объединяем — останавливаем и running, и все найденные
+            nicks = list(set(nicks_running + all_wins))
             log(f"СТОП ВСЕ: останавливаю {len(nicks)} окон: {nicks}")
             if nicks:
                 self.stop_windows(nicks)

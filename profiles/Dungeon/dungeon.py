@@ -652,40 +652,11 @@ class Dungeon(EventDrivenProfile):
 
             log(f"Данги: клик {level_name} ({arrow_x},{arrow_y}) offset=({rx},{ry})", window_id)
             await self.mouse.click(self.window_info, arrow_x, arrow_y)
-            await asyncio.sleep(5)
-
-            after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-            arrow_clicked = False
-            if after_click is not None:
-                self._save_debug(f"castle_after_{level_name.replace('.', '_')}.png", after_click)
-                gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
-                mean_brightness = float(gray.mean())
-
-                if mean_brightness > 60:
-                    log(f"Данги: светлый экран (mean={mean_brightness:.0f}) — "
-                        f"Замок запущен через {level_name}", window_id)
-                    arrow_clicked = True
-                else:
-                    log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
-                        f"{level_name} не сработал", window_id, level="WARNING")
-                    # Данж мог запуститься но экран ещё не белый — ждём ещё
-                    await asyncio.sleep(5)
-                    after_click2 = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-                    if after_click2 is not None:
-                        gray2 = cv2.cvtColor(after_click2, cv2.COLOR_BGR2GRAY)
-                        mean2 = float(gray2.mean())
-                        if mean2 > 60:
-                            log(f"Данги: светлый экран (mean={mean2:.0f}) — "
-                                f"Замок запущен через {level_name} (2-я проверка)", window_id)
-                            arrow_clicked = True
-                        else:
-                            log(f"Данги: всё ещё тёмно (mean={mean2:.0f}) — "
-                                f"{level_name} не сработал", window_id, level="WARNING")
-
-            if not arrow_clicked:
-                log("Данги: не смог кликнуть по стрелке Замка", window_id, level="WARNING")
-                await game.wait_and_click("npc_global_quit_button", timeout=2)
-                return False
+            # Ждём 10 сек — данж запускается, персонаж улетает.
+            # НЕ проверяем белый экран — в Замке он не белый (mean=47).
+            # НЕ кликаем npc_global_quit_button — это открывает меню иконок.
+            await asyncio.sleep(10)
+            log(f"Данги: Замок запущен через {level_name}", window_id)
 
             # 8. Данж запущен — ждём 8 сек и усыпляем
             log("Данги: Замок запущен, жду 8 сек на загрузку", window_id)
@@ -922,40 +893,11 @@ class Dungeon(EventDrivenProfile):
 
             log(f"Данги: клик {level_name} ({arrow_x},{arrow_y}) offset=({rx},{ry})", window_id)
             await self.mouse.click(self.window_info, arrow_x, arrow_y)
-            await asyncio.sleep(5)
-
-            after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-            arrow_clicked = False
-            if after_click is not None:
-                self._save_debug(f"island_after_{level_name.replace('.', '_')}.png", after_click)
-                gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
-                mean_brightness = float(gray.mean())
-
-                if mean_brightness > 60:
-                    log(f"Данги: светлый экран (mean={mean_brightness:.0f}) — "
-                        f"Остров запущен через {level_name}", window_id)
-                    arrow_clicked = True
-                else:
-                    log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
-                        f"{level_name} не сработал", window_id, level="WARNING")
-                    # Данж мог запуститься но экран ещё не белый — ждём ещё
-                    await asyncio.sleep(5)
-                    after_click2 = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-                    if after_click2 is not None:
-                        gray2 = cv2.cvtColor(after_click2, cv2.COLOR_BGR2GRAY)
-                        mean2 = float(gray2.mean())
-                        if mean2 > 60:
-                            log(f"Данги: светлый экран (mean={mean2:.0f}) — "
-                                f"Остров запущен через {level_name} (2-я проверка)", window_id)
-                            arrow_clicked = True
-                        else:
-                            log(f"Данги: всё ещё тёмно (mean={mean2:.0f}) — "
-                                f"{level_name} не сработал", window_id, level="WARNING")
-
-            if not arrow_clicked:
-                log("Данги: не смог кликнуть по стрелке Острова", window_id, level="WARNING")
-                await game.wait_and_click("npc_global_quit_button", timeout=2)
-                return False
+            # Ждём 10 сек — данж запускается, персонаж улетает.
+            # НЕ проверяем белый экран — на Острове он не белый (mean=47).
+            # НЕ кликаем npc_global_quit_button — это открывает меню иконок.
+            await asyncio.sleep(10)
+            log(f"Данги: Остров запущен через {level_name}", window_id)
 
             # 8. Данж запущен — ждём 8 сек и усыпляем
             log("Данги: Остров запущен, жду 8 сек на загрузку", window_id)
