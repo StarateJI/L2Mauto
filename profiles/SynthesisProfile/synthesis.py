@@ -180,7 +180,7 @@ class Synthesis(BaseProfile):
 
         # 3. Главный цикл синтеза
         synth_round = 0
-        while True:
+        while synth_round < 10:  # максимум 10 раундов на категорию
             synth_round += 1
             log(f"Синтез: {category_name} — раунд {synth_round}", self.window_id)
 
@@ -199,41 +199,16 @@ class Synthesis(BaseProfile):
             await self._click_pct(*BTN_SYNTHESIZE, "Синтез (кнопка)")
             await asyncio.sleep(2 + random.uniform(0, 0.5))
 
-            # Спам «Показать все» → «Повтор» пока есть
+            # Спам «Показать все» → «Повтор» пока есть → Выход
             await self._spam_repeat(wx, wy, ww, wh)
 
-            # Нажать «Все» (фильтр слева вверху)
+            # Нажать «Все» (фильтр слева вверху) — сбросить выбор
             log(f"Синтез: {category_name} — нажимаю фильтр 'Все'", self.window_id)
             await self._click_pct(*BTN_ALL_FILTER, "Фильтр Все")
             await asyncio.sleep(0.5 + random.uniform(0, 0.2))
 
-            # Снова Автовыбор + проверка
-            await self._click_pct(*BTN_AUTO_SELECT, "Автовыбор (2-й раунд)")
-            await asyncio.sleep(0.5 + random.uniform(0, 0.2))
-
-            if not await self._is_synthesize_active(wx, wy, ww, wh):
-                log(f"Синтез: {category_name} — кнопка Синтез тусклая после "
-                    f"фильтра 'Все'. Переходим к следующей категории.",
-                    self.window_id)
-                return
-
-            # Синтез + спам
-            await self._click_pct(*BTN_SYNTHESIZE, "Синтез (кнопка, 2-й раунд)")
-            await asyncio.sleep(2 + random.uniform(0, 0.5))
-            await self._spam_repeat(wx, wy, ww, wh)
-
-            # Снова «Все» и проверка
-            await self._click_pct(*BTN_ALL_FILTER, "Фильтр Все (2-й раунд)")
-            await asyncio.sleep(0.5 + random.uniform(0, 0.2))
-
-            # Проверяем — есть ли ещё материалы
-            await self._click_pct(*BTN_AUTO_SELECT, "Автовыбор (проверка)")
-            await asyncio.sleep(0.5 + random.uniform(0, 0.2))
-
-            if not await self._is_synthesize_active(wx, wy, ww, wh):
-                log(f"Синтез: {category_name} — материалов больше нет. "
-                    f"Переходим к следующей категории.", self.window_id)
-                return
+        log(f"Синтез: {category_name} — достигнут лимит раундов (10), "
+            f"переходим к следующей категории.", self.window_id, level="WARNING")
 
     async def main_loop(self):
         try:
