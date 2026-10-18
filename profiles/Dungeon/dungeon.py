@@ -626,7 +626,7 @@ class Dungeon(EventDrivenProfile):
                 log(f"Данги: пробую {level_name} — клик ({arrow_x},{arrow_y}) "
                     f"offset=({rx},{ry})", window_id)
                 await self.mouse.click(self.window_info, arrow_x, arrow_y)
-                await asyncio.sleep(2)
+                await asyncio.sleep(3)
 
                 after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
                 if after_click is not None:
@@ -634,8 +634,10 @@ class Dungeon(EventDrivenProfile):
                     gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
                     mean_brightness = float(gray.mean())
 
-                    if mean_brightness > 200:
-                        log(f"Данги: белый экран (mean={mean_brightness:.0f}) — "
+                    # Порог 60 — при загрузке данжа экран полу-белый (mean=65-73),
+                    # не сразу полностью белый (mean>200).
+                    if mean_brightness > 60:
+                        log(f"Данги: светлый экран (mean={mean_brightness:.0f}) — "
                             f"Замок запущен через {level_name}", window_id)
                         arrow_clicked = True
                         break
@@ -885,7 +887,7 @@ class Dungeon(EventDrivenProfile):
                 log(f"Данги: пробую {level_name} — клик ({arrow_x},{arrow_y}) "
                     f"offset=({rx},{ry})", window_id)
                 await self.mouse.click(self.window_info, arrow_x, arrow_y)
-                await asyncio.sleep(2)
+                await asyncio.sleep(3)
 
                 after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
                 if after_click is not None:
@@ -893,8 +895,12 @@ class Dungeon(EventDrivenProfile):
                     gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
                     mean_brightness = float(gray.mean())
 
-                    if mean_brightness > 200:
-                        log(f"Данги: белый экран (mean={mean_brightness:.0f}) — "
+                    # Белый экран = загрузка данжа. Но при загрузке экран не
+                    # сразу становится полностью белым — сначала полу-белый
+                    # с эффектами размытия (mean=65-73). Порог 60 + проверка
+                    # что окна выбора уровня нет (mean < 100 = не тёмный UI).
+                    if mean_brightness > 60:
+                        log(f"Данги: светлый экран (mean={mean_brightness:.0f}) — "
                             f"Остров запущен через {level_name}", window_id)
                         arrow_clicked = True
                         break
