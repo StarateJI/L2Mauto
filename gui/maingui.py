@@ -220,6 +220,7 @@ class NedoGui(QWidget):
             "Rewards":      ("🎁", "Бонусы"),
             "Scheduler":    ("📅", "Шедуля"),
             "Buyer":         ("🛒", "Закуп"),
+            "Synthesis":     ("🔮", "Синтез"),
         }
 
         for name, cls in self.profiles.items():
