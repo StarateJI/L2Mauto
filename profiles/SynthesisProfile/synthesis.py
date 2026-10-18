@@ -165,10 +165,8 @@ class Synthesis(BaseProfile):
         """
         log(f"Синтез: === Категория: {category_name} ===", self.window_id)
 
-        # 0. Нажать кнопку меню — открыть вкладки категорий
-        await self._click_pct(0.953, 0.060, "Кнопка меню (категории)")
-        await asyncio.sleep(1)
-
+        # Кнопка меню нажимается после Выхода из предыдущей категории.
+        # Для первой категории (Класс) — main_menu_gui уже открыл меню.
         # 1. Клик по вкладке категории
         await self._click_pct(tab_x, tab_y, f"Вкладка {category_name}")
         await asyncio.sleep(1)
@@ -198,7 +196,10 @@ class Synthesis(BaseProfile):
                     f"нет материалов. Выхожу и перехожу к следующей категории.",
                     self.window_id)
                 await self._click_pct(*BTN_EXIT, "Выход (нет материалов)")
-                await asyncio.sleep(1)
+                await asyncio.sleep(2)
+                # Нажать кнопку меню — открыть вкладки категорий
+                await self._click_pct(0.953, 0.060, "Кнопка меню (после Выхода)")
+                await asyncio.sleep(2)
                 return
 
             # Синтез (нажать КНОПКУ, не вкладку)
@@ -215,9 +216,11 @@ class Synthesis(BaseProfile):
         log(f"Синтез: {category_name} — достигнут лимит раундов (10), "
             f"переходим к следующей категории.", self.window_id, level="WARNING")
 
-        # Выйти из окна синтеза перед следующей категорией
+        # Выйти из окна синтеза + нажать меню перед следующей категорией
         await self._click_pct(*BTN_EXIT, "Выход из категории")
-        await asyncio.sleep(1)
+        await asyncio.sleep(2)
+        await self._click_pct(0.953, 0.060, "Кнопка меню (после лимита)")
+        await asyncio.sleep(2)
 
     async def main_loop(self):
         try:
