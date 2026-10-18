@@ -103,6 +103,35 @@ class Synthesis(BaseProfile):
         await self.mouse.click(win_info, x, y)
         await asyncio.sleep(0.3 + random.uniform(0.1, 0.3))
 
+    async def _is_menu_open(self, wx, wy, ww, wh):
+        """Проверить — открыто ли меню (яркие пиксели в правой части)."""
+        # Зона: правая часть экрана
+        x1 = int(ww * 0.70)
+        y1 = int(wh * 0.10)
+        x2 = int(ww * 0.98)
+        y2 = int(wh * 0.90)
+        zone = self._grab_window_rect(wx, wy, x1, y1, x2-x1, y2-y1)
+        if zone is None:
+            return True  # не смогли снять — считаем что открыто
+        gray = cv2.cvtColor(zone, cv2.COLOR_BGR2GRAY)
+        bright_count = int((gray > 80).sum())
+        is_open = bright_count > 35000
+        log(f"Синтез: меню {'ОТКРЫТО' if is_open else 'закрыто'} "
+            f"(ярких пикселей={bright_count})",
+            self.window_id)
+        return is_open
+
+    async def _open_menu(self, wx, wy, ww, wh):
+        """Нажать кнопку Меню и проверить что открылось."""
+        for attempt in range(3):
+            await self._click_pct(*BTN_MENU, f"Меню (попытка {attempt+1})")
+            await asyncio.sleep(3)
+            if await self._is_menu_open(wx, wy, ww, wh):
+                return True
+            log(f"Синтез: меню не открылось, повтор", self.window_id, level="WARNING")
+        log("Синтез: не смог открыть меню за 3 попытки", self.window_id, level="WARNING")
+        return False
+
     def _check_brightness(self, wx, wy, ww, wh, x_pct, y_pct):
         """Проверить яркость зоны — для определения активности кнопки."""
         x = int(ww * x_pct)
@@ -205,8 +234,7 @@ class Synthesis(BaseProfile):
                     self.window_id)
                 await self._click_pct(*BTN_EXIT, "Выход (нет материалов)")
                 await asyncio.sleep(3)
-                await self._click_pct(*BTN_MENU, "Меню (после Выхода)")
-                await asyncio.sleep(3)
+                await self._open_menu(wx, wy, ww, wh)
                 return
 
             # Синтез (нажать КНОПКУ, не вкладку)
@@ -225,9 +253,8 @@ class Synthesis(BaseProfile):
 
         # Выйти из окна синтеза + нажать меню перед следующей категорией
         await self._click_pct(*BTN_EXIT, "Выход из категории")
-        await asyncio.sleep(2)
-        await self._click_pct(*BTN_MENU, "Меню (после лимита)")
-        await asyncio.sleep(2)
+        await asyncio.sleep(3)
+        await self._open_menu(wx, wy, ww, wh)
 
     async def main_loop(self):
         try:
