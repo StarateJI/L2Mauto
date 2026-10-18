@@ -240,9 +240,11 @@ class Synthesis(BaseProfile):
             u = ctypes.windll.user32
             SW_RESTORE = 9
             MONITOR_DEFAULTTOPRIMARY = 1
+            maximize_done = False
             try:
                 win = gw.getWindowsWithTitle(self.window_info[window_id]["Title"])[0]
                 hwnd = win._hWnd
+                log(f"Синтез: окно ДО maximize: {win.width}x{win.height} isMaximized={win.isMaximized}", window_id)
                 if win.isMaximized:
                     u.ShowWindow(ctypes.c_void_p(int(hwnd)), SW_RESTORE)
                     await asyncio.sleep(0.4)
@@ -261,6 +263,7 @@ class Synthesis(BaseProfile):
                 mx, my = mi.rcWork.left, mi.rcWork.top
                 mw = mi.rcWork.right - mi.rcWork.left
                 mh = mi.rcWork.bottom - mi.rcWork.top
+                log(f"Синтез: монитор рабочая область {mw}x{mh} на ({mx},{my})", window_id)
                 u.SetWindowPos(wintypes.HWND(hwnd), None, mx, my, mw, mh,
                                0x0004 | 0x0010)
                 await asyncio.sleep(1.5)
@@ -271,11 +274,10 @@ class Synthesis(BaseProfile):
                 self.window_info[window_id]["Height"] = win.height
                 wx, wy = win.left, win.top
                 ww, wh = win.width, win.height
-                log(f"Синтез: окно maximize {ww}x{wh}", window_id)
+                log(f"Синтез: окно ПОСЛЕ maximize: {ww}x{wh} на ({wx},{wy})", window_id)
+                maximize_done = True
             except Exception as e:
                 log(f"Синтез: maximize не сработал: {e}", window_id, level="WARNING")
-
-            maximize_done = True
 
             # 2. Открыть главное меню
             from bot.methods.game import PartyDungeon
