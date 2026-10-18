@@ -546,13 +546,14 @@ class Dungeon(EventDrivenProfile):
 
             # 6. Нажать «Вход»
             # Сначала пробуем CBT-триггер (как в blessed). Если не сработал —
-            # кликаем по координатам: кнопка «Вход» справа ~88% X, ~17% Y.
+            # кликаем по координатам: кнопка «Вход» центр-низ X~44%, Y~85%.
             entered = await game.wait_and_click("dungeon_enter_button", timeout=5)
             if not entered:
                 log("Данги: CBT-кнопка Вход не найдена — кликаю по координатам",
                     window_id, level="WARNING")
-                enter_x = int(ww * 0.88)
-                enter_y = int(wh * 0.17)
+                # Кнопка «Вход» — центр-низ: X~44%, Y~85% (по скрину 1920×1080)
+                enter_x = int(ww * 0.44)
+                enter_y = int(wh * 0.85)
                 await self._activate()
                 await asyncio.sleep(0.3)
                 await self.mouse.click(self.window_info, enter_x, enter_y)
