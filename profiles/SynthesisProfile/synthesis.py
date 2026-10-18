@@ -317,7 +317,7 @@ class Synthesis(BaseProfile):
             await asyncio.sleep(1.5)
 
             # 3. Найти и нажать кнопку «Синтез» в главном меню
-            await self._click_pct(0.85, 0.35, "Кнопка Синтез в меню")
+            await self._click_pct(0.953, 0.060, "Кнопка Синтез в меню")
             await asyncio.sleep(2)
 
             screen = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
