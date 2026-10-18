@@ -41,6 +41,12 @@ class BaseSettings:
     NEED_CLAIM_ALI: bool
     NEED_CLAIM_BATTLE_PASS: bool
     NEED_CLAIM_DONATE_SHOP: bool
+    # Синтез — выбор категорий (5 чекбоксов, можно любые комбинации)
+    NEED_SYNTH_KLASS: bool = True
+    NEED_SYNTH_AGATHION: bool = True
+    NEED_SYNTH_APPEARANCE: bool = True
+    NEED_SYNTH_TRANSPORT: bool = True
+    NEED_SYNTH_ARTIFACT: bool = True
     NEED_SHOP_AFTER_RIP: bool
     NEED_SHOP_AFTER_PVP_EVADE: bool
     NEED_BACK_TO_SPOT_PARTY_DUNGEON: bool
@@ -239,6 +245,11 @@ default_values = {
     "NEED_CLAIM_ALI": True,
     "NEED_CLAIM_BATTLE_PASS": True,
     "NEED_CLAIM_DONATE_SHOP": True,
+    "NEED_SYNTH_KLASS": True,
+    "NEED_SYNTH_AGATHION": True,
+    "NEED_SYNTH_APPEARANCE": True,
+    "NEED_SYNTH_TRANSPORT": True,
+    "NEED_SYNTH_ARTIFACT": True,
     "NEED_SHOP_AFTER_RIP": True,
     "NEED_SHOP_AFTER_PVP_EVADE": True,
     "NEED_BACK_TO_SPOT_PARTY_DUNGEON": True,

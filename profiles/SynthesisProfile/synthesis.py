@@ -15,13 +15,16 @@ from bot.events.enums import BotState, NotifyLevel
 # ── Координаты (проценты от размера окна) ──────────────────────────────────
 # Получены от пользователя (фуллскрин 2560×1440)
 
-# Вкладки категорий (сверху)
+# Вкладки категорий (сверху).
+# Каждая категория привязана к настройке NEED_SYNTH_* — можно включать/выключать
+# любую комбинацию (хоть 1 категорию, хоть все 5).
+# Формат: (название, x, y, имя_настройки)
 TAB_CATEGORIES = [
-    ("Класс",       0.724, 0.197),
-    ("Агатионы",    0.766, 0.201),
-    ("Облик",       0.810, 0.201),
-    ("Транспорт",   0.860, 0.198),
-    ("Артефакты",   0.905, 0.198),
+    ("Класс",       0.724, 0.197, "NEED_SYNTH_KLASS"),
+    ("Агатионы",    0.766, 0.201, "NEED_SYNTH_AGATHION"),
+    ("Облик",       0.810, 0.201, "NEED_SYNTH_APPEARANCE"),
+    ("Транспорт",   0.860, 0.198, "NEED_SYNTH_TRANSPORT"),
+    ("Артефакты",   0.905, 0.198, "NEED_SYNTH_ARTIFACT"),
 ]
 
 # Вкладка «Синтез» (подвкладка внутри категории)
@@ -432,13 +435,28 @@ class Synthesis(BaseProfile):
                 log("Синтез: меню уже открыто на старте — не кликаю",
                     window_id)
 
-            # 3. Обойти все 5 категорий
-            # После Выхода из каждой категории меню НЕ закрывается (закрывается только подокно
-            # синтеза), поэтому повторно кликать Меню НЕ нужно.
-            for cat_name, tab_x, tab_y in TAB_CATEGORIES:
-                await self._process_category(
-                    game, cat_name, tab_x, tab_y, wx, wy, ww, wh
-                )
+            # 3. Обойти только ВКЛЮЧЁННЫЕ категории (любая комбинация).
+            # После Выхода из каждой категории меню НЕ закрывается (закрывается
+            # только подокно синтеза), поэтому повторно кликать Меню НЕ нужно.
+            enabled = []
+            for cat_name, tab_x, tab_y, setting_key in TAB_CATEGORIES:
+                # getattr с True по умолчанию — обратная совместимость (если
+                # у старого settings нет поля, считаем что категория включена)
+                if getattr(self.settings, setting_key, True):
+                    enabled.append((cat_name, tab_x, tab_y))
+
+            if not enabled:
+                log("Синтез: все 5 категорий ВЫКЛЮЧЕНЫ в настройках — "
+                    "нечего синтезировать, завершаю", window_id, level="WARNING")
+                self.notify(NotifyLevel.WARNING,
+                            "Синтез: все категории выключены в настройках")
+            else:
+                log(f"Синтез: включено категорий: {len(enabled)}/5 — "
+                    f"{', '.join(c[0] for c in enabled)}", window_id)
+                for cat_name, tab_x, tab_y in enabled:
+                    await self._process_category(
+                        game, cat_name, tab_x, tab_y, wx, wy, ww, wh
+                    )
 
             # 5. Закрыть меню
             await self._click_pct(*BTN_CLOSE, "Закрыть")
