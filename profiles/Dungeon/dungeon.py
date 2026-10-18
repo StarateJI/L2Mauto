@@ -324,7 +324,9 @@ class Dungeon(EventDrivenProfile):
             if level_window is not None:
                 self._save_debug("blessed_level_window.png", level_window)
 
-            # 6. Кликнуть по стрелке Ур.75
+            # 6. Кликнуть по стрелке последнего открытого уровня.
+            # Благ Земля: кликаем ПОСЛЕДНИЙ открытый (Ур.75 = верхний).
+            # Без цикла перебора — один клик, один уровень. Если не сработал — стоп.
             LEVELS_Y = [
                 ("Ур.75", 0.733),
                 ("Ур.70", 0.649),
@@ -336,34 +338,35 @@ class Dungeon(EventDrivenProfile):
             ]
             ARROW_X_PCT = 0.652
 
+            # Кликаем только первый (Ур.75 = последний открытый). Без fallback.
+            level_name, level_y_pct = LEVELS_Y[0]
+            import random as _rnd
+            rx = _rnd.randint(-3, 3)
+            ry = _rnd.randint(-2, 2)
+            arrow_x = int(ww * ARROW_X_PCT) + rx
+            arrow_y = int(wh * level_y_pct) + ry
+
+            await self._activate()
+            await asyncio.sleep(0.3)
+
+            log(f"Данги: клик {level_name} ({arrow_x},{arrow_y}) offset=({rx},{ry})", window_id)
+            await self.mouse.click(self.window_info, arrow_x, arrow_y)
+            await asyncio.sleep(5)
+
+            after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
             arrow_clicked = False
-            for level_name, level_y_pct in LEVELS_Y:
-                arrow_x = int(ww * ARROW_X_PCT)
-                arrow_y = int(wh * level_y_pct)
+            if after_click is not None:
+                self._save_debug(f"blessed_after_{level_name.replace('.', '_')}.png", after_click)
+                gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
+                mean_brightness = float(gray.mean())
 
-                await self._activate()
-                await asyncio.sleep(0.3)
-
-                log(f"Данги: пробую {level_name} — клик ({arrow_x},{arrow_y})", window_id)
-                await self.mouse.click(self.window_info, arrow_x, arrow_y)
-                await asyncio.sleep(3)
-
-                after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-                if after_click is not None:
-                    self._save_debug(f"blessed_after_{level_name.replace('.', '_')}.png", after_click)
-                    gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
-                    mean_brightness = float(gray.mean())
-
-                    # Порог 60 — при загрузке данжа экран полу-белый (mean=65-73),
-                    # не сразу полностью белый (mean>200).
-                    if mean_brightness > 60:
-                        log(f"Данги: светлый экран (mean={mean_brightness:.0f}) — "
-                            f"данж запущен через {level_name}", window_id)
-                        arrow_clicked = True
-                        break
-                    else:
-                        log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
-                            f"пробую следующий", window_id)
+                if mean_brightness > 60:
+                    log(f"Данги: светлый экран (mean={mean_brightness:.0f}) — "
+                        f"данж запущен через {level_name}", window_id)
+                    arrow_clicked = True
+                else:
+                    log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
+                        f"{level_name} не сработал", window_id, level="WARNING")
 
             if not arrow_clicked:
                 log("Данги: не смог кликнуть по стрелке", window_id, level="WARNING")
@@ -605,47 +608,40 @@ class Dungeon(EventDrivenProfile):
                 return False
 
             # open_levels[0] = последний открытый (нижний) — ПРОПУСКАЕМ
-            # open_levels[1] = предпоследний открытый — КЛИКАЕМ
+            # open_levels[1] = предпоследний открытый — КЛИКАЕМ (один, без fallback)
             last_open = open_levels[0]
             target_level = open_levels[1]
             log(f"Данги: последний открытый = {last_open[0]} (пропускаю), "
                 f"кликаю предпоследний = {target_level[0]}", window_id)
 
-            # Кликаем предпоследний открытый. Если не загрузился — пробуем
-            # следующий вверх (open_levels[2], [3]...)
+            level_name, level_y_pct = target_level
+            import random as _rnd
+            rx = _rnd.randint(-3, 3)
+            ry = _rnd.randint(-2, 2)
+            arrow_x = int(ww * ARROW_X_PCT) + rx
+            arrow_y = int(wh * level_y_pct) + ry
+
+            await self._activate()
+            await asyncio.sleep(0.3)
+
+            log(f"Данги: клик {level_name} ({arrow_x},{arrow_y}) offset=({rx},{ry})", window_id)
+            await self.mouse.click(self.window_info, arrow_x, arrow_y)
+            await asyncio.sleep(5)
+
+            after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
             arrow_clicked = False
-            for idx, (level_name, level_y_pct) in enumerate(open_levels[1:], start=1):
-                # Рандомизация клика: ±3px по X, ±2px по Y (защита от бана)
-                import random as _rnd
-                rx = _rnd.randint(-3, 3)
-                ry = _rnd.randint(-2, 2)
-                arrow_x = int(ww * ARROW_X_PCT) + rx
-                arrow_y = int(wh * level_y_pct) + ry
+            if after_click is not None:
+                self._save_debug(f"castle_after_{level_name.replace('.', '_')}.png", after_click)
+                gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
+                mean_brightness = float(gray.mean())
 
-                await self._activate()
-                await asyncio.sleep(0.3)
-
-                log(f"Данги: пробую {level_name} — клик ({arrow_x},{arrow_y}) "
-                    f"offset=({rx},{ry})", window_id)
-                await self.mouse.click(self.window_info, arrow_x, arrow_y)
-                await asyncio.sleep(3)
-
-                after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-                if after_click is not None:
-                    self._save_debug(f"castle_after_{level_name.replace('.', '_')}.png", after_click)
-                    gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
-                    mean_brightness = float(gray.mean())
-
-                    # Порог 60 — при загрузке данжа экран полу-белый (mean=65-73),
-                    # не сразу полностью белый (mean>200).
-                    if mean_brightness > 60:
-                        log(f"Данги: светлый экран (mean={mean_brightness:.0f}) — "
-                            f"Замок запущен через {level_name}", window_id)
-                        arrow_clicked = True
-                        break
-                    else:
-                        log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
-                            f"пробую следующий открытый вверх", window_id)
+                if mean_brightness > 60:
+                    log(f"Данги: светлый экран (mean={mean_brightness:.0f}) — "
+                        f"Замок запущен через {level_name}", window_id)
+                    arrow_clicked = True
+                else:
+                    log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
+                        f"{level_name} не сработал", window_id, level="WARNING")
 
             if not arrow_clicked:
                 log("Данги: не смог кликнуть по стрелке Замка", window_id, level="WARNING")
@@ -836,15 +832,15 @@ class Dungeon(EventDrivenProfile):
                 self._save_debug("island_level_window.png", level_window)
 
             LEVELS_Y_REVERSED = [
-                ("Ур.85", 0.905),
-                ("Ур.82", 0.822),
-                ("Ур.80", 0.741),
-                ("Ур.78", 0.659),
-                ("Ур.70", 0.578),
-                ("Ур.60", 0.495),
-                ("Ур.55", 0.413),
-                ("Ур.50", 0.332),
-                ("Ур.40", 0.249),
+                ("Ур.85", 0.62),
+                ("Ур.82", 0.56),
+                ("Ур.80", 0.50),
+                ("Ур.78", 0.44),
+                ("Ур.70", 0.38),
+                ("Ур.60", 0.29),
+                ("Ур.55", 0.24),
+                ("Ур.50", 0.18),
+                ("Ур.40", 0.11),
             ]
             ARROW_X_PCT = 0.652
 
@@ -875,40 +871,34 @@ class Dungeon(EventDrivenProfile):
             log(f"Данги: последний открытый = {last_open[0]} (пропускаю), "
                 f"кликаю предпоследний = {target_level[0]}", window_id)
 
+            level_name, level_y_pct = target_level
+            import random as _rnd
+            rx = _rnd.randint(-3, 3)
+            ry = _rnd.randint(-2, 2)
+            arrow_x = int(ww * ARROW_X_PCT) + rx
+            arrow_y = int(wh * level_y_pct) + ry
+
+            await self._activate()
+            await asyncio.sleep(0.3)
+
+            log(f"Данги: клик {level_name} ({arrow_x},{arrow_y}) offset=({rx},{ry})", window_id)
+            await self.mouse.click(self.window_info, arrow_x, arrow_y)
+            await asyncio.sleep(5)
+
+            after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
             arrow_clicked = False
-            for idx, (level_name, level_y_pct) in enumerate(open_levels[1:], start=1):
-                import random as _rnd
-                rx = _rnd.randint(-3, 3)
-                ry = _rnd.randint(-2, 2)
-                arrow_x = int(ww * ARROW_X_PCT) + rx
-                arrow_y = int(wh * level_y_pct) + ry
+            if after_click is not None:
+                self._save_debug(f"island_after_{level_name.replace('.', '_')}.png", after_click)
+                gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
+                mean_brightness = float(gray.mean())
 
-                await self._activate()
-                await asyncio.sleep(0.3)
-
-                log(f"Данги: пробую {level_name} — клик ({arrow_x},{arrow_y}) "
-                    f"offset=({rx},{ry})", window_id)
-                await self.mouse.click(self.window_info, arrow_x, arrow_y)
-                await asyncio.sleep(3)
-
-                after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-                if after_click is not None:
-                    self._save_debug(f"island_after_{level_name.replace('.', '_')}.png", after_click)
-                    gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
-                    mean_brightness = float(gray.mean())
-
-                    # Белый экран = загрузка данжа. Но при загрузке экран не
-                    # сразу становится полностью белым — сначала полу-белый
-                    # с эффектами размытия (mean=65-73). Порог 60 + проверка
-                    # что окна выбора уровня нет (mean < 100 = не тёмный UI).
-                    if mean_brightness > 60:
-                        log(f"Данги: светлый экран (mean={mean_brightness:.0f}) — "
-                            f"Остров запущен через {level_name}", window_id)
-                        arrow_clicked = True
-                        break
-                    else:
-                        log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
-                            f"пробую следующий открытый вверх", window_id)
+                if mean_brightness > 60:
+                    log(f"Данги: светлый экран (mean={mean_brightness:.0f}) — "
+                        f"Остров запущен через {level_name}", window_id)
+                    arrow_clicked = True
+                else:
+                    log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
+                        f"{level_name} не сработал", window_id, level="WARNING")
 
             if not arrow_clicked:
                 log("Данги: не смог кликнуть по стрелке Острова", window_id, level="WARNING")
