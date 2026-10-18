@@ -31,7 +31,7 @@ TAB_SYNTHESIS = (0.423, 0.160)
 BTN_AUTO_SELECT = (0.576, 0.879)
 BTN_SYNTHESIZE  = (0.802, 0.886)
 BTN_SHOW_ALL    = (0.504, 0.883)
-BTN_REPEAT      = (0.598, 0.886)
+BTN_REPEAT      = (0.620, 0.886)
 BTN_EXIT        = (0.503, 0.891)
 
 # Фильтр «Все» (слева вверху)
