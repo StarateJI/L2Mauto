@@ -116,10 +116,23 @@ class Synthesis(BaseProfile):
 
     async def _spam_repeat(self, wx, wy, ww, wh):
         """
-        Жмём Повтор пока есть. Если Повтор исчез — жмём Выход.
+        Спам: Показать все/Перейти к результату → Повтор → ...
+        Пока есть Повтор — жмём. Если Повтор исчез — Выход.
+        «Показать все» и «Перейти к результату» — одна и та же кнопка (BTN_SHOW_ALL).
         """
         for attempt in range(50):
-            # Проверяем — есть ли кнопка «Повтор» (яркая)
+            # Проверяем — есть ли кнопка «Показать все»/«Перейти к результату»
+            show_all_mean = self._check_brightness(wx, wy, ww, wh, *BTN_SHOW_ALL)
+
+            if show_all_mean > 30:
+                # Жмём «Показать все» / «Перейти к результату»
+                log(f"Синтез: Показать все/Перейти (mean={show_all_mean:.0f})",
+                    self.window_id)
+                await self._click_pct(*BTN_SHOW_ALL, "Показать все/Перейти")
+                await asyncio.sleep(1 + random.uniform(0, 0.3))
+                continue
+
+            # Проверяем — есть ли кнопка «Повтор»
             repeat_mean = self._check_brightness(wx, wy, ww, wh, *BTN_REPEAT)
 
             if repeat_mean > 30:
@@ -129,7 +142,7 @@ class Synthesis(BaseProfile):
                 await asyncio.sleep(2 + random.uniform(0, 0.5))
                 continue
 
-            # Повтор исчез — жмём «Выход»
+            # Нет ни «Показать все», ни «Повтор» — только «Выход»
             log("Синтез: Повтор исчез — нажимаю Выход", self.window_id)
             await self._click_pct(*BTN_EXIT, "Выход")
             await asyncio.sleep(1)
