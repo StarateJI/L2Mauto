@@ -593,7 +593,7 @@ class Dungeon(EventDrivenProfile):
                     mean_brightness = float(gray.mean())
                     # Порог 15 — скрин тёмный (средняя яркость ~16),
                     # открытые стрелки чуть ярче фона
-                    is_open = mean_brightness > 15
+                    is_open = mean_brightness > 22
                     log(f"Данги: {level_name} mean={mean_brightness:.0f} "
                         f"{'ОТКРЫТ' if is_open else 'закрыт'}", window_id)
                     if is_open:
@@ -852,7 +852,7 @@ class Dungeon(EventDrivenProfile):
                 if arrow_zone is not None:
                     gray = cv2.cvtColor(arrow_zone, cv2.COLOR_BGR2GRAY)
                     mean_brightness = float(gray.mean())
-                    is_open = mean_brightness > 15
+                    is_open = mean_brightness > 22
                     log(f"Данги: {level_name} mean={mean_brightness:.0f} "
                         f"{'ОТКРЫТ' if is_open else 'закрыт'}", window_id)
                     if is_open:
