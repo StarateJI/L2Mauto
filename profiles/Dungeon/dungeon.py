@@ -552,19 +552,17 @@ class Dungeon(EventDrivenProfile):
             await asyncio.sleep(2)
             log("Данги: нажал Вход", window_id)
 
-            # 7. Окно выбора уровня — выбрать ПРЕДПОСЛЕДНИЙ открытый
+            # 7. Окно выбора уровня — выбрать ПРЕДПОСЛЕДНИЙ открытый.
+            # Уровни НЕ все открыты — закрытые (Ур.83, 85) серые/тусклые.
+            # Стратегия: сканируем снизу вверх. Берём яркость стрелки (зона
+            # X=65.2%, узкая полоса). Открытые = яркие (mean>100), закрытые = тусклые.
+            # Последний открытый пропускаем, кликаем предпоследний открытый.
             level_window = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
             if level_window is not None:
                 self._save_debug("castle_level_window.png", level_window)
 
-            # Стрелки уровней идут справа. Список сверху вниз: Ур.40, 50, 55, 60, 70, 78, 80, 83, 85
-            # Последний открытый = нижний (Ур.85), предпоследний = Ур.83.
-            # Стратегия: кликаем снизу вверх. Последний (нижний) пропускаем,
-            # кликаем предпоследний. Проверяем по белому экрану (загрузка данжа).
-            #
-            # Y координаты уровней (относительно wh) — примерные, как в blessed.
-            # Для Разоренного Замка уровни: 40,50,55,60,70,78,80,83,85 — 9 штук.
-            # Нижний = Ур.85 (~y=0.85), предпоследний = Ур.83 (~y=0.80).
+            # Список уровней снизу вверх (последние вверху списка = первые)
+            # Y координаты примерные — поправим по скринам если не попадут
             LEVELS_Y_REVERSED = [
                 ("Ур.85", 0.85),
                 ("Ур.83", 0.80),
@@ -578,20 +576,47 @@ class Dungeon(EventDrivenProfile):
             ]
             ARROW_X_PCT = 0.652
 
-            arrow_clicked = False
-            skipped_first = False  # пропускаем последний (нижний) открытый
+            # Сначала определяем какие уровни открыты (по яркости стрелки)
+            open_levels = []  # [(name, y_pct), ...] снизу вверх
             for level_name, level_y_pct in LEVELS_Y_REVERSED:
+                # Зона стрелки (узкая, 20px ширина)
+                ax = int(ww * ARROW_X_PCT)
+                ay = int(wh * level_y_pct)
+                arrow_zone = self._grab_window_rect(wx, wy, ax - 10, ay - 8, 20, 16)
+                if arrow_zone is not None:
+                    gray = cv2.cvtColor(arrow_zone, cv2.COLOR_BGR2GRAY)
+                    mean_brightness = float(gray.mean())
+                    is_open = mean_brightness > 100
+                    log(f"Данги: {level_name} mean={mean_brightness:.0f} "
+                        f"{'ОТКРЫТ' if is_open else 'закрыт'}", window_id)
+                    if is_open:
+                        open_levels.append((level_name, level_y_pct))
+                else:
+                    # Не удалось снять — считаем открытым (попробуем кликнуть)
+                    open_levels.append((level_name, level_y_pct))
+
+            if len(open_levels) < 2:
+                log(f"Данги: открытых уровней < 2 ({len(open_levels)}) — не из чего выбирать",
+                    window_id, level="WARNING")
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+                return False
+
+            # open_levels[0] = последний открытый (нижний) — ПРОПУСКАЕМ
+            # open_levels[1] = предпоследний открытый — КЛИКАЕМ
+            last_open = open_levels[0]
+            target_level = open_levels[1]
+            log(f"Данги: последний открытый = {last_open[0]} (пропускаю), "
+                f"кликаю предпоследний = {target_level[0]}", window_id)
+
+            # Кликаем предпоследний открытый. Если не загрузился — пробуем
+            # следующий вверх (open_levels[2], [3]...)
+            arrow_clicked = False
+            for idx, (level_name, level_y_pct) in enumerate(open_levels[1:], start=1):
                 arrow_x = int(ww * ARROW_X_PCT)
                 arrow_y = int(wh * level_y_pct)
 
                 await self._activate()
                 await asyncio.sleep(0.3)
-
-                if not skipped_first:
-                    # Пропускаем последний открытый (Ур.85)
-                    log(f"Данги: пропускаю {level_name} (последний открытый)", window_id)
-                    skipped_first = True
-                    continue
 
                 log(f"Данги: пробую {level_name} — клик ({arrow_x},{arrow_y})", window_id)
                 await self.mouse.click(self.window_info, arrow_x, arrow_y)
@@ -610,7 +635,7 @@ class Dungeon(EventDrivenProfile):
                         break
                     else:
                         log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
-                            f"пробую следующий", window_id)
+                            f"пробую следующий открытый вверх", window_id)
 
             if not arrow_clicked:
                 log("Данги: не смог кликнуть по стрелке Замка", window_id, level="WARNING")
