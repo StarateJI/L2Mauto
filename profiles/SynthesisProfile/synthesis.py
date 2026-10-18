@@ -124,7 +124,7 @@ class Synthesis(BaseProfile):
             # Проверяем — есть ли кнопка «Показать все»/«Перейти к результату»
             show_all_mean = self._check_brightness(wx, wy, ww, wh, *BTN_SHOW_ALL)
 
-            if show_all_mean > 20:
+            if show_all_mean > 90:
                 # Жмём «Показать все» / «Перейти к результату»
                 log(f"Синтез: Показать все/Перейти (mean={show_all_mean:.0f})",
                     self.window_id)
