@@ -190,9 +190,11 @@ class Synthesis(BaseProfile):
             # Проверить — активна ли кнопка Синтез (после Автовыбора)
             if not await self._is_synthesize_active(wx, wy, ww, wh):
                 log(f"Синтез: {category_name} — кнопка Синтез тусклая, "
-                    f"нет материалов. Переходим к следующей категории.",
+                    f"нет материалов. Выхожу и перехожу к следующей категории.",
                     self.window_id)
-                return  # return = следующая категория, НЕ завершение сценария
+                await self._click_pct(*BTN_EXIT, "Выход (нет материалов)")
+                await asyncio.sleep(1)
+                return
 
             # Синтез (нажать КНОПКУ, не вкладку)
             await self._click_pct(*BTN_SYNTHESIZE, "Синтез (кнопка)")
@@ -207,6 +209,10 @@ class Synthesis(BaseProfile):
 
         log(f"Синтез: {category_name} — достигнут лимит раундов (10), "
             f"переходим к следующей категории.", self.window_id, level="WARNING")
+
+        # Выйти из окна синтеза перед следующей категорией
+        await self._click_pct(*BTN_EXIT, "Выход из категории")
+        await asyncio.sleep(1)
 
     async def main_loop(self):
         try:
