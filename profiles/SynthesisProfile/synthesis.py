@@ -37,8 +37,12 @@ BTN_EXIT        = (0.503, 0.913)
 # Фильтр «Все» (слева вверху)
 BTN_ALL_FILTER  = (0.040, 0.256)
 
-# Кнопка закрытия меню (крестик) — правый верхний угол
-BTN_CLOSE_MENU  = (0.97, 0.03)
+# Кнопка «Меню» — открывает всё: классы, агатионы, данжи, аук, почту и т.д.
+# Одна кнопка для всего. Координаты в процентах от размера окна.
+BTN_MENU = (0.953, 0.060)
+
+# Кнопка закрытия (крестик)
+BTN_CLOSE = (0.97, 0.03)
 
 
 class Synthesis(BaseProfile):
@@ -165,8 +169,8 @@ class Synthesis(BaseProfile):
         """
         log(f"Синтез: === Категория: {category_name} ===", self.window_id)
 
-        # Кнопка меню нажимается после Выхода из предыдущей категории.
-        # Для первой категории (Класс) — main_menu_gui уже открыл меню.
+        # Кнопка Меню нажимается после Выхода из предыдущей категории.
+        # Для первой категории (Класс) — Меню уже открыто в main_loop.
         # 1. Клик по вкладке категории
         await self._click_pct(tab_x, tab_y, f"Вкладка {category_name}")
         await asyncio.sleep(1)
@@ -198,7 +202,7 @@ class Synthesis(BaseProfile):
                 await self._click_pct(*BTN_EXIT, "Выход (нет материалов)")
                 await asyncio.sleep(2)
                 # Нажать кнопку меню — открыть вкладки категорий
-                await self._click_pct(0.953, 0.060, "Кнопка меню (после Выхода)")
+                await self._click_pct(*BTN_MENU, "Меню (после Выхода)")
                 await asyncio.sleep(2)
                 return
 
@@ -219,7 +223,7 @@ class Synthesis(BaseProfile):
         # Выйти из окна синтеза + нажать меню перед следующей категорией
         await self._click_pct(*BTN_EXIT, "Выход из категории")
         await asyncio.sleep(2)
-        await self._click_pct(0.953, 0.060, "Кнопка меню (после лимита)")
+        await self._click_pct(*BTN_MENU, "Меню (после лимита)")
         await asyncio.sleep(2)
 
     async def main_loop(self):
@@ -294,22 +298,22 @@ class Synthesis(BaseProfile):
             except Exception as e:
                 log(f"Синтез: maximize не сработал: {e}", window_id, level="WARNING")
 
-            # 2. Нажать кнопку меню (0.953, 0.060) — открывает меню с вкладками
+            # 2. Нажать кнопку Меню — открывает вкладки
             from bot.methods.game import PartyDungeon
             game = PartyDungeon(self)
 
-            await self._click_pct(0.953, 0.060, "Кнопка меню")
+            await self._click_pct(*BTN_MENU, "Меню")
             await asyncio.sleep(2)
 
             # 3. Обойти все 5 категорий
-            # Кнопка меню (0.953, 0.060) нажимается в _process_category
+            # Кнопка Меню нажимается в _process_category после каждого Выхода
             for cat_name, tab_x, tab_y in TAB_CATEGORIES:
                 await self._process_category(
                     game, cat_name, tab_x, tab_y, wx, wy, ww, wh
                 )
 
             # 5. Закрыть меню
-            await self._click_pct(*BTN_CLOSE_MENU, "Закрыть меню")
+            await self._click_pct(*BTN_CLOSE, "Закрыть")
             await asyncio.sleep(1)
 
             # 6. Restore окно на СОХРАНЁННУЮ позицию
