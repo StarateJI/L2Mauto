@@ -89,14 +89,18 @@ class Synthesis(BaseProfile):
         window = self.window_info[self.window_id]
         ww = window["Width"]
         wh = window["Height"]
+        wx, wy = window["Position"]
         rx = random.randint(-3, 3)
         ry = random.randint(-2, 2)
         x = int(ww * x_pct) + rx
         y = int(wh * y_pct) + ry
         await self._activate()
         await asyncio.sleep(0.2 + random.uniform(0, 0.15))
-        log(f"Синтез: клик {label} ({x},{y}) offset=({rx},{ry})", self.window_id)
-        await self.mouse.click(self.window_info, x, y)
+        # Передаём только СВОЁ окно, не весь словарь
+        win_info = {self.window_id: window}
+        log(f"Синтез: клик {label} ({x},{y}) offset=({rx},{ry}) "
+            f"окно=({wx},{wy}) {ww}x{wh}", self.window_id)
+        await self.mouse.click(win_info, x, y)
         await asyncio.sleep(0.3 + random.uniform(0.1, 0.3))
 
     def _check_brightness(self, wx, wy, ww, wh, x_pct, y_pct):
