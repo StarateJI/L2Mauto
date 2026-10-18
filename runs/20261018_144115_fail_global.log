@@ -1,0 +1,201 @@
+=== Log tail 2026-10-18T14:41:21.569452 | last 200 lines ===
+2026-10-18 14:37:49,678 - INFO - [global] Проверяю обновы...
+2026-10-18 14:37:50,450 - DEBUG - [global] needs_update: raw → 5.13.64
+2026-10-18 14:37:50,718 - DEBUG - [global] needs_update: API → 5.13.64
+2026-10-18 14:37:50,718 - DEBUG - [global] needs_update: лучший источник raw → 5.13.64 (из 2)
+2026-10-18 14:37:50,718 - INFO - [global] needs_update: local=(5, 13, 64) remote=(5, 13, 64) -> has_update=False
+2026-10-18 14:37:50,718 - INFO - [global] Установлена последняя версия бота | 5.13.64
+2026-10-18 14:38:16,110 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-18 14:38:16,110 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-18 14:38:17,048 - DEBUG - [global] _api_put: GET runs/20261018_143816_fail_periodic.log -> 404
+2026-10-18 14:38:19,303 - DEBUG - [global] _api_put: PUT runs/20261018_143816_fail_periodic.log -> 201 (23766 bytes)
+2026-10-18 14:38:19,305 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261018_143816_fail_periodic.log
+2026-10-18 14:38:19,306 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-18 14:38:20,426 - DEBUG - [global] _api_put: GET runs/20261018_143816_fail_global.log -> 404
+2026-10-18 14:38:20,733 - INFO - [global] Проверяю обновы...
+2026-10-18 14:38:21,548 - DEBUG - [global] needs_update: raw → 5.13.64
+2026-10-18 14:38:21,733 - DEBUG - [global] needs_update: API → 5.13.64
+2026-10-18 14:38:21,733 - DEBUG - [global] needs_update: лучший источник raw → 5.13.64 (из 2)
+2026-10-18 14:38:21,733 - INFO - [global] needs_update: local=(5, 13, 64) remote=(5, 13, 64) -> has_update=False
+2026-10-18 14:38:21,734 - INFO - [global] Установлена последняя версия бота | 5.13.64
+2026-10-18 14:38:22,675 - DEBUG - [global] _api_put: PUT runs/20261018_143816_fail_global.log -> 201 (22485 bytes)
+2026-10-18 14:38:22,677 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261018_143816_fail_global.log
+2026-10-18 14:38:22,678 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-18 14:38:22,678 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-18 14:38:51,751 - INFO - [global] Проверяю обновы...
+2026-10-18 14:38:52,501 - DEBUG - [global] needs_update: raw → 5.13.64
+2026-10-18 14:38:52,817 - DEBUG - [global] needs_update: API → 5.13.65
+2026-10-18 14:38:52,817 - DEBUG - [global] needs_update: лучший источник API → 5.13.65 (из 2)
+2026-10-18 14:38:52,818 - INFO - [global] needs_update: local=(5, 13, 64) remote=(5, 13, 65) -> has_update=True
+2026-10-18 14:38:52,818 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-18 14:39:08,526 - INFO - [global] Сделан лёгкий бэкап .py в C:\Users\PC\Desktop\L2Mauto\backups\update_backup_5.13.64.zip
+2026-10-18 14:39:08,527 - INFO - [global] Обнова: бэкап сделан, качаю файлы ПАРАЛЛЕЛЬНО (8 потоков)...
+2026-10-18 14:39:08,527 - DEBUG - [global] Обнова: purge кеша jsdelivr (для fallback raw URL)...
+2026-10-18 14:39:09,209 - DEBUG - [global] Обнова: purge статус=200
+2026-10-18 14:39:10,238 - INFO - [global] Обнова: Git Trees API — 458 файлов в репо, 150 качаем (excluded=308)
+2026-10-18 14:39:12,674 - DEBUG - [global] Обнова: скачано 20/150 (ok=20, fail=0)
+2026-10-18 14:39:14,028 - DEBUG - [global] Обнова: скачано 40/150 (ok=40, fail=0)
+2026-10-18 14:39:15,958 - DEBUG - [global] Обнова: скачано 60/150 (ok=60, fail=0)
+2026-10-18 14:39:17,604 - DEBUG - [global] Обнова: скачано 80/150 (ok=80, fail=0)
+2026-10-18 14:39:18,486 - DEBUG - [global] Обнова: скачано 100/150 (ok=100, fail=0)
+2026-10-18 14:39:19,250 - DEBUG - [global] Обнова: скачано 120/150 (ok=120, fail=0)
+2026-10-18 14:39:20,093 - DEBUG - [global] Обнова: скачано 140/150 (ok=140, fail=0)
+2026-10-18 14:39:21,188 - DEBUG - [global] Обнова: скачано 150/150 (ok=150, fail=0)
+2026-10-18 14:39:21,189 - INFO - [global] Обнова: скачано 150/150 файлов за 11.0с, ошибок: 0
+2026-10-18 14:39:21,230 - INFO - [global] Создан apply_update.bat: C:\Users\PC\Desktop\L2Mauto\apply_update.bat
+2026-10-18 14:39:21,230 - INFO - [global] Накатил обнпату через apply_update.bat, закрываюсь для рестарта...
+2026-10-18 14:39:29,796 - INFO - [global] Драйвер работает! | Клава=1 | Мышь=11
+2026-10-18 14:39:30,687 - INFO - [global] Запустил периодический загрузчик логов
+2026-10-18 14:39:30,687 - INFO - [global] Запустил чекер обнов
+2026-10-18 14:39:30,687 - INFO - [global] Проверяю обновы...
+2026-10-18 14:39:31,819 - DEBUG - [global] needs_update: raw → 5.13.65
+2026-10-18 14:39:31,837 - DEBUG - [global] needs_update: raw → 5.13.65
+2026-10-18 14:39:32,114 - DEBUG - [global] needs_update: API → 5.13.65
+2026-10-18 14:39:32,175 - DEBUG - [global] needs_update: лучший источник raw → 5.13.65 (из 2)
+2026-10-18 14:39:32,175 - INFO - [global] needs_update: local=(5, 13, 65) remote=(5, 13, 65) -> has_update=False
+2026-10-18 14:39:36,868 - DEBUG - [global] needs_update: API → 5.13.65
+2026-10-18 14:39:36,868 - DEBUG - [global] needs_update: лучший источник raw → 5.13.65 (из 2)
+2026-10-18 14:39:36,869 - INFO - [global] needs_update: local=(5, 13, 65) remote=(5, 13, 65) -> has_update=False
+2026-10-18 14:39:36,869 - INFO - [global] Установлена последняя версия бота | 5.13.65
+2026-10-18 14:39:52,180 - INFO - [global] Выбор окон для Dungeon: ['Tommi', 'Шанкс', 'Solitude', 'Whiterun', 'Morthal', 'JoePeach', 'Монгол', 'Фанфурье', 'Чипинкос', 'Валупа', 'Жмышенко', 'Щега']
+2026-10-18 14:39:52,203 - INFO - [global] Пачка 1/6: старт (2 окон: ['Tommi', 'Шанкс'])
+2026-10-18 14:39:52,204 - INFO - [global] Запуск через 3 сек. | ['Tommi', 'Шанкс']
+2026-10-18 14:39:55,223 - INFO - [global] Создал мышь
+2026-10-18 14:39:55,223 - INFO - [global] Инициализировал созданную мышь!
+2026-10-18 14:40:00,739 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-18 14:40:00,739 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-18 14:40:01,778 - DEBUG - [global] _api_put: GET runs/20261018_144000_fail_periodic.log -> 404
+2026-10-18 14:40:05,137 - DEBUG - [global] _api_put: PUT runs/20261018_144000_fail_periodic.log -> 201 (23766 bytes)
+2026-10-18 14:40:05,138 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261018_144000_fail_periodic.log
+2026-10-18 14:40:06,083 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_land_text.png -> 200
+2026-10-18 14:40:06,885 - INFO - [global] Проверяю обновы...
+2026-10-18 14:40:07,730 - DEBUG - [global] needs_update: raw → 5.13.65
+2026-10-18 14:40:07,935 - DEBUG - [global] needs_update: API → 5.13.65
+2026-10-18 14:40:07,935 - DEBUG - [global] needs_update: лучший источник raw → 5.13.65 (из 2)
+2026-10-18 14:40:07,935 - INFO - [global] needs_update: local=(5, 13, 65) remote=(5, 13, 65) -> has_update=False
+2026-10-18 14:40:07,936 - INFO - [global] Установлена последняя версия бота | 5.13.65
+2026-10-18 14:40:07,951 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_land_text.png -> 200 (17369 bytes)
+2026-10-18 14:40:08,849 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_zemlya.png -> 200
+2026-10-18 14:40:10,444 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_zemlya.png -> 200 (1808 bytes)
+2026-10-18 14:40:10,447 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 2/2 (удалено с диска: 2)
+2026-10-18 14:40:11,536 - DEBUG - [global] _api_put: GET runs/20261018_144000_fail_global.log -> 404
+2026-10-18 14:40:15,358 - DEBUG - [global] _api_put: PUT runs/20261018_144000_fail_global.log -> 201 (21926 bytes)
+2026-10-18 14:40:15,360 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261018_144000_fail_global.log
+2026-10-18 14:40:15,361 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-18 14:40:15,361 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-18 14:40:20,178 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-18 14:40:20,179 - DEBUG - [global] log_uploader: START window=Tommi made=0 token=...Rjnfq
+2026-10-18 14:40:21,097 - DEBUG - [global] _api_put: GET runs/20261018_144020_fail_Tommi.log -> 404
+2026-10-18 14:40:21,116 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-18 14:40:21,117 - DEBUG - [global] log_uploader: START window=Шанкс made=0 token=...Rjnfq
+2026-10-18 14:40:21,722 - INFO - [global] Пачка 1/6: завершена за 30с
+2026-10-18 14:40:22,178 - DEBUG - [global] _api_put: GET runs/20261018_144021_fail_Шанкс.log -> 404
+2026-10-18 14:40:22,723 - INFO - [global] Пачка 2/6: старт (2 окон: ['Solitude', 'Whiterun'])
+2026-10-18 14:40:22,723 - INFO - [global] Запуск через 3 сек. | ['Solitude', 'Whiterun']
+2026-10-18 14:40:23,448 - DEBUG - [global] _api_put: PUT runs/20261018_144020_fail_Tommi.log -> 201 (66373 bytes)
+2026-10-18 14:40:23,451 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261018_144020_fail_Tommi.log
+2026-10-18 14:40:24,389 - DEBUG - [global] _api_put: PUT runs/20261018_144021_fail_Шанкс.log -> 409 (68650 bytes)
+2026-10-18 14:40:24,389 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 1f55cef3c6d314e1c5db35015405e87eb33cc1f4 but expected 55d491d7363a28e315967c2f8d17acb2f9ceb05a","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-18 14:40:24,390 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-18 14:40:24,516 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:24,516 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:24,516 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:24,544 - DEBUG - [global] _api_put: GET debug/Tommi/profiles_Dungeon_castle_found_ocr.png -> 200
+2026-10-18 14:40:24,666 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:24,666 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:24,666 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:24,818 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:24,818 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:24,818 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:24,977 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:24,978 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:24,978 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:25,098 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:25,098 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:25,098 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:25,241 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:25,241 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:25,241 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:25,386 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:25,386 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:25,386 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:25,522 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:25,522 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:25,522 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:25,649 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:25,649 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:25,649 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:26,333 - DEBUG - [global] _api_put: PUT debug/Tommi/profiles_Dungeon_castle_found_ocr.png -> 200 (50359 bytes)
+2026-10-18 14:40:26,336 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 1/5 (удалено с диска: 1)
+2026-10-18 14:40:26,480 - DEBUG - [global] _api_put: GET debug/Шанкс/profiles_Dungeon_castle_found_ocr.png -> 200
+2026-10-18 14:40:27,485 - DEBUG - [global] _api_put: GET runs/20261018_144020_fail_global.log -> 404
+2026-10-18 14:40:28,391 - DEBUG - [global] _api_put: PUT debug/Шанкс/profiles_Dungeon_castle_found_ocr.png -> 200 (50359 bytes)
+2026-10-18 14:40:28,393 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 1/5 (удалено с диска: 1)
+2026-10-18 14:40:29,498 - DEBUG - [global] _api_put: GET runs/20261018_144021_fail_global.log -> 404
+2026-10-18 14:40:29,674 - DEBUG - [global] _api_put: PUT runs/20261018_144020_fail_global.log -> 409 (21598 bytes)
+2026-10-18 14:40:29,674 - WARNING - [global] _api_put: PUT failed body: {"message":"is at f54f2f305e777baea463c6065ac9be79a1be0c88 but expected 39e3d91484f91c5420def52ea8f0957770d8d156","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-18 14:40:29,675 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-18 14:40:29,675 - DEBUG - [global] log_uploader: END window=Tommi
+2026-10-18 14:40:36,343 - DEBUG - [global] _api_put: PUT runs/20261018_144021_fail_global.log -> 201 (21615 bytes)
+2026-10-18 14:40:36,345 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261018_144021_fail_global.log
+2026-10-18 14:40:36,345 - DEBUG - [global] log_uploader: END window=Шанкс
+2026-10-18 14:40:37,949 - INFO - [global] Проверяю обновы...
+2026-10-18 14:40:38,737 - DEBUG - [global] needs_update: raw → 5.13.65
+2026-10-18 14:40:38,930 - DEBUG - [global] needs_update: API → 5.13.65
+2026-10-18 14:40:38,930 - DEBUG - [global] needs_update: лучший источник raw → 5.13.65 (из 2)
+2026-10-18 14:40:38,930 - INFO - [global] needs_update: local=(5, 13, 65) remote=(5, 13, 65) -> has_update=False
+2026-10-18 14:40:38,931 - INFO - [global] Установлена последняя версия бота | 5.13.65
+2026-10-18 14:40:44,833 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:44,833 - INFO - [global] СТОП ВСЕ: останавливаю 2 окон: ['Solitude', 'Whiterun']
+2026-10-18 14:40:44,834 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:44,834 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-18 14:40:44,835 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-18 14:40:44,835 - DEBUG - [global] log_uploader: START window=Solitude made=0 token=...Rjnfq
+2026-10-18 14:40:44,836 - DEBUG - [global] log_uploader: START window=Whiterun made=0 token=...Rjnfq
+2026-10-18 14:40:44,971 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:44,971 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:44,971 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:45,106 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:45,106 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:45,106 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:45,249 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:45,249 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:45,249 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:45,394 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:45,394 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:45,394 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:45,529 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:45,530 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:45,530 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:45,658 - INFO - [global] СТОП ВСЕ: нажато, останавливаю...
+2026-10-18 14:40:45,658 - INFO - [global] СТОП ВСЕ: останавливаю 0 окон: []
+2026-10-18 14:40:45,658 - INFO - [global] СТОП ВСЕ: команда отправлена, _batch_stop=True
+2026-10-18 14:40:45,884 - DEBUG - [global] _api_put: GET runs/20261018_144044_fail_Solitude.log -> 404
+2026-10-18 14:40:47,277 - DEBUG - [global] _api_put: GET runs/20261018_144044_fail_Whiterun.log -> 404
+2026-10-18 14:40:49,950 - DEBUG - [global] _api_put: PUT runs/20261018_144044_fail_Whiterun.log -> 201 (74707 bytes)
+2026-10-18 14:40:49,952 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261018_144044_fail_Whiterun.log
+2026-10-18 14:40:49,953 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-18 14:40:50,999 - DEBUG - [global] _api_put: GET runs/20261018_144044_fail_global.log -> 404
+2026-10-18 14:40:51,259 - DEBUG - [global] _api_put: PUT runs/20261018_144044_fail_Solitude.log -> 201 (59572 bytes)
+2026-10-18 14:40:51,260 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261018_144044_fail_Solitude.log
+2026-10-18 14:40:51,262 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-18 14:40:52,396 - DEBUG - [global] _api_put: GET runs/20261018_144044_fail_global.log -> 404
+2026-10-18 14:40:53,269 - DEBUG - [global] _api_put: PUT runs/20261018_144044_fail_global.log -> 201 (21367 bytes)
+2026-10-18 14:40:53,271 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261018_144044_fail_global.log
+2026-10-18 14:40:53,271 - DEBUG - [global] log_uploader: END window=Whiterun
+2026-10-18 14:40:53,488 - DEBUG - [global] _api_put: PUT runs/20261018_144044_fail_global.log -> 422 (21497 bytes)
+2026-10-18 14:40:53,488 - WARNING - [global] _api_put: PUT failed body: {"message":"Invalid request.\n\n\"sha\" wasn't supplied.","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file-contents","status":"422"}
+2026-10-18 14:40:53,490 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-18 14:40:53,490 - DEBUG - [global] log_uploader: END window=Solitude
+2026-10-18 14:41:08,948 - INFO - [global] Проверяю обновы...
+2026-10-18 14:41:09,746 - DEBUG - [global] needs_update: raw → 5.13.65
+2026-10-18 14:41:09,926 - DEBUG - [global] needs_update: API → 5.13.65
+2026-10-18 14:41:09,926 - DEBUG - [global] needs_update: лучший источник raw → 5.13.65 (из 2)
+2026-10-18 14:41:09,926 - INFO - [global] needs_update: local=(5, 13, 65) remote=(5, 13, 65) -> has_update=False
+2026-10-18 14:41:09,927 - INFO - [global] Установлена последняя версия бота | 5.13.65
+2026-10-18 14:41:15,387 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-18 14:41:15,387 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-18 14:41:19,127 - DEBUG - [global] _api_put: GET runs/20261018_144115_fail_periodic.log -> 404
+2026-10-18 14:41:21,486 - DEBUG - [global] _api_put: PUT runs/20261018_144115_fail_periodic.log -> 201 (23766 bytes)
+2026-10-18 14:41:21,487 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261018_144115_fail_periodic.log
+2026-10-18 14:41:21,489 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
