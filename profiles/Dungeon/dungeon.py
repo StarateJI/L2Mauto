@@ -552,46 +552,45 @@ class Dungeon(EventDrivenProfile):
             log("Данги: нажал Вход (координаты)", window_id)
 
             # 7. Окно выбора уровня — выбрать ПРЕДПОСЛЕДНИЙ открытый.
-            # Уровни НЕ все открыты — закрытые (Ур.83, 85) серые/тусклые.
-            # Стратегия: сканируем снизу вверх. Берём яркость стрелки (зона
-            # X=65.2%, узкая полоса). Открытые = яркие (mean>100), закрытые = тусклые.
-            # Последний открытый пропускаем, кликаем предпоследний открытый.
+            # Уровни Замка: Ур.40, 50, 60, 70, 80, 82, 85 (7 штук).
+            # Координаты Y по VLM (скрин 400×225):
+            #   Ур.40=0.215, Ур.50=0.295, Ур.60=0.375, Ур.70=0.455,
+            #   Ур.80=0.615, Ур.82=0.695, Ур.85=0.775
+            # Стрелка X = 0.665 (правее центра)
             level_window = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
             if level_window is not None:
                 self._save_debug("castle_level_window.png", level_window)
 
-            # Список уровней снизу вверх (последние вверху списка = первые)
-            # Y координаты примерные — поправим по скринам если не попадут
+            # Список уровней снизу вверх (последний открытый = первый)
             LEVELS_Y_REVERSED = [
-                ("Ур.85", 0.85),
-                ("Ур.83", 0.80),
-                ("Ур.80", 0.74),
-                ("Ур.78", 0.68),
-                ("Ур.70", 0.62),
-                ("Ур.60", 0.55),
-                ("Ур.55", 0.46),
-                ("Ур.50", 0.37),
-                ("Ур.40", 0.28),
+                ("Ур.85", 0.775),
+                ("Ур.82", 0.695),
+                ("Ур.80", 0.615),
+                ("Ур.70", 0.455),
+                ("Ур.60", 0.375),
+                ("Ур.50", 0.295),
+                ("Ур.40", 0.215),
             ]
-            ARROW_X_PCT = 0.652
+            ARROW_X_PCT = 0.665
 
             # Сначала определяем какие уровни открыты (по яркости стрелки)
-            open_levels = []  # [(name, y_pct), ...] снизу вверх
+            open_levels = []
             for level_name, level_y_pct in LEVELS_Y_REVERSED:
-                # Зона стрелки (узкая, 20px ширина)
                 ax = int(ww * ARROW_X_PCT)
                 ay = int(wh * level_y_pct)
-                arrow_zone = self._grab_window_rect(wx, wy, ax - 10, ay - 8, 20, 16)
+                # Зона стрелки побольше (30×20) — надёжнее определить яркость
+                arrow_zone = self._grab_window_rect(wx, wy, ax - 15, ay - 10, 30, 20)
                 if arrow_zone is not None:
                     gray = cv2.cvtColor(arrow_zone, cv2.COLOR_BGR2GRAY)
                     mean_brightness = float(gray.mean())
-                    is_open = mean_brightness > 100
+                    # Порог 50 (не 100) — на маленьком окне 400×225 стрелки
+                    # не такие яркие как на фуллскрине
+                    is_open = mean_brightness > 50
                     log(f"Данги: {level_name} mean={mean_brightness:.0f} "
                         f"{'ОТКРЫТ' if is_open else 'закрыт'}", window_id)
                     if is_open:
                         open_levels.append((level_name, level_y_pct))
                 else:
-                    # Не удалось снять — считаем открытым (попробуем кликнуть)
                     open_levels.append((level_name, level_y_pct))
 
             if len(open_levels) < 2:
@@ -611,13 +610,18 @@ class Dungeon(EventDrivenProfile):
             # следующий вверх (open_levels[2], [3]...)
             arrow_clicked = False
             for idx, (level_name, level_y_pct) in enumerate(open_levels[1:], start=1):
-                arrow_x = int(ww * ARROW_X_PCT)
-                arrow_y = int(wh * level_y_pct)
+                # Рандомизация клика: ±3px по X, ±2px по Y (защита от бана)
+                import random as _rnd
+                rx = _rnd.randint(-3, 3)
+                ry = _rnd.randint(-2, 2)
+                arrow_x = int(ww * ARROW_X_PCT) + rx
+                arrow_y = int(wh * level_y_pct) + ry
 
                 await self._activate()
                 await asyncio.sleep(0.3)
 
-                log(f"Данги: пробую {level_name} — клик ({arrow_x},{arrow_y})", window_id)
+                log(f"Данги: пробую {level_name} — клик ({arrow_x},{arrow_y}) "
+                    f"offset=({rx},{ry})", window_id)
                 await self.mouse.click(self.window_info, arrow_x, arrow_y)
                 await asyncio.sleep(2)
 
