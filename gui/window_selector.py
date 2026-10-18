@@ -19,7 +19,7 @@ from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtWidgets import (
     QDialog, QVBoxLayout, QHBoxLayout, QPushButton, QLabel,
     QScrollArea, QWidget, QGridLayout, QMessageBox, QSpinBox,
-    QButtonGroup, QFrame
+    QButtonGroup, QFrame, QCheckBox
 )
 from PyQt5.QtGui import QFont, QColor, QPalette
 
