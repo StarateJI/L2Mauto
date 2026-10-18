@@ -303,6 +303,11 @@ class Synthesis(BaseProfile):
                 return False
             await asyncio.sleep(1.5)
 
+            # 2b. Нажать кнопку меню (0.953, 0.060) — открыть список вкладок
+            # категорий (Класс, Агатионы, Облик, Транспорт, Артефакты)
+            await self._click_pct(0.953, 0.060, "Кнопка меню (открыть вкладки)")
+            await asyncio.sleep(2)
+
             # 3. Обойти все 5 категорий
             # Кнопка меню (0.953, 0.060) нажимается в _process_category
             for cat_name, tab_x, tab_y in TAB_CATEGORIES:
