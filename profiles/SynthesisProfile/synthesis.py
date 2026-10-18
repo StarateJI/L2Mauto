@@ -31,8 +31,8 @@ TAB_SYNTHESIS = (0.423, 0.160)
 BTN_AUTO_SELECT = (0.576, 0.879)
 BTN_SYNTHESIZE  = (0.802, 0.886)
 BTN_SHOW_ALL    = (0.504, 0.883)
-BTN_REPEAT      = (0.620, 0.886)
-BTN_EXIT        = (0.503, 0.891)
+BTN_REPEAT      = (0.602, 0.913)
+BTN_EXIT        = (0.503, 0.913)
 
 # Фильтр «Все» (слева вверху)
 BTN_ALL_FILTER  = (0.040, 0.256)
@@ -116,39 +116,21 @@ class Synthesis(BaseProfile):
 
     async def _spam_repeat(self, wx, wy, ww, wh):
         """
-        Спамить 'Показать все' → 'Повтор' пока есть Повтор.
-        Когда осталась только 'Выход' — нажать Выход.
+        Жмём Повтор пока есть. Если Повтор исчез — жмём Выход.
         """
         for attempt in range(50):
-            # Снимаем экран
-            screen = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-            if screen is None:
-                await asyncio.sleep(1)
-                continue
-
-            gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
-
             # Проверяем — есть ли кнопка «Повтор» (яркая)
             repeat_mean = self._check_brightness(wx, wy, ww, wh, *BTN_REPEAT)
-            # Проверяем — есть ли кнопка «Показать все»
-            show_all_mean = self._check_brightness(wx, wy, ww, wh, *BTN_SHOW_ALL)
-
-            if show_all_mean > 30:
-                # Жмём «Показать все»
-                log(f"Синтез: Показать все (mean={show_all_mean:.0f})", self.window_id)
-                await self._click_pct(*BTN_SHOW_ALL, "Показать все")
-                await asyncio.sleep(1 + random.uniform(0, 0.3))
-                continue
 
             if repeat_mean > 30:
                 # Жмём «Повтор»
                 log(f"Синтез: Повтор (mean={repeat_mean:.0f})", self.window_id)
                 await self._click_pct(*BTN_REPEAT, "Повтор")
-                await asyncio.sleep(1.5 + random.uniform(0, 0.5))
+                await asyncio.sleep(2 + random.uniform(0, 0.5))
                 continue
 
-            # Нет ни «Показать все», ни «Повтор» — только «Выход»
-            log("Синтез: остался только Выход — нажимаю", self.window_id)
+            # Повтор исчез — жмём «Выход»
+            log("Синтез: Повтор исчез — нажимаю Выход", self.window_id)
             await self._click_pct(*BTN_EXIT, "Выход")
             await asyncio.sleep(1)
             return True
