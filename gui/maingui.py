@@ -609,10 +609,15 @@ class NedoGui(QWidget):
             if nicks:
                 self.stop_windows(nicks)
 
-            # 4. Очистить список пропущенных
+            # 3b. Очистить пропущенные окна — не пытаться их повторять
             if hasattr(self, '_skipped_windows'):
                 self._skipped_windows.clear()
 
+            # 3c. Остановить ВСЕ таймеры process_batch — убить цепочку
+            # QTimer.singleShot не отменяется, но флаг _batch_stop=true
+            # заставляет их вернуть сразу при входе.
+
+            # 4. Финальная очистка
             log(f"СТОП ВСЕ: команда отправлена, _batch_stop={self._batch_stop}")
         except Exception as e:
             log(f"СТОП ВСЕ: exception: {e}", level="ERROR")
