@@ -108,7 +108,7 @@ class Synthesis(BaseProfile):
     async def _is_synthesize_active(self, wx, wy, ww, wh):
         """Проверить — активна ли кнопка Синтез (не тусклая)."""
         mean = self._check_brightness(wx, wy, ww, wh, *BTN_SYNTHESIZE)
-        is_active = mean > 30
+        is_active = mean > 60
         log(f"Синтез: кнопка 'Синтез' mean={mean:.0f} "
             f"{'АКТИВНА' if is_active else 'тусклая (нет материалов)'}",
             self.window_id)
