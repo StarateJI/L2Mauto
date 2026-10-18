@@ -294,18 +294,11 @@ class Synthesis(BaseProfile):
             except Exception as e:
                 log(f"Синтез: maximize не сработал: {e}", window_id, level="WARNING")
 
-            # 2. Открыть главное меню
+            # 2. Нажать кнопку меню (0.953, 0.060) — открывает меню с вкладками
             from bot.methods.game import PartyDungeon
             game = PartyDungeon(self)
 
-            if not await game.wait_and_click("main_menu_gui", timeout=7):
-                log("Синтез: не открыл главное меню", window_id)
-                return False
-            await asyncio.sleep(1.5)
-
-            # 2b. Нажать кнопку меню (0.953, 0.060) — открыть список вкладок
-            # категорий (Класс, Агатионы, Облик, Транспорт, Артефакты)
-            await self._click_pct(0.953, 0.060, "Кнопка меню (открыть вкладки)")
+            await self._click_pct(0.953, 0.060, "Кнопка меню")
             await asyncio.sleep(2)
 
             # 3. Обойти все 5 категорий
