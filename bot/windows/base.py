@@ -41,12 +41,14 @@ class BaseSettings:
     NEED_CLAIM_ALI: bool
     NEED_CLAIM_BATTLE_PASS: bool
     NEED_CLAIM_DONATE_SHOP: bool
-    # Синтез — выбор категорий (5 чекбоксов, можно любые комбинации)
-    NEED_SYNTH_KLASS: bool = True
-    NEED_SYNTH_AGATHION: bool = True
-    NEED_SYNTH_APPEARANCE: bool = True
-    NEED_SYNTH_TRANSPORT: bool = True
-    NEED_SYNTH_ARTIFACT: bool = True
+    # Синтез — выбор категорий (5 чекбоксов, можно любые комбинации).
+    # Дефолты в default_values dict ниже, НЕ здесь (иначе dataclass упадёт —
+    # поле без default после поля с default запрещено).
+    NEED_SYNTH_KLASS: bool
+    NEED_SYNTH_AGATHION: bool
+    NEED_SYNTH_APPEARANCE: bool
+    NEED_SYNTH_TRANSPORT: bool
+    NEED_SYNTH_ARTIFACT: bool
     NEED_SHOP_AFTER_RIP: bool
     NEED_SHOP_AFTER_PVP_EVADE: bool
     NEED_BACK_TO_SPOT_PARTY_DUNGEON: bool
