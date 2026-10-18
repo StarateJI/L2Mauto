@@ -551,9 +551,9 @@ class Dungeon(EventDrivenProfile):
             if not entered:
                 log("Данги: CBT-кнопка Вход не найдена — кликаю по координатам",
                     window_id, level="WARNING")
-                # Кнопка «Вход» — центр-низ: X~44%, Y~85% (по скрину 1920×1080)
-                enter_x = int(ww * 0.44)
-                enter_y = int(wh * 0.85)
+                # Кнопка «Вход» — X~83%, Y~89% (по скрину 2560×1440: 2127,1280)
+                enter_x = int(ww * 0.83)
+                enter_y = int(wh * 0.89)
                 await self._activate()
                 await asyncio.sleep(0.3)
                 await self.mouse.click(self.window_info, enter_x, enter_y)
