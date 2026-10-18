@@ -300,15 +300,8 @@ class Synthesis(BaseProfile):
                 return False
             await asyncio.sleep(1.5)
 
-            # 3. Найти и нажать кнопку «Синтез» в главном меню
-            await self._click_pct(0.953, 0.060, "Кнопка Синтез в меню")
-            await asyncio.sleep(2)
-
-            screen = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
-            if screen is not None:
-                self._save_debug("synth_menu_opened.png", screen)
-
-            # 4. Обойти все 5 категорий
+            # 3. Обойти все 5 категорий
+            # Кнопка меню (0.953, 0.060) нажимается в _process_category
             for cat_name, tab_x, tab_y in TAB_CATEGORIES:
                 await self._process_category(
                     game, cat_name, tab_x, tab_y, wx, wy, ww, wh
