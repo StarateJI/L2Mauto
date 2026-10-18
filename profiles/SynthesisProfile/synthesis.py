@@ -264,6 +264,49 @@ class Synthesis(BaseProfile):
             # 1. Выйти из сна
             await self._wake_up(max_attempts=3)
 
+            # 1b. Maximize окно (как аук) — координаты замерялись в фуллскрине
+            import ctypes
+            import pygetwindow as gw
+            u = ctypes.windll.user32
+            SW_RESTORE = 9
+            MONITOR_DEFAULTTOPRIMARY = 1
+            try:
+                win = gw.getWindowsWithTitle(self.window_info[window_id]["Title"])[0]
+                hwnd = win._hWnd
+                if win.isMaximized:
+                    u.ShowWindow(ctypes.c_void_p(int(hwnd)), SW_RESTORE)
+                    await asyncio.sleep(0.4)
+                from ctypes import wintypes
+                MONITORINFO = type('MONITORINFO', (ctypes.Structure,), {
+                    '_fields_': [('cbSize', ctypes.c_uint32),
+                                 ('rcMonitor', wintypes.RECT),
+                                 ('rcWork', wintypes.RECT),
+                                 ('dwFlags', ctypes.c_uint32)],
+                })
+                hmon = u.MonitorFromWindow(wintypes.HWND(hwnd),
+                                           ctypes.c_uint32(MONITOR_DEFAULTTOPRIMARY))
+                mi = MONITORINFO()
+                mi.cbSize = ctypes.sizeof(MONITORINFO)
+                u.GetMonitorInfoW(wintypes.HMONITOR(hmon), ctypes.byref(mi))
+                mx, my = mi.rcWork.left, mi.rcWork.top
+                mw = mi.rcWork.right - mi.rcWork.left
+                mh = mi.rcWork.bottom - mi.rcWork.top
+                u.SetWindowPos(wintypes.HWND(hwnd), None, mx, my, mw, mh,
+                               0x0004 | 0x0010)
+                await asyncio.sleep(1.5)
+                # Перечитать размер
+                win = gw.getWindowsWithTitle(self.window_info[window_id]["Title"])[0]
+                self.window_info[window_id]["Position"] = (win.left, win.top)
+                self.window_info[window_id]["Width"] = win.width
+                self.window_info[window_id]["Height"] = win.height
+                wx, wy = win.left, win.top
+                ww, wh = win.width, win.height
+                log(f"Синтез: окно maximize {ww}x{wh}", window_id)
+            except Exception as e:
+                log(f"Синтез: maximize не сработал: {e}", window_id, level="WARNING")
+
+            maximize_done = True
+
             # 2. Открыть главное меню
             from bot.methods.game import PartyDungeon
             game = PartyDungeon(self)
@@ -274,10 +317,6 @@ class Synthesis(BaseProfile):
             await asyncio.sleep(1.5)
 
             # 3. Найти и нажать кнопку «Синтез» в главном меню
-            # TODO: нужна CBT-координата или координата кнопки синтеза в меню
-            # Пока кликаем по координате — нужно уточнить
-            # Возможно через wait_and_click("synthesis_menu") если есть в CBT
-            # Временно: кликаем в правую часть меню где обычно «Развитие»/«Синтез»
             await self._click_pct(0.85, 0.35, "Кнопка Синтез в меню")
             await asyncio.sleep(2)
 
@@ -295,7 +334,25 @@ class Synthesis(BaseProfile):
             await self._click_pct(*BTN_CLOSE_MENU, "Закрыть меню")
             await asyncio.sleep(1)
 
-            # 6. Усыпить окно
+            # 6. Restore окно
+            if maximize_done:
+                try:
+                    win = gw.getWindowsWithTitle(self.window_info[window_id]["Title"])[0]
+                    hwnd = win._hWnd
+                    u.ShowWindow(ctypes.c_void_p(int(hwnd)), SW_RESTORE)
+                    await asyncio.sleep(0.5)
+                    u.SetWindowPos(ctypes.c_void_p(int(hwnd)), None,
+                                   0, 40, 400, 225, 0x0004 | 0x0010)
+                    await asyncio.sleep(0.5)
+                    win = gw.getWindowsWithTitle(self.window_info[window_id]["Title"])[0]
+                    self.window_info[window_id]["Position"] = (win.left, win.top)
+                    self.window_info[window_id]["Width"] = win.width
+                    self.window_info[window_id]["Height"] = win.height
+                    log(f"Синтез: окно восстановлено {win.width}x{win.height}", window_id)
+                except Exception as e:
+                    log(f"Синтез: restore не сработал: {e}", window_id, level="WARNING")
+
+            # 7. Усыпить окно
             if not await self.energo.is_on():
                 await self.energo.turn_on()
                 await asyncio.sleep(1)
