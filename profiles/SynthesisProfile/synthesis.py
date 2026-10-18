@@ -200,10 +200,9 @@ class Synthesis(BaseProfile):
                     f"нет материалов. Выхожу и перехожу к следующей категории.",
                     self.window_id)
                 await self._click_pct(*BTN_EXIT, "Выход (нет материалов)")
-                await asyncio.sleep(2)
-                # Нажать кнопку меню — открыть вкладки категорий
+                await asyncio.sleep(3)
                 await self._click_pct(*BTN_MENU, "Меню (после Выхода)")
-                await asyncio.sleep(2)
+                await asyncio.sleep(3)
                 return
 
             # Синтез (нажать КНОПКУ, не вкладку)
