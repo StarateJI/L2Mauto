@@ -341,6 +341,16 @@ class Synthesis(BaseProfile):
             import traceback
             log(traceback.format_exc(), self.window_id, level="ERROR")
             return False
+        finally:
+            # Залить логи в bot-logs
+            try:
+                from bot.log_uploader import upload_run_logs
+                import asyncio as _aio
+                _aio.get_event_loop().run_in_executor(
+                    None, upload_run_logs, self.window_id, 0, None
+                )
+            except Exception:
+                pass
 
     async def on_stop(self):
         self.running = False
