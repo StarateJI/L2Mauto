@@ -454,12 +454,17 @@ class NedoGui(QWidget):
         # Auction, Synthesis — всегда 1 окно в пачке (hide спиннер, фикс 1)
         show_count = (profile_name not in ("PvPDodge", "Auction", "Synthesis"))
         dungeon_types = ["Пати данж", "Благословенная Земля", "Разоренный Замок", "Остров Неистовства"] if profile_name == "Dungeon" else None
+        # Синтез — 5 категорий, можно выбрать любые комбинации (множественный выбор)
+        synth_categories = (["Класс", "Агатионы", "Облик", "Транспорт", "Артефакты"]
+                             if profile_name == "Synthesis" else None)
 
         # Значения по умолчанию — из cache (запоминаются)
         from gui.cache import load_cache, save_cache as _save_cache
         _cache = load_cache()
         default_count = self.cache.get(profile_name, 2) if profile_name not in ("Auction", "Synthesis") else 1
         default_dungeon = _cache.get("DungeonType", "Пати данж") if dungeon_types else None
+        # Для синтеза — запоминаем какие категории выбрали (по умолчанию все 5)
+        default_synth = _cache.get("SynthCategories") if synth_categories else None
 
         selector = WindowSelectorDialog(
             profile_name, windows, parent=self,
@@ -467,6 +472,8 @@ class NedoGui(QWidget):
             dungeon_types=dungeon_types,
             default_count=default_count,
             default_dungeon_type=default_dungeon,
+            synth_categories=synth_categories,
+            default_synth=default_synth,
         )
         if selector.exec_() != WindowSelectorDialog.Accepted:
             return
@@ -474,7 +481,7 @@ class NedoGui(QWidget):
         if not windows:
             return
 
-        # Сохраняем количество и тип данжа (запоминаются для следующего раза)
+        # Сохраняем количество, тип данжа и категории синтеза (запоминаются)
         # Auction, Synthesis — фикс 1 окно, игнорируем что в cache
         if profile_name in ("Auction", "Synthesis"):
             num = 1
@@ -490,6 +497,18 @@ class NedoGui(QWidget):
             _cache["DungeonType"] = dungeon_type
             _save_cache(_cache)
             batch_kwargs["dungeon_type"] = dungeon_type
+
+        # Синтез — передаём список выбранных категорий в batch_kwargs
+        if synth_categories:
+            selected_synth = selector.get_synth_categories()
+            if not selected_synth:
+                QMessageBox.warning(self, "Синтез",
+                                    "Не выбрано ни одной категории синтеза!\n"
+                                    "Выбери хотя бы одну.")
+                return
+            _cache["SynthCategories"] = selected_synth
+            _save_cache(_cache)
+            batch_kwargs["synth_categories"] = selected_synth
 
         # PvPDodge — запускает все выбранные окна сразу (без батчей)
         if profile_name == "PvPDodge":

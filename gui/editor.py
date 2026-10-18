@@ -216,14 +216,9 @@ class Editor(QDialog):
             "NEED_CLAIM_DONATE_SHOP": settings.NEED_CLAIM_DONATE_SHOP,
         })
 
-        # Синтез — 5 категорий, можно выбирать любые комбинации (хоть 1, хоть все 5)
-        self._add_pack(rl2, "⚗ Синтез (категории)", {
-            "NEED_SYNTH_KLASS": getattr(settings, "NEED_SYNTH_KLASS", True),
-            "NEED_SYNTH_AGATHION": getattr(settings, "NEED_SYNTH_AGATHION", True),
-            "NEED_SYNTH_APPEARANCE": getattr(settings, "NEED_SYNTH_APPEARANCE", True),
-            "NEED_SYNTH_TRANSPORT": getattr(settings, "NEED_SYNTH_TRANSPORT", True),
-            "NEED_SYNTH_ARTIFACT": getattr(settings, "NEED_SYNTH_ARTIFACT", True),
-        })
+        # NOTE: выбор категорий синтеза перенесён в диалог запуска
+        # (gui/window_selector.py) — как у данжей. Можно выбрать любую
+        # комбинацию: 1 из 5, 3 из 5, все 5. Выбор запоминается в cache.json.
 
         self._add_pack(rl2, "🛒 Магазин по расписанию", {
             "NEED_SHOP_AFTER_RIP": settings.NEED_SHOP_AFTER_RIP,
@@ -523,11 +518,7 @@ class Editor(QDialog):
                         "NEED_CLAIM_CLAN", "NEED_CLAIM_ALI", "NEED_CLAIM_BATTLE_PASS",
                         "NEED_CLAIM_DONATE_SHOP", "NEED_SHOP_AFTER_RIP",
                         "NEED_SHOP_AFTER_PVP_EVADE", "NEED_BACK_TO_SPOT_PARTY_DUNGEON",
-                        "USE_STASH", "USE_SHOP", "USE_SELLER", "BUY_VIA_SCHEDULER",
-                        # Синтез — 5 категорий (любые комбинации)
-                        "NEED_SYNTH_KLASS", "NEED_SYNTH_AGATHION",
-                        "NEED_SYNTH_APPEARANCE", "NEED_SYNTH_TRANSPORT",
-                        "NEED_SYNTH_ARTIFACT"]:  # NEW: сохраняем галочку
+                        "USE_STASH", "USE_SHOP", "USE_SELLER", "BUY_VIA_SCHEDULER"]:
                 self.settings.__dict__[key] = self.widgets[key].isChecked()
 
             self.settings.DELAY_PVP_ANSWER = self.delay_pvp_answer.value()

@@ -51,9 +51,14 @@ BTN_CLOSE = (0.97, 0.03)
 class Synthesis(BaseProfile):
     """Синтез — автоматический синтез предметов по 5 категориям."""
 
-    def __init__(self, window_info, settings=None):
+    def __init__(self, window_info, settings=None, **kwargs):
         super().__init__(window_info, settings=settings)
         self.runtime_data = RuntimeData(current_state=BotState.AFK)
+        # Категории, выбранные пользователем в диалоге запуска.
+        # Если None — берём все 5 (обратная совместимость).
+        self._selected_categories = kwargs.pop("synth_categories", None)
+        # Если есть другие kwargs (например dungeon_type у данжей) — не падаем
+        # BaseProfile должен их принять
 
     def profile_version(self):
         return "1.0.0"
@@ -438,21 +443,34 @@ class Synthesis(BaseProfile):
             # 3. Обойти только ВКЛЮЧЁННЫЕ категории (любая комбинация).
             # После Выхода из каждой категории меню НЕ закрывается (закрывается
             # только подокно синтеза), поэтому повторно кликать Меню НЕ нужно.
-            enabled = []
-            for cat_name, tab_x, tab_y, setting_key in TAB_CATEGORIES:
-                # getattr с True по умолчанию — обратная совместимость (если
-                # у старого settings нет поля, считаем что категория включена)
-                if getattr(self.settings, setting_key, True):
-                    enabled.append((cat_name, tab_x, tab_y))
+            #
+            # Приоритет: диалог запуска (synth_categories) > settings.NEED_SYNTH_*
+            # Если ни то ни другое не задано — все 5 (обратная совместимость)
+            if self._selected_categories is not None:
+                # Из диалога — список названий категорий
+                wanted = set(self._selected_categories)
+                enabled = [(n, x, y) for n, x, y, _ in TAB_CATEGORIES
+                           if n in wanted]
+                log(f"Синтез: из диалога запуска выбраны категории: "
+                    f"{sorted(wanted)}", window_id)
+            else:
+                # Из настроек окна (старый путь, если запустили без диалога)
+                enabled = []
+                for cat_name, tab_x, tab_y, setting_key in TAB_CATEGORIES:
+                    if getattr(self.settings, setting_key, True):
+                        enabled.append((cat_name, tab_x, tab_y))
+                if enabled:
+                    log(f"Синтез: из настроек включено категорий: "
+                        f"{len(enabled)}/5 — {', '.join(c[0] for c in enabled)}",
+                        window_id)
 
             if not enabled:
-                log("Синтез: все 5 категорий ВЫКЛЮЧЕНЫ в настройках — "
-                    "нечего синтезировать, завершаю", window_id, level="WARNING")
+                log("Синтез: все 5 категорий ВЫКЛЮЧЕНЫ — нечего синтезировать, "
+                    "завершаю", window_id, level="WARNING")
                 self.notify(NotifyLevel.WARNING,
-                            "Синтез: все категории выключены в настройках")
+                            "Синтез: все категории выключены")
             else:
-                log(f"Синтез: включено категорий: {len(enabled)}/5 — "
-                    f"{', '.join(c[0] for c in enabled)}", window_id)
+                log(f"Синтез: обрабатываю {len(enabled)} категорий", window_id)
                 for cat_name, tab_x, tab_y in enabled:
                     await self._process_category(
                         game, cat_name, tab_x, tab_y, wx, wy, ww, wh

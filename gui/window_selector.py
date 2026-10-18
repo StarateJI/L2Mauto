@@ -194,6 +194,8 @@ class WindowSelectorDialog(QDialog):
       dungeon_types: список типов данжа (только для Dungeon)
       default_count: значение по умолчанию для спиннера
       default_dungeon_type: выбранный по умолчанию тип данжа
+      synth_categories: список категорий синтеза (только для Synthesis)
+      default_synth: какие выбраны по умолчанию
     """
 
     def __init__(self, scenario_name: str, all_windows: List[str],
@@ -201,14 +203,18 @@ class WindowSelectorDialog(QDialog):
                  show_count: bool = True,
                  dungeon_types: Optional[List[str]] = None,
                  default_count: int = 2,
-                 default_dungeon_type: Optional[str] = None):
+                 default_dungeon_type: Optional[str] = None,
+                 synth_categories: Optional[List[str]] = None,
+                 default_synth: Optional[List[str]] = None):
         super().__init__(parent)
         self.scenario_name = scenario_name
         self.all_windows = all_windows
         self.buttons: List[WindowButton] = []
         self.dungeon_types = dungeon_types or []
+        self.synth_categories = synth_categories or []
         self._dungeon_btn_group: Optional[QButtonGroup] = None
         self._dungeon_btns: List[DungeonTypeButton] = []
+        self._synth_checks: List[QCheckBox] = []
         self._count_spin: Optional[QSpinBox] = None
 
         self.setWindowTitle(f"Запуск — {scenario_name}")
@@ -285,10 +291,11 @@ class WindowSelectorDialog(QDialog):
         scroll.setWidget(scroll_content)
         layout.addWidget(scroll, stretch=1)
 
-        # ── Панель настроек (количество + тип данжа) ─────────────────────
-        if show_count or dungeon_types:
+        # ── Панель настроек (количество + тип данжа + категории синтеза) ──
+        if show_count or dungeon_types or synth_categories:
             self._build_settings_panel(layout, show_count, dungeon_types,
-                                       default_count, default_dungeon_type)
+                                       default_count, default_dungeon_type,
+                                       synth_categories, default_synth)
 
         self._update_count_label()
 
@@ -356,8 +363,10 @@ class WindowSelectorDialog(QDialog):
     def _build_settings_panel(self, layout: QVBoxLayout, show_count: bool,
                               dungeon_types: Optional[List[str]],
                               default_count: int,
-                              default_dungeon_type: Optional[str]):
-        """Панель настроек: сколько одновременно + тип данжа."""
+                              default_dungeon_type: Optional[str],
+                              synth_categories: Optional[List[str]] = None,
+                              default_synth: Optional[List[str]] = None):
+        """Панель настроек: сколько одновременно + тип данжа + категории синтеза."""
         panel = QFrame()
         panel.setStyleSheet("""
             QFrame {
@@ -447,6 +456,56 @@ class WindowSelectorDialog(QDialog):
             dungeon_row.addStretch()
             panel_layout.addLayout(dungeon_row)
 
+        # ── Категории синтеза (множественный выбор, НЕ exclusive) ──────────
+        if synth_categories:
+            sep = QFrame()
+            sep.setFrameShape(QFrame.HLine)
+            sep.setStyleSheet("color: #3d3d52; max-height: 1px;")
+            panel_layout.addWidget(sep)
+
+            lbl_s = QLabel("🔮 Категории синтеза (можно несколько):")
+            lbl_s.setStyleSheet(
+                "color: #71717a; font-size: 10pt; font-weight: 600;"
+            )
+            panel_layout.addWidget(lbl_s)
+
+            # По умолчанию — все включены (если default_synth не передан)
+            if default_synth is None:
+                default_synth_set = set(synth_categories)
+            else:
+                default_synth_set = set(default_synth)
+
+            synth_grid = QGridLayout()
+            synth_grid.setSpacing(6)
+            cols = 3  # 3 чекбокса в ряд → 5 категорий поместятся в 2 ряда
+            for i, cat in enumerate(synth_categories):
+                cb = QCheckBox(cat)
+                cb.setChecked(cat in default_synth_set)
+                cb.setStyleSheet("""
+                    QCheckBox {
+                        color: #d4d4d8;
+                        font-size: 10pt;
+                        font-weight: 600;
+                        spacing: 6px;
+                        padding: 4px 8px;
+                    }
+                    QCheckBox::indicator {
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 4px;
+                        border: 1px solid #52525b;
+                        background-color: #1f1f30;
+                    }
+                    QCheckBox::indicator:checked {
+                        background-color: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                            stop:0 #818cf8, stop:1 #6366f1);
+                        border: 1px solid #a5b4fc;
+                    }
+                """)
+                synth_grid.addWidget(cb, i // cols, i % cols)
+                self._synth_checks.append(cb)
+            panel_layout.addLayout(synth_grid)
+
         layout.addWidget(panel)
 
     def _update_count_label(self):
@@ -490,3 +549,14 @@ class WindowSelectorDialog(QDialog):
         if checked is None:
             return self.dungeon_types[0] if self.dungeon_types else None
         return checked.text()
+
+    def get_synth_categories(self) -> Optional[List[str]]:
+        """Выбранные категории синтеза (None если панель не показана).
+
+        Множественный выбор — возвращает список всех включённых.
+        Если ничего не выбрано — возвращает пустой список (бот тогда
+        пропустит синтез).
+        """
+        if not self.synth_categories:
+            return None
+        return [cb.text() for cb in self._synth_checks if cb.isChecked()]
