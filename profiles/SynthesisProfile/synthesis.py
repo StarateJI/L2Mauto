@@ -104,32 +104,119 @@ class Synthesis(BaseProfile):
         await asyncio.sleep(0.3 + random.uniform(0.1, 0.3))
 
     async def _is_menu_open(self, wx, wy, ww, wh):
-        """Проверить — открыто ли меню (яркие пиксели в правой части)."""
-        # Зона: правая часть экрана
-        x1 = int(ww * 0.70)
-        y1 = int(wh * 0.10)
-        x2 = int(ww * 0.98)
-        y2 = int(wh * 0.90)
-        zone = self._grab_window_rect(wx, wy, x1, y1, x2-x1, y2-y1)
-        if zone is None:
-            return True  # не смогли снять — считаем что открыто
-        gray = cv2.cvtColor(zone, cv2.COLOR_BGR2GRAY)
-        bright_count = int((gray > 80).sum())
-        is_open = bright_count > 35000
-        log(f"Синтез: меню {'ОТКРЫТО' if is_open else 'закрыто'} "
-            f"(ярких пикселей={bright_count})",
-            self.window_id)
+        """Проверить — открыто ли меню (template matching по ряду вкладок).
+
+        Берём эталон (menu_tabs_template.png — ряд вкладок Класс→Артефакты),
+        ищем его через cv2.matchTemplate в правой части экрана.
+        Если найдено с max_val > 0.6 — меню открыто.
+
+        Преимущества над яркостью:
+          - не зависит от яркости локации (тёмная/яркая сцена — неважно)
+          - ищет конкретный UI-элемент (иконки+текст вкладок),
+            который есть ТОЛЬКО когда меню открыто
+          - масштабо-независимо: перебираем 7 масштабов (0.6..1.6x)
+            для разных разрешений окна
+
+        Замер на скринах пользователя (catbox sj36q8.jpg):
+          CLOSED: max_val=0.355  (< 0.6 → не найдено ✓)
+          OPEN:   max_val=1.000  (> 0.6 → найдено ✓)
+        """
+        # Зона поиска: правая половина экрана (где появляется панель меню)
+        sx1, sy1 = int(ww * 0.55), int(wh * 0.05)
+        sx2, sy2 = int(ww * 0.99), int(wh * 0.40)
+        screen = self._grab_window_rect(wx, wy, sx1, sy1, sx2 - sx1, sy2 - sy1)
+        if screen is None:
+            log("Синтез: _is_menu_open — не удалось снять скрин, "
+                "считаем что закрыто", self.window_id, level="WARNING")
+            return False
+
+        # Загрузить эталон один раз и кешировать
+        if not hasattr(self, "_menu_tabs_template"):
+            try:
+                tpl_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                         "menu_tabs_template.png")
+                tpl = cv2.imread(tpl_path, cv2.IMREAD_GRAYSCALE)
+                if tpl is None:
+                    log(f"Синтез: НЕ ЗАГРУЖЕН template {tpl_path}",
+                        self.window_id, level="ERROR")
+                    self._menu_tabs_template = None
+                else:
+                    self._menu_tabs_template = tpl
+                    log(f"Синтез: загружен template {tpl.shape[1]}x{tpl.shape[0]}",
+                        self.window_id)
+            except Exception as e:
+                log(f"Синтез: ошибка загрузки template: {e}",
+                    self.window_id, level="ERROR")
+                self._menu_tabs_template = None
+
+        if self._menu_tabs_template is None:
+            # Fallback: brightness ratio (старый метод, менее надёжный)
+            log("Синтез: нет template — fallback на яркость",
+                self.window_id, level="WARNING")
+            right_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
+            r_mean = float(right_gray.mean())
+            is_open = r_mean < 60
+            log(f"Синтез: меню {'ОТКРЫТО' if is_open else 'ЗАКРЫТО'} "
+                f"(fallback mean={r_mean:.0f})", self.window_id)
+            return is_open
+
+        screen_gray = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
+        tpl = self._menu_tabs_template
+
+        # Перебор масштабов (окно может быть любого размера).
+        # 4 масштаба — баланс между точностью и скоростью (~0.5-1с на вызов).
+        best_val = 0.0
+        best_scale = 1.0
+        for scale in (0.85, 1.0, 1.15, 1.3):
+            new_w = max(1, int(tpl.shape[1] * scale))
+            new_h = max(1, int(tpl.shape[0] * scale))
+            if new_w > screen_gray.shape[1] or new_h > screen_gray.shape[0]:
+                continue
+            scaled = cv2.resize(tpl, (new_w, new_h), interpolation=cv2.INTER_AREA)
+            res = cv2.matchTemplate(screen_gray, scaled, cv2.TM_CCOEFF_NORMED)
+            _, max_val, _, _ = cv2.minMaxLoc(res)
+            if max_val > best_val:
+                best_val = max_val
+                best_scale = scale
+
+        is_open = best_val > 0.6
+        log(f"Синтез: меню {'ОТКРЫТО ✓' if is_open else 'ЗАКРЫТО ✗'} "
+            f"(matchTemplate max_val={best_val:.3f} при scale={best_scale}, "
+            f"порог 0.6)", self.window_id)
         return is_open
 
     async def _open_menu(self, wx, wy, ww, wh):
-        """Нажать кнопку Меню и проверить что открылось."""
+        """Убедиться, что меню открыто.
+
+        1. Сначала проверяем — может меню уже открыто (не toggle-им его закрытым!).
+        2. Если закрыто — кликаем Меню, ждём, проверяем.
+        3. До 3 попыток. Если за 3 попытки не открылось — кликаем крестик (X),
+           потом снова Меню (на случай что поверх висит диалог).
+        """
+        # 0. Может уже открыто?
+        if await self._is_menu_open(wx, wy, ww, wh):
+            log("Синтез: меню уже открыто — не кликаю Меню (не toggle-им)",
+                self.window_id)
+            return True
+
         for attempt in range(3):
-            await self._click_pct(*BTN_MENU, f"Меню (попытка {attempt+1})")
-            await asyncio.sleep(3)
+            log(f"Синтез: меню закрыто — кликаю Меню (попытка {attempt + 1}/3)",
+                self.window_id)
+            await self._click_pct(*BTN_MENU, f"Меню (попытка {attempt + 1})")
+            await asyncio.sleep(3 + random.uniform(0, 0.5))
             if await self._is_menu_open(wx, wy, ww, wh):
+                log("Синтез: меню открылось ✓", self.window_id)
                 return True
-            log(f"Синтез: меню не открылось, повтор", self.window_id, level="WARNING")
-        log("Синтез: не смог открыть меню за 3 попытки", self.window_id, level="WARNING")
+            log(f"Синтез: после клика меню всё ещё закрыто",
+                self.window_id, level="WARNING")
+            # Возможно поверх висит диалог/окно — кликнем крестик и повторим
+            if attempt == 0:
+                log("Синтез: пробую закрыть возможный диалог (X)",
+                    self.window_id, level="WARNING")
+                await self._click_pct(*BTN_CLOSE, "X (закрыть диалог)")
+                await asyncio.sleep(2)
+        log("Синтез: НЕ СМОГ открыть меню за 3 попытки",
+            self.window_id, level="ERROR")
         return False
 
     def _check_brightness(self, wx, wy, ww, wh, x_pct, y_pct):
@@ -194,19 +281,17 @@ class Synthesis(BaseProfile):
                                   wx, wy, ww, wh):
         """
         Обработать одну категорию (Класс, Агатионы, ...).
-        0. Нажать кнопку меню (открыть вкладки категорий)
         1. Клик по вкладке категории
         2. Клик по подвкладке «Синтез» (один раз, не в цикле)
         3. Цикл: Автовыбор → проверка Синтез → Синтез → спам → Все
         4. Если Синтез тусклая → Выход → return (следующая категория)
+        5. После Выхода — нажать Меню чтобы открыть вкладки для следующей категории
         """
         log(f"Синтез: === Категория: {category_name} ===", self.window_id)
 
-        # Кнопка Меню нажимается после Выхода из предыдущей категории.
-        # Для первой категории (Класс) — Меню уже открыто в main_loop.
         # 1. Клик по вкладке категории
         await self._click_pct(tab_x, tab_y, f"Вкладка {category_name}")
-        await asyncio.sleep(1)
+        await asyncio.sleep(1.5 + random.uniform(0, 0.3))
 
         # 2. Клик по подвкладке «Синтез» — ОДИН РАЗ, не в цикле
         await self._click_pct(*TAB_SYNTHESIS, "Вкладка Синтез")
@@ -234,7 +319,11 @@ class Synthesis(BaseProfile):
                     self.window_id)
                 await self._click_pct(*BTN_EXIT, "Выход (нет материалов)")
                 await asyncio.sleep(3)
-                await self._open_menu(wx, wy, ww, wh)
+                # Меню НЕ закрывается кнопкой Выход (закрывается только подокно синтеза).
+                # Проверяем — если меню почему-то закрылось, открываем.
+                if not await self._is_menu_open(wx, wy, ww, wh):
+                    await self._click_pct(*BTN_MENU, "Меню (после Выхода)")
+                    await asyncio.sleep(2)
                 return
 
             # Синтез (нажать КНОПКУ, не вкладку)
@@ -251,10 +340,13 @@ class Synthesis(BaseProfile):
         log(f"Синтез: {category_name} — достигнут лимит раундов (10), "
             f"переходим к следующей категории.", self.window_id, level="WARNING")
 
-        # Выйти из окна синтеза + нажать меню перед следующей категорией
+        # Выйти из окна синтеза. Меню НЕ закрывается (только подокно).
+        # Проверяем — если меню почему-то закрылось, открываем для следующей категории.
         await self._click_pct(*BTN_EXIT, "Выход из категории")
         await asyncio.sleep(3)
-        await self._open_menu(wx, wy, ww, wh)
+        if not await self._is_menu_open(wx, wy, ww, wh):
+            await self._click_pct(*BTN_MENU, "Меню (после Выхода из категории)")
+            await asyncio.sleep(2)
 
     async def main_loop(self):
         try:
@@ -328,15 +420,21 @@ class Synthesis(BaseProfile):
             except Exception as e:
                 log(f"Синтез: maximize не сработал: {e}", window_id, level="WARNING")
 
-            # 2. Нажать кнопку Меню — открывает вкладки
+            # 2. Нажать кнопку Меню — открывает вкладки.
+            # Проверяем template matching'ом — если уже открыто, не кликаем (не toggle-им).
             from bot.methods.game import PartyDungeon
             game = PartyDungeon(self)
 
-            await self._click_pct(*BTN_MENU, "Меню")
-            await asyncio.sleep(2)
+            if not await self._is_menu_open(wx, wy, ww, wh):
+                await self._click_pct(*BTN_MENU, "Меню (было закрыто)")
+                await asyncio.sleep(2)
+            else:
+                log("Синтез: меню уже открыто на старте — не кликаю",
+                    window_id)
 
             # 3. Обойти все 5 категорий
-            # Кнопка Меню нажимается в _process_category после каждого Выхода
+            # После Выхода из каждой категории меню НЕ закрывается (закрывается только подокно
+            # синтеза), поэтому повторно кликать Меню НЕ нужно.
             for cat_name, tab_x, tab_y in TAB_CATEGORIES:
                 await self._process_category(
                     game, cat_name, tab_x, tab_y, wx, wy, ww, wh
