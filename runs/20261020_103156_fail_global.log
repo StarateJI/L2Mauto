@@ -1,0 +1,201 @@
+=== Log tail 2026-10-20T10:32:00.284539 | last 200 lines ===
+2026-10-20 10:27:59,064 - INFO - [global] Проверяю обновы...
+2026-10-20 10:27:59,365 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:27:59,816 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 10:28:04,645 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 10:28:04,645 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 10:28:04,645 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 10:28:04,645 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 10:28:07,601 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:28:07,601 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 10:28:07,601 - DEBUG - [global] log_uploader: END window=Numa
+2026-10-20 10:28:17,420 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:28:17,420 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 10:28:19,113 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:28:19,113 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 0/2 (удалено с диска: 0)
+2026-10-20 10:28:25,929 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 10:28:25,929 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 10:28:27,857 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:28:29,650 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:28:34,658 - INFO - [global] Проверяю обновы...
+2026-10-20 10:28:35,370 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 10:28:36,366 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:28:40,194 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 10:28:40,194 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 10:28:40,194 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 10:28:40,194 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 10:28:44,843 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-20 10:28:44,844 - DEBUG - [global] log_uploader: START window=6600ti made=0 token=...Rjnfq
+2026-10-20 10:28:47,545 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:28:49,362 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:28:49,363 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 10:28:49,363 - DEBUG - [global] log_uploader: END window=KCAS
+2026-10-20 10:28:55,304 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:28:56,043 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:28:56,043 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 10:28:57,966 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:29:00,938 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-20 10:29:00,938 - DEBUG - [global] log_uploader: START window=Floky made=0 token=...Rjnfq
+2026-10-20 10:29:00,954 - INFO - [global] Пачка 8/10: завершена за 73с
+2026-10-20 10:29:01,954 - INFO - [global] Пачка 9/10: старт (2 окон: ['Керриганн', 'ФармерФиола'])
+2026-10-20 10:29:01,954 - INFO - [global] Запуск через 3 сек. | ['Керриганн', 'ФармерФиола']
+2026-10-20 10:29:06,473 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:29:10,393 - INFO - [global] Проверяю обновы...
+2026-10-20 10:29:11,125 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 10:29:11,364 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:29:15,048 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:29:15,048 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 10:29:15,050 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 10:29:15,927 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 10:29:15,928 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 10:29:15,928 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 10:29:15,928 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 10:29:17,639 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:29:17,639 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 0/2 (удалено с диска: 0)
+2026-10-20 10:29:25,586 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:29:26,151 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:29:28,153 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:29:31,014 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:29:31,015 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 10:29:36,560 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:29:41,438 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:29:45,256 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:29:45,256 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 10:29:45,256 - DEBUG - [global] log_uploader: END window=6600ti
+2026-10-20 10:29:45,943 - INFO - [global] Проверяю обновы...
+2026-10-20 10:29:46,709 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 10:29:47,801 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:29:47,801 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 10:29:47,801 - DEBUG - [global] log_uploader: END window=4x4
+2026-10-20 10:29:51,510 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 10:29:51,510 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 10:29:51,510 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 10:29:51,510 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 10:29:56,231 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:30:01,086 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:30:06,766 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:30:11,523 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:30:14,473 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-20 10:30:14,473 - DEBUG - [global] log_uploader: START window=Керриганн made=0 token=...Rjnfq
+2026-10-20 10:30:14,856 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-20 10:30:14,856 - DEBUG - [global] log_uploader: START window=ФармерФиола made=0 token=...Rjnfq
+2026-10-20 10:30:14,926 - INFO - [global] Пачка 9/10: завершена за 73с
+2026-10-20 10:30:15,927 - INFO - [global] Пачка 10/10: старт (2 окон: ['Lupi', 'Loot'])
+2026-10-20 10:30:15,927 - INFO - [global] Запуск через 3 сек. | ['Lupi', 'Loot']
+2026-10-20 10:30:21,529 - INFO - [global] Проверяю обновы...
+2026-10-20 10:30:22,251 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 10:30:24,905 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:30:25,299 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:30:26,412 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:30:26,414 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 0/8 (удалено с диска: 0)
+2026-10-20 10:30:27,087 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 10:30:27,088 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 10:30:27,088 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 10:30:27,088 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 10:30:31,171 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:30:31,171 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 0/2 (удалено с диска: 0)
+2026-10-20 10:30:36,949 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:30:41,681 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:30:44,589 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:30:44,589 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 10:30:45,023 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:30:45,023 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 10:30:55,033 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:30:55,469 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:30:56,652 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:30:56,652 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 10:30:56,652 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 10:30:56,652 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 10:30:57,103 - INFO - [global] Проверяю обновы...
+2026-10-20 10:30:58,029 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 10:31:01,365 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:31:01,366 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 10:31:01,366 - DEBUG - [global] log_uploader: END window=Floky
+2026-10-20 10:31:02,707 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 10:31:02,708 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 10:31:02,708 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 10:31:02,708 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 10:31:14,759 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:31:15,142 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 10:31:25,248 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:31:25,594 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 10:31:27,113 - DEBUG - [global] _api_put: PUT debug/Керриганн/profiles_Dungeon_blessed_scroll_00.png -> 201 (48978 bytes)
+2026-10-20 10:31:27,115 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 1/2 (удалено с диска: 1)
+2026-10-20 10:31:27,372 - DEBUG - [global] _api_put: PUT debug/ФармерФиола/profiles_Dungeon_blessed_scroll_00.png -> 409 (48978 bytes)
+2026-10-20 10:31:27,372 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 40177e6f2365f70ca867d095f35c4ac6c18c1185 but expected 2593fd90f6f243adbbfeb8f23d1c79d52ca329c7","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-20 10:31:27,372 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 0/2 (удалено с диска: 0)
+2026-10-20 10:31:28,058 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-20 10:31:28,058 - DEBUG - [global] log_uploader: START window=Lupi made=0 token=...Rjnfq
+2026-10-20 10:31:28,134 - DEBUG - [global] _api_put: GET runs/20261020_103014_fail_global.log -> 404
+2026-10-20 10:31:28,263 - DEBUG - [global] _api_put: GET runs/20261020_103014_fail_global.log -> 404
+2026-10-20 10:31:28,507 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-20 10:31:28,508 - DEBUG - [global] log_uploader: START window=Loot made=0 token=...Rjnfq
+2026-10-20 10:31:29,109 - DEBUG - [global] _api_put: GET runs/20261020_103128_fail_Lupi.log -> 404
+2026-10-20 10:31:29,474 - INFO - [global] Пачка 10/10: завершена за 74с
+2026-10-20 10:31:29,484 - DEBUG - [global] _api_put: GET runs/20261020_103128_fail_Loot.log -> 404
+2026-10-20 10:31:30,474 - INFO - [global] Прогон завершён за 726с (12.1 мин). Пачек: 10.
+2026-10-20 10:31:30,672 - DEBUG - [global] _api_put: PUT runs/20261020_103014_fail_global.log -> 409 (27342 bytes)
+2026-10-20 10:31:30,672 - WARNING - [global] _api_put: PUT failed body: {"message":"is at cdc722ba44905c155dbc2346ea9838e6aaeda66f but expected 40177e6f2365f70ca867d095f35c4ac6c18c1185","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-20 10:31:30,673 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 10:31:30,673 - DEBUG - [global] log_uploader: END window=ФармерФиола
+2026-10-20 10:31:30,687 - DEBUG - [global] _api_put: PUT runs/20261020_103014_fail_global.log -> 201 (27179 bytes)
+2026-10-20 10:31:30,688 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_103014_fail_global.log
+2026-10-20 10:31:30,688 - DEBUG - [global] log_uploader: END window=Керриганн
+2026-10-20 10:31:31,294 - DEBUG - [global] _api_put: PUT runs/20261020_103128_fail_Lupi.log -> 409 (57902 bytes)
+2026-10-20 10:31:31,295 - WARNING - [global] _api_put: PUT failed body: {"message":"is at cdc722ba44905c155dbc2346ea9838e6aaeda66f but expected 40177e6f2365f70ca867d095f35c4ac6c18c1185","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-20 10:31:31,297 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 10:31:32,145 - DEBUG - [global] _api_put: PUT runs/20261020_103128_fail_Loot.log -> 201 (58088 bytes)
+2026-10-20 10:31:32,147 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_103128_fail_Loot.log
+2026-10-20 10:31:32,332 - DEBUG - [global] _api_put: GET debug/Lupi/profiles_Dungeon_blessed_after_dungeon_click.png -> 200
+2026-10-20 10:31:32,724 - INFO - [global] Проверяю обновы...
+2026-10-20 10:31:33,180 - DEBUG - [global] _api_put: GET debug/Loot/profiles_Dungeon_blessed_after_dungeon_click.png -> 200
+2026-10-20 10:31:33,777 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 10:31:33,828 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 10:31:33,828 - DEBUG - [global] needs_update: лучший источник API → 5.14.15 (из 2)
+2026-10-20 10:31:33,828 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 10:31:33,828 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 10:31:34,214 - DEBUG - [global] _api_put: PUT debug/Lupi/profiles_Dungeon_blessed_after_dungeon_click.png -> 409 (115445 bytes)
+2026-10-20 10:31:34,214 - WARNING - [global] _api_put: PUT failed body: {"message":"is at da03dc12735069e84da8a8ed6dd74013f49f27be but expected d17b7990db0f92df78fac3d642d534bb749ed7e8","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-20 10:31:35,205 - DEBUG - [global] _api_put: PUT debug/Loot/profiles_Dungeon_blessed_after_dungeon_click.png -> 200 (115445 bytes)
+2026-10-20 10:31:35,243 - DEBUG - [global] _api_put: GET debug/Lupi/profiles_Dungeon_blessed_after_load.png -> 200
+2026-10-20 10:31:36,385 - DEBUG - [global] _api_put: GET debug/Loot/profiles_Dungeon_blessed_after_load.png -> 200
+2026-10-20 10:31:37,432 - DEBUG - [global] _api_put: PUT debug/Lupi/profiles_Dungeon_blessed_after_load.png -> 409 (168779 bytes)
+2026-10-20 10:31:37,432 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 61dfc47c1dc0ad6f1007b7d055bebb9b63de4f33 but expected d841377846a84efdbc87c1205ff750ea478e22f8","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-20 10:31:38,203 - DEBUG - [global] _api_put: GET debug/Lupi/profiles_Dungeon_blessed_after_Ур_75.png -> 404
+2026-10-20 10:31:38,426 - DEBUG - [global] _api_put: PUT debug/Loot/profiles_Dungeon_blessed_after_load.png -> 200 (168779 bytes)
+2026-10-20 10:31:39,218 - DEBUG - [global] _api_put: GET debug/Loot/profiles_Dungeon_blessed_after_Ур_75.png -> 404
+2026-10-20 10:31:40,059 - DEBUG - [global] _api_put: PUT debug/Lupi/profiles_Dungeon_blessed_after_Ур_75.png -> 201 (161569 bytes)
+2026-10-20 10:31:40,887 - DEBUG - [global] _api_put: GET debug/Lupi/profiles_Dungeon_blessed_found_ocr.png -> 404
+2026-10-20 10:31:41,207 - DEBUG - [global] _api_put: PUT debug/Loot/profiles_Dungeon_blessed_after_Ур_75.png -> 201 (161569 bytes)
+2026-10-20 10:31:42,119 - DEBUG - [global] _api_put: GET debug/Loot/profiles_Dungeon_blessed_found_ocr.png -> 200
+2026-10-20 10:31:42,814 - DEBUG - [global] _api_put: PUT debug/Lupi/profiles_Dungeon_blessed_found_ocr.png -> 201 (49724 bytes)
+2026-10-20 10:31:43,561 - DEBUG - [global] _api_put: GET debug/Lupi/profiles_Dungeon_blessed_level_window.png -> 404
+2026-10-20 10:31:44,052 - DEBUG - [global] _api_put: PUT debug/Loot/profiles_Dungeon_blessed_found_ocr.png -> 200 (49724 bytes)
+2026-10-20 10:31:44,806 - DEBUG - [global] _api_put: GET debug/Loot/profiles_Dungeon_blessed_level_window.png -> 404
+2026-10-20 10:31:45,401 - DEBUG - [global] _api_put: PUT debug/Lupi/profiles_Dungeon_blessed_level_window.png -> 201 (56025 bytes)
+2026-10-20 10:31:46,147 - DEBUG - [global] _api_put: GET debug/Lupi/profiles_Dungeon_blessed_menu_opened.png -> 404
+2026-10-20 10:31:46,621 - DEBUG - [global] _api_put: PUT debug/Loot/profiles_Dungeon_blessed_level_window.png -> 201 (56025 bytes)
+2026-10-20 10:31:47,365 - DEBUG - [global] _api_put: GET debug/Loot/profiles_Dungeon_blessed_menu_opened.png -> 404
+2026-10-20 10:31:48,075 - DEBUG - [global] _api_put: PUT debug/Lupi/profiles_Dungeon_blessed_menu_opened.png -> 201 (113367 bytes)
+2026-10-20 10:31:48,840 - DEBUG - [global] _api_put: GET debug/Lupi/profiles_Dungeon_blessed_time_check.png -> 404
+2026-10-20 10:31:49,512 - DEBUG - [global] _api_put: PUT debug/Loot/profiles_Dungeon_blessed_menu_opened.png -> 201 (113367 bytes)
+2026-10-20 10:31:50,260 - DEBUG - [global] _api_put: GET debug/Loot/profiles_Dungeon_blessed_time_check.png -> 404
+2026-10-20 10:31:50,755 - DEBUG - [global] _api_put: PUT debug/Lupi/profiles_Dungeon_blessed_time_check.png -> 201 (10349 bytes)
+2026-10-20 10:31:50,757 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 5/7 (удалено с диска: 5)
+2026-10-20 10:31:51,679 - DEBUG - [global] _api_put: GET runs/20261020_103128_fail_global.log -> 404
+2026-10-20 10:31:51,943 - DEBUG - [global] _api_put: PUT debug/Loot/profiles_Dungeon_blessed_time_check.png -> 201 (10349 bytes)
+2026-10-20 10:31:51,946 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 7/7 (удалено с диска: 7)
+2026-10-20 10:31:52,898 - DEBUG - [global] _api_put: GET runs/20261020_103128_fail_global.log -> 404
+2026-10-20 10:31:53,854 - DEBUG - [global] _api_put: PUT runs/20261020_103128_fail_global.log -> 409 (27141 bytes)
+2026-10-20 10:31:53,854 - WARNING - [global] _api_put: PUT failed body: {"message":"is at f70ccc757213594fa3c9425228a6ffe6bf829823 but expected c1a2e75c845008c82e5bf603134e0d4e3194dd75","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-20 10:31:53,855 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 10:31:53,855 - DEBUG - [global] log_uploader: END window=Lupi
+2026-10-20 10:31:55,069 - DEBUG - [global] _api_put: PUT runs/20261020_103128_fail_global.log -> 201 (27149 bytes)
+2026-10-20 10:31:55,070 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_103128_fail_global.log
+2026-10-20 10:31:55,070 - DEBUG - [global] log_uploader: END window=Loot
+2026-10-20 10:31:56,683 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 10:31:56,683 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 10:31:57,620 - DEBUG - [global] _api_put: GET runs/20261020_103156_fail_periodic.log -> 404
+2026-10-20 10:32:00,200 - DEBUG - [global] _api_put: PUT runs/20261020_103156_fail_periodic.log -> 201 (109509 bytes)
+2026-10-20 10:32:00,201 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_103156_fail_periodic.log
+2026-10-20 10:32:00,203 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
