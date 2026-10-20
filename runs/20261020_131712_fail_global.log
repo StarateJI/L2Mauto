@@ -1,0 +1,201 @@
+=== Log tail 2026-10-20T13:17:16.730871 | last 200 lines ===
+2026-10-20 13:08:17,592 - DEBUG - [global] _api_put: PUT runs/20261020_130815_fail_periodic.log -> 422 (31212 bytes)
+2026-10-20 13:08:17,592 - WARNING - [global] _api_put: PUT failed body: {"message":"Invalid request.\n\n\"sha\" wasn't supplied.","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file-contents","status":"422"}
+2026-10-20 13:08:17,594 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 13:08:17,597 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 13:08:18,767 - DEBUG - [global] _api_put: GET runs/20261020_130815_fail_global.log -> 404
+2026-10-20 13:08:19,986 - DEBUG - [global] _api_put: PUT runs/20261020_130815_fail_global.log -> 422 (22922 bytes)
+2026-10-20 13:08:19,986 - WARNING - [global] _api_put: PUT failed body: {"message":"Invalid request.\n\n\"sha\" wasn't supplied.","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file-contents","status":"422"}
+2026-10-20 13:08:19,988 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 13:08:19,988 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 13:08:19,988 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 13:08:31,047 - INFO - [global] Проверяю обновы...
+2026-10-20 13:08:32,177 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:08:32,293 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:08:32,293 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:08:32,293 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:08:32,294 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:09:02,307 - INFO - [global] Проверяю обновы...
+2026-10-20 13:09:03,427 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:09:03,558 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:09:03,558 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:09:03,558 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:09:03,559 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:09:20,014 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 13:09:20,014 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 13:09:21,211 - DEBUG - [global] _api_put: GET runs/20261020_130920_fail_periodic.log -> 404
+2026-10-20 13:09:23,684 - DEBUG - [global] _api_put: PUT runs/20261020_130920_fail_periodic.log -> 409 (31212 bytes)
+2026-10-20 13:09:23,684 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 3b93200614ab4f2b3eb36a62a4ef3180e3e7e091 but expected 6f517b291480d27247eef6b0d545d463bcc15374","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-20 13:09:23,686 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 13:09:23,689 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 13:09:24,932 - DEBUG - [global] _api_put: GET runs/20261020_130920_fail_global.log -> 404
+2026-10-20 13:09:27,562 - DEBUG - [global] _api_put: PUT runs/20261020_130920_fail_global.log -> 409 (22751 bytes)
+2026-10-20 13:09:27,562 - WARNING - [global] _api_put: PUT failed body: {"message":"is at d4e656724a421c5bcbed125b16844d407c72d79d but expected 3b93200614ab4f2b3eb36a62a4ef3180e3e7e091","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-20 13:09:27,565 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 13:09:27,565 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 13:09:27,565 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 13:09:33,574 - INFO - [global] Проверяю обновы...
+2026-10-20 13:09:34,668 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:09:34,863 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:09:34,863 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:09:34,863 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:09:34,864 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:10:04,876 - INFO - [global] Проверяю обновы...
+2026-10-20 13:10:05,977 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:10:06,138 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:10:06,138 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:10:06,138 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:10:06,139 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:10:27,590 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 13:10:27,590 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 13:10:28,776 - DEBUG - [global] _api_put: GET runs/20261020_131027_fail_periodic.log -> 404
+2026-10-20 13:10:31,271 - DEBUG - [global] _api_put: PUT runs/20261020_131027_fail_periodic.log -> 409 (31212 bytes)
+2026-10-20 13:10:31,271 - WARNING - [global] _api_put: PUT failed body: {"message":"is at e20e6812be7657155d0e4928577398025c8d0461 but expected fcb91f6d31f333427ebb764db99f18b00ae676ba","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-20 13:10:31,274 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 13:10:31,277 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 13:10:32,528 - DEBUG - [global] _api_put: GET runs/20261020_131027_fail_global.log -> 404
+2026-10-20 13:10:35,430 - DEBUG - [global] _api_put: PUT runs/20261020_131027_fail_global.log -> 201 (22808 bytes)
+2026-10-20 13:10:35,434 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_131027_fail_global.log
+2026-10-20 13:10:35,434 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 13:10:35,434 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 13:10:36,153 - INFO - [global] Проверяю обновы...
+2026-10-20 13:10:37,298 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:10:37,383 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:10:37,383 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:10:37,383 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:10:37,384 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:11:07,398 - INFO - [global] Проверяю обновы...
+2026-10-20 13:11:08,654 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:11:08,741 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:11:08,742 - DEBUG - [global] needs_update: лучший источник API → 5.14.15 (из 2)
+2026-10-20 13:11:08,742 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:11:08,742 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:11:35,457 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 13:11:35,458 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 13:11:36,583 - DEBUG - [global] _api_put: GET runs/20261020_131135_fail_periodic.log -> 404
+2026-10-20 13:11:38,167 - DEBUG - [global] _api_put: PUT runs/20261020_131135_fail_periodic.log -> 422 (31212 bytes)
+2026-10-20 13:11:38,167 - WARNING - [global] _api_put: PUT failed body: {"message":"Invalid request.\n\n\"sha\" wasn't supplied.","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file-contents","status":"422"}
+2026-10-20 13:11:38,171 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 13:11:38,174 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 13:11:38,754 - INFO - [global] Проверяю обновы...
+2026-10-20 13:11:39,374 - DEBUG - [global] _api_put: GET runs/20261020_131135_fail_global.log -> 404
+2026-10-20 13:11:39,915 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:11:40,077 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:11:40,077 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:11:40,078 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:11:40,078 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:11:40,804 - DEBUG - [global] _api_put: PUT runs/20261020_131135_fail_global.log -> 422 (22499 bytes)
+2026-10-20 13:11:40,804 - WARNING - [global] _api_put: PUT failed body: {"message":"Invalid request.\n\n\"sha\" wasn't supplied.","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file-contents","status":"422"}
+2026-10-20 13:11:40,806 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 13:11:40,806 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 13:11:40,806 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 13:12:10,094 - INFO - [global] Проверяю обновы...
+2026-10-20 13:12:11,191 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:12:11,407 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:12:11,407 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:12:11,407 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:12:11,408 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:12:40,834 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 13:12:40,834 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 13:12:41,421 - INFO - [global] Проверяю обновы...
+2026-10-20 13:12:42,057 - DEBUG - [global] _api_put: GET runs/20261020_131240_fail_periodic.log -> 404
+2026-10-20 13:12:42,728 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:12:42,735 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:12:42,735 - DEBUG - [global] needs_update: лучший источник API → 5.14.15 (из 2)
+2026-10-20 13:12:42,735 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:12:42,736 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:12:44,966 - DEBUG - [global] _api_put: PUT runs/20261020_131240_fail_periodic.log -> 201 (31212 bytes)
+2026-10-20 13:12:44,969 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_131240_fail_periodic.log
+2026-10-20 13:12:44,971 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 13:12:46,277 - DEBUG - [global] _api_put: GET runs/20261020_131240_fail_global.log -> 404
+2026-10-20 13:12:48,916 - DEBUG - [global] _api_put: PUT runs/20261020_131240_fail_global.log -> 201 (21970 bytes)
+2026-10-20 13:12:48,919 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_131240_fail_global.log
+2026-10-20 13:12:48,920 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 13:12:48,920 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 13:13:12,747 - INFO - [global] Проверяю обновы...
+2026-10-20 13:13:13,841 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:13:14,013 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:13:14,014 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:13:14,014 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:13:14,015 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:13:44,028 - INFO - [global] Проверяю обновы...
+2026-10-20 13:13:45,296 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:13:45,326 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:13:45,326 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:13:45,326 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:13:45,327 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:13:48,942 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 13:13:48,942 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 13:13:50,455 - DEBUG - [global] _api_put: GET runs/20261020_131348_fail_periodic.log -> 200
+2026-10-20 13:13:52,993 - DEBUG - [global] _api_put: PUT runs/20261020_131348_fail_periodic.log -> 200 (31212 bytes)
+2026-10-20 13:13:52,996 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_131348_fail_periodic.log
+2026-10-20 13:13:52,999 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 13:13:54,274 - DEBUG - [global] _api_put: GET runs/20261020_131348_fail_global.log -> 404
+2026-10-20 13:13:57,192 - DEBUG - [global] _api_put: PUT runs/20261020_131348_fail_global.log -> 201 (21536 bytes)
+2026-10-20 13:13:57,195 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_131348_fail_global.log
+2026-10-20 13:13:57,196 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 13:13:57,196 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 13:14:15,339 - INFO - [global] Проверяю обновы...
+2026-10-20 13:14:16,441 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:14:16,594 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:14:16,594 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:14:16,594 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:14:16,595 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:14:46,607 - INFO - [global] Проверяю обновы...
+2026-10-20 13:14:47,722 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:14:47,873 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:14:47,873 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:14:47,873 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:14:47,874 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:14:57,222 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 13:14:57,223 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 13:14:58,408 - DEBUG - [global] _api_put: GET runs/20261020_131457_fail_periodic.log -> 404
+2026-10-20 13:15:01,073 - DEBUG - [global] _api_put: PUT runs/20261020_131457_fail_periodic.log -> 201 (31212 bytes)
+2026-10-20 13:15:01,076 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_131457_fail_periodic.log
+2026-10-20 13:15:01,078 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 13:15:02,341 - DEBUG - [global] _api_put: GET runs/20261020_131457_fail_global.log -> 404
+2026-10-20 13:15:05,100 - DEBUG - [global] _api_put: PUT runs/20261020_131457_fail_global.log -> 201 (21242 bytes)
+2026-10-20 13:15:05,103 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_131457_fail_global.log
+2026-10-20 13:15:05,103 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 13:15:05,103 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 13:15:17,889 - INFO - [global] Проверяю обновы...
+2026-10-20 13:15:19,043 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:15:19,254 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:15:19,254 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:15:19,254 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:15:19,255 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:15:49,267 - INFO - [global] Проверяю обновы...
+2026-10-20 13:15:50,342 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:15:50,547 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:15:50,548 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:15:50,548 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:15:50,549 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:16:05,127 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 13:16:05,127 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 13:16:06,303 - DEBUG - [global] _api_put: GET runs/20261020_131605_fail_periodic.log -> 404
+2026-10-20 13:16:08,979 - DEBUG - [global] _api_put: PUT runs/20261020_131605_fail_periodic.log -> 201 (31212 bytes)
+2026-10-20 13:16:08,983 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_131605_fail_periodic.log
+2026-10-20 13:16:08,986 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 13:16:10,249 - DEBUG - [global] _api_put: GET runs/20261020_131605_fail_global.log -> 404
+2026-10-20 13:16:12,774 - DEBUG - [global] _api_put: PUT runs/20261020_131605_fail_global.log -> 201 (20885 bytes)
+2026-10-20 13:16:12,777 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_131605_fail_global.log
+2026-10-20 13:16:12,777 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 13:16:12,777 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 13:16:20,564 - INFO - [global] Проверяю обновы...
+2026-10-20 13:16:21,824 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:16:21,901 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:16:21,901 - DEBUG - [global] needs_update: лучший источник API → 5.14.15 (из 2)
+2026-10-20 13:16:21,901 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:16:21,902 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:16:51,918 - INFO - [global] Проверяю обновы...
+2026-10-20 13:16:53,021 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 13:16:53,192 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 13:16:53,193 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 13:16:53,193 - INFO - [global] needs_update: local=(5, 14, 15) remote=(5, 14, 15) -> has_update=False
+2026-10-20 13:16:53,194 - INFO - [global] Установлена последняя версия бота | 5.14.15
+2026-10-20 13:17:12,803 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 13:17:12,803 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 13:17:14,010 - DEBUG - [global] _api_put: GET runs/20261020_131712_fail_periodic.log -> 404
+2026-10-20 13:17:16,648 - DEBUG - [global] _api_put: PUT runs/20261020_131712_fail_periodic.log -> 201 (31212 bytes)
+2026-10-20 13:17:16,650 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_131712_fail_periodic.log
+2026-10-20 13:17:16,653 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
