@@ -1,0 +1,201 @@
+=== Log tail 2026-10-20T18:14:40.852025 | last 200 lines ===
+2026-10-20 18:02:02,344 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:02:02,344 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:02:32,358 - INFO - [global] Проверяю обновы...
+2026-10-20 18:02:32,960 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:02:35,664 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 18:02:35,664 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 18:02:35,664 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:02:35,665 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:02:59,590 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 18:02:59,590 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 18:03:00,566 - DEBUG - [global] _api_put: GET runs/20261020_180259_fail_periodic.log -> 404
+2026-10-20 18:03:03,076 - DEBUG - [global] _api_put: PUT runs/20261020_180259_fail_periodic.log -> 201 (109509 bytes)
+2026-10-20 18:03:03,078 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_180259_fail_periodic.log
+2026-10-20 18:03:03,079 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 18:03:04,035 - DEBUG - [global] _api_put: GET runs/20261020_180259_fail_global.log -> 404
+2026-10-20 18:03:05,676 - INFO - [global] Проверяю обновы...
+2026-10-20 18:03:06,545 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:03:06,579 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-20 18:03:06,579 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-20 18:03:06,579 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:03:06,579 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:03:07,284 - DEBUG - [global] _api_put: PUT runs/20261020_180259_fail_global.log -> 201 (22435 bytes)
+2026-10-20 18:03:07,285 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261020_180259_fail_global.log
+2026-10-20 18:03:07,285 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 18:03:07,285 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 18:03:36,596 - INFO - [global] Проверяю обновы...
+2026-10-20 18:03:37,300 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:03:42,144 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:03:42,144 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:03:42,144 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:03:42,145 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:04:07,312 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 18:04:07,312 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 18:04:12,159 - INFO - [global] Проверяю обновы...
+2026-10-20 18:04:13,077 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:04:17,709 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:04:17,710 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:04:17,710 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:04:17,710 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:04:18,727 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 18:04:38,392 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 18:04:38,392 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 18:04:38,393 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 18:04:47,724 - INFO - [global] Проверяю обновы...
+2026-10-20 18:04:48,428 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:04:48,897 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 18:04:53,267 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:04:53,267 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:04:53,267 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:04:53,267 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:05:08,557 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 18:05:08,557 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 18:05:08,557 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 18:05:08,557 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 18:05:23,281 - INFO - [global] Проверяю обновы...
+2026-10-20 18:05:23,971 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:05:28,842 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:05:28,842 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:05:28,842 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:05:28,842 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:05:58,860 - INFO - [global] Проверяю обновы...
+2026-10-20 18:05:59,764 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:06:04,402 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:06:04,403 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:06:04,403 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:06:04,403 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:06:08,586 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 18:06:08,586 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 18:06:19,000 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 18:06:34,418 - INFO - [global] Проверяю обновы...
+2026-10-20 18:06:35,140 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:06:39,649 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 18:06:39,649 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 18:06:39,650 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 18:06:39,953 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:06:39,954 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:06:39,954 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:06:39,954 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:06:50,145 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 18:07:09,801 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 18:07:09,801 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 18:07:09,801 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 18:07:09,801 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 18:07:09,972 - INFO - [global] Проверяю обновы...
+2026-10-20 18:07:10,674 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:07:15,501 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:07:15,501 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:07:15,501 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:07:15,501 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:07:45,515 - INFO - [global] Проверяю обновы...
+2026-10-20 18:07:46,224 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:07:51,070 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:07:51,070 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:07:51,070 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:07:51,071 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:08:09,831 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 18:08:09,831 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 18:08:20,249 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 18:08:21,082 - INFO - [global] Проверяю обновы...
+2026-10-20 18:08:21,799 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:08:26,638 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:08:26,638 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:08:26,638 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:08:26,638 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:08:39,909 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 18:08:39,909 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 18:08:39,910 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 18:08:50,398 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 18:08:56,655 - INFO - [global] Проверяю обновы...
+2026-10-20 18:08:57,525 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:09:02,211 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:09:02,212 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:09:02,212 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:09:02,212 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:09:10,049 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 18:09:10,049 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 18:09:10,049 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 18:09:10,049 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 18:09:32,223 - INFO - [global] Проверяю обновы...
+2026-10-20 18:09:32,915 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:09:37,759 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:09:37,759 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:09:37,759 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:09:37,759 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:10:07,773 - INFO - [global] Проверяю обновы...
+2026-10-20 18:10:08,498 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:10:10,071 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 18:10:10,071 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 18:10:13,319 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:10:13,319 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:10:13,319 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:10:13,319 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:10:20,505 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 18:10:40,168 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 18:10:40,168 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 18:10:40,169 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 18:10:43,333 - INFO - [global] Проверяю обновы...
+2026-10-20 18:10:44,018 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:10:48,871 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:10:48,871 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:10:48,871 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:10:48,871 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:10:50,674 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 18:11:10,339 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 18:11:10,339 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 18:11:10,339 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 18:11:10,339 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 18:11:18,887 - INFO - [global] Проверяю обновы...
+2026-10-20 18:11:19,592 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:11:24,441 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:11:24,441 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:11:24,441 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:11:24,441 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:11:54,458 - INFO - [global] Проверяю обновы...
+2026-10-20 18:11:55,187 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:12:00,008 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:12:00,008 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:12:00,008 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:12:00,008 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:12:10,371 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 18:12:10,371 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 18:12:20,768 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 18:12:30,019 - INFO - [global] Проверяю обновы...
+2026-10-20 18:12:30,744 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:12:35,539 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:12:35,539 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:12:35,539 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:12:35,539 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:12:40,440 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 18:12:40,440 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 18:12:40,442 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
+2026-10-20 18:12:50,941 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 18:13:05,555 - INFO - [global] Проверяю обновы...
+2026-10-20 18:13:06,264 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:13:10,626 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 18:13:10,626 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-20 18:13:10,626 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-20 18:13:10,626 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-20 18:13:11,082 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:13:11,082 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:13:11,082 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:13:11,082 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:13:41,097 - INFO - [global] Проверяю обновы...
+2026-10-20 18:13:41,698 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:13:47,527 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:13:47,527 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:13:47,527 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:13:47,527 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:14:10,657 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-20 18:14:10,657 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-20 18:14:17,539 - INFO - [global] Проверяю обновы...
+2026-10-20 18:14:18,433 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-20 18:14:21,096 - DEBUG - [global] _api_put: GET exception: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=10)
+2026-10-20 18:14:23,079 - DEBUG - [global] needs_update: API failed: ReadTimeout: HTTPSConnectionPool(host='api.github.com', port=443): Read timed out. (read timeout=5)
+2026-10-20 18:14:23,080 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 1)
+2026-10-20 18:14:23,080 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-20 18:14:23,080 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-20 18:14:40,761 - WARNING - [global] _api_put: PUT exception: ('Connection aborted.', ConnectionResetError(10054, 'Удаленный хост принудительно разорвал существующее подключение', None, 10054, None))
+2026-10-20 18:14:40,761 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-20 18:14:40,762 - DEBUG - [global] log_uploader: STEP 2 SKIP (no PNGs)
