@@ -1,0 +1,201 @@
+=== Log tail 2026-10-22T14:36:51.997219 | last 200 lines ===
+2026-10-22 14:32:40,366 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-22 14:33:00,683 - INFO - [global] Проверяю обновы...
+2026-10-22 14:33:01,450 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-22 14:33:01,653 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-22 14:33:01,653 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-22 14:33:01,653 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-22 14:33:01,653 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-22 14:33:31,676 - INFO - [global] Проверяю обновы...
+2026-10-22 14:33:32,457 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-22 14:33:32,648 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-22 14:33:32,648 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-22 14:33:32,648 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-22 14:33:32,648 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-22 14:33:40,399 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-22 14:33:40,400 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-22 14:33:41,345 - DEBUG - [global] _api_put: GET runs/20261022_143340_fail_periodic.log -> 404
+2026-10-22 14:33:41,697 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-22 14:33:41,698 - DEBUG - [global] log_uploader: START window=МистерКринж made=0 token=...Rjnfq
+2026-10-22 14:33:42,079 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-22 14:33:42,081 - DEBUG - [global] log_uploader: START window=Azin0777 made=0 token=...Rjnfq
+2026-10-22 14:33:42,189 - INFO - [global] Пачка 8/10: завершена за 95с
+2026-10-22 14:33:42,666 - DEBUG - [global] _api_put: GET runs/20261022_143341_fail_МистерКринж.log -> 404
+2026-10-22 14:33:42,999 - DEBUG - [global] _api_put: GET runs/20261022_143342_fail_Azin0777.log -> 404
+2026-10-22 14:33:43,192 - INFO - [global] Пачка 9/10: старт (2 окон: ['GameStop', 'Zone51'])
+2026-10-22 14:33:43,192 - INFO - [global] Запуск через 3 сек. | ['GameStop', 'Zone51']
+2026-10-22 14:33:44,182 - DEBUG - [global] _api_put: PUT runs/20261022_143340_fail_periodic.log -> 201 (90169 bytes)
+2026-10-22 14:33:44,184 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261022_143340_fail_periodic.log
+2026-10-22 14:33:45,132 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_after_dungeon_click.png -> 200
+2026-10-22 14:33:45,856 - DEBUG - [global] _api_put: PUT runs/20261022_143342_fail_Azin0777.log -> 409 (58372 bytes)
+2026-10-22 14:33:45,856 - WARNING - [global] _api_put: PUT failed body: {"message":"is at add259d0e60664d26bfe9583c3ada2a4de0ba73a but expected 399b4726fb8997d7daa7e422b4a2c917d9267cf4","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:33:45,857 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-22 14:33:45,964 - DEBUG - [global] _api_put: PUT runs/20261022_143341_fail_МистерКринж.log -> 409 (65620 bytes)
+2026-10-22 14:33:45,964 - WARNING - [global] _api_put: PUT failed body: {"message":"is at add259d0e60664d26bfe9583c3ada2a4de0ba73a but expected 399b4726fb8997d7daa7e422b4a2c917d9267cf4","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:33:45,967 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-22 14:33:46,895 - DEBUG - [global] _api_put: GET debug/Azin0777/profiles_Dungeon_blessed_after_dungeon_click.png -> 200
+2026-10-22 14:33:47,378 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_after_dungeon_click.png -> 200 (114467 bytes)
+2026-10-22 14:33:47,381 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 1/7 (удалено с диска: 1)
+2026-10-22 14:33:47,702 - DEBUG - [global] _api_put: GET debug/МистерКринж/profiles_Dungeon_blessed_after_dungeon_click.png -> 200
+2026-10-22 14:33:48,639 - DEBUG - [global] _api_put: GET runs/20261022_143340_fail_global.log -> 404
+2026-10-22 14:33:49,148 - DEBUG - [global] _api_put: PUT debug/Azin0777/profiles_Dungeon_blessed_after_dungeon_click.png -> 200 (114467 bytes)
+2026-10-22 14:33:49,152 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 1/7 (удалено с диска: 1)
+2026-10-22 14:33:49,665 - DEBUG - [global] _api_put: PUT debug/МистерКринж/profiles_Dungeon_blessed_after_dungeon_click.png -> 409 (114467 bytes)
+2026-10-22 14:33:49,665 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 7e1437b2d67f56198933cafec7c9491118c6ec83 but expected b495bfea0c7b6a79bf9c064f42303b2131a4ecab","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:33:49,669 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 0/7 (удалено с диска: 0)
+2026-10-22 14:33:50,168 - DEBUG - [global] _api_put: GET runs/20261022_143342_fail_global.log -> 404
+2026-10-22 14:33:50,873 - DEBUG - [global] _api_put: GET runs/20261022_143341_fail_global.log -> 404
+2026-10-22 14:33:51,609 - DEBUG - [global] _api_put: PUT runs/20261022_143340_fail_global.log -> 409 (23180 bytes)
+2026-10-22 14:33:51,609 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 4ae5c6121d6de09fb418ad97b4aba4a3ce614deb but expected 7e1437b2d67f56198933cafec7c9491118c6ec83","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:33:51,611 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-22 14:33:51,611 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-22 14:33:51,611 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-22 14:33:52,672 - DEBUG - [global] _api_put: PUT runs/20261022_143342_fail_global.log -> 409 (23140 bytes)
+2026-10-22 14:33:52,672 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 4ae5c6121d6de09fb418ad97b4aba4a3ce614deb but expected 7e1437b2d67f56198933cafec7c9491118c6ec83","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:33:52,675 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-22 14:33:52,675 - DEBUG - [global] log_uploader: END window=Azin0777
+2026-10-22 14:33:53,578 - DEBUG - [global] _api_put: PUT runs/20261022_143341_fail_global.log -> 201 (23196 bytes)
+2026-10-22 14:33:53,580 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261022_143341_fail_global.log
+2026-10-22 14:33:53,580 - DEBUG - [global] log_uploader: END window=МистерКринж
+2026-10-22 14:34:02,665 - INFO - [global] Проверяю обновы...
+2026-10-22 14:34:03,415 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-22 14:34:03,613 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-22 14:34:03,613 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-22 14:34:03,613 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-22 14:34:03,613 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-22 14:34:33,632 - INFO - [global] Проверяю обновы...
+2026-10-22 14:34:34,397 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-22 14:34:34,627 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-22 14:34:34,628 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-22 14:34:34,628 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-22 14:34:34,628 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-22 14:34:51,641 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-22 14:34:51,642 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-22 14:34:52,592 - DEBUG - [global] _api_put: GET runs/20261022_143451_fail_periodic.log -> 404
+2026-10-22 14:34:55,018 - DEBUG - [global] _api_put: PUT runs/20261022_143451_fail_periodic.log -> 409 (91627 bytes)
+2026-10-22 14:34:55,018 - WARNING - [global] _api_put: PUT failed body: {"message":"is at d74a966bea97e2da09eaec11fdccc71113416a2f but expected e419eed646d1fda516223175e4cb2bbc4f6eebc9","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:34:55,020 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-22 14:34:55,905 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_after_dungeon_click.png -> 200
+2026-10-22 14:34:57,909 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_after_dungeon_click.png -> 409 (114871 bytes)
+2026-10-22 14:34:57,909 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 965111fa9fbc959bfad991a478bb986dcc6b92c4 but expected d74a966bea97e2da09eaec11fdccc71113416a2f","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:34:59,030 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_after_Ур_75.png -> 200
+2026-10-22 14:35:01,080 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_after_Ур_75.png -> 200 (160771 bytes)
+2026-10-22 14:35:02,018 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_found_ocr.png -> 200
+2026-10-22 14:35:04,017 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_found_ocr.png -> 409 (49809 bytes)
+2026-10-22 14:35:04,017 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 05b98333bbf3d66b8b11d85d62b59a9333b26306 but expected 8dee33b12829babe9096e7f3b779eb448e7b9a19","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:35:04,647 - INFO - [global] Проверяю обновы...
+2026-10-22 14:35:05,274 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_level_window.png -> 200
+2026-10-22 14:35:05,422 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-22 14:35:05,644 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-22 14:35:05,644 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-22 14:35:05,645 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-22 14:35:05,645 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-22 14:35:07,135 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_level_window.png -> 200 (55568 bytes)
+2026-10-22 14:35:08,130 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_menu_opened.png -> 200
+2026-10-22 14:35:10,053 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_menu_opened.png -> 200 (107053 bytes)
+2026-10-22 14:35:10,831 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-22 14:35:10,833 - DEBUG - [global] log_uploader: START window=GameStop made=0 token=...Rjnfq
+2026-10-22 14:35:11,108 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_scroll_00.png -> 200
+2026-10-22 14:35:11,232 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-22 14:35:11,234 - DEBUG - [global] log_uploader: START window=Zone51 made=0 token=...Rjnfq
+2026-10-22 14:35:11,746 - INFO - [global] Пачка 9/10: завершена за 89с
+2026-10-22 14:35:11,845 - DEBUG - [global] _api_put: GET runs/20261022_143510_fail_GameStop.log -> 404
+2026-10-22 14:35:12,348 - DEBUG - [global] _api_put: GET runs/20261022_143511_fail_Zone51.log -> 404
+2026-10-22 14:35:12,746 - INFO - [global] Пачка 10/10: старт (2 окон: ['DragStar', 'Roxpool'])
+2026-10-22 14:35:12,746 - INFO - [global] Запуск через 3 сек. | ['DragStar', 'Roxpool']
+2026-10-22 14:35:13,123 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_scroll_00.png -> 200 (46365 bytes)
+2026-10-22 14:35:14,103 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_scroll_03.png -> 200
+2026-10-22 14:35:14,272 - DEBUG - [global] _api_put: PUT runs/20261022_143510_fail_GameStop.log -> 409 (61352 bytes)
+2026-10-22 14:35:14,272 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 4e51dcd6a7f7a3c41a0b0c8d0d8611814011f5c6 but expected 8fade8035ba0545e22dd16ead847748f19c2a6e3","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:35:14,274 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-22 14:35:14,835 - DEBUG - [global] _api_put: PUT runs/20261022_143511_fail_Zone51.log -> 201 (59779 bytes)
+2026-10-22 14:35:14,838 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261022_143511_fail_Zone51.log
+2026-10-22 14:35:15,472 - DEBUG - [global] _api_put: GET debug/GameStop/profiles_Dungeon_blessed_after_dungeon_click.png -> 200
+2026-10-22 14:35:15,648 - DEBUG - [global] _api_put: GET debug/Zone51/profiles_Dungeon_blessed_after_dungeon_click.png -> 200
+2026-10-22 14:35:16,012 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_scroll_03.png -> 200 (50503 bytes)
+2026-10-22 14:35:16,015 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 5/8 (удалено с диска: 5)
+2026-10-22 14:35:17,086 - DEBUG - [global] _api_put: GET runs/20261022_143451_fail_global.log -> 404
+2026-10-22 14:35:17,574 - DEBUG - [global] _api_put: PUT debug/GameStop/profiles_Dungeon_blessed_after_dungeon_click.png -> 200 (114871 bytes)
+2026-10-22 14:35:17,576 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 1/5 (удалено с диска: 1)
+2026-10-22 14:35:17,630 - DEBUG - [global] _api_put: PUT debug/Zone51/profiles_Dungeon_blessed_after_dungeon_click.png -> 409 (114871 bytes)
+2026-10-22 14:35:17,630 - WARNING - [global] _api_put: PUT failed body: {"message":"is at b9ef3beb764bc8eeef464e17504a6ae3cd2beab5 but expected c11fadb9dfcbf4f1ef4a06250a287ffc645ea61c","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:35:17,633 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 0/5 (удалено с диска: 0)
+2026-10-22 14:35:18,717 - DEBUG - [global] _api_put: GET runs/20261022_143510_fail_global.log -> 404
+2026-10-22 14:35:18,822 - DEBUG - [global] _api_put: GET runs/20261022_143511_fail_global.log -> 404
+2026-10-22 14:35:19,367 - DEBUG - [global] _api_put: PUT runs/20261022_143451_fail_global.log -> 201 (23360 bytes)
+2026-10-22 14:35:19,369 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261022_143451_fail_global.log
+2026-10-22 14:35:19,369 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-22 14:35:19,369 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-22 14:35:21,119 - DEBUG - [global] _api_put: PUT runs/20261022_143511_fail_global.log -> 409 (23748 bytes)
+2026-10-22 14:35:21,119 - WARNING - [global] _api_put: PUT failed body: {"message":"is at d46fdf8764fbc11d5eb55eb68d15d896277f6f43 but expected f26bac790a7c0953883f244e7f07b4cec0021ea1","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:35:21,121 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-22 14:35:21,122 - DEBUG - [global] log_uploader: END window=Zone51
+2026-10-22 14:35:21,162 - DEBUG - [global] _api_put: PUT runs/20261022_143510_fail_global.log -> 201 (23748 bytes)
+2026-10-22 14:35:21,164 - DEBUG - [global] log_uploader: STEP 3 (global log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261022_143510_fail_global.log
+2026-10-22 14:35:21,164 - DEBUG - [global] log_uploader: END window=GameStop
+2026-10-22 14:35:35,662 - INFO - [global] Проверяю обновы...
+2026-10-22 14:35:36,435 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-22 14:35:36,614 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-22 14:35:36,614 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-22 14:35:36,614 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-22 14:35:36,614 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-22 14:36:06,632 - INFO - [global] Проверяю обновы...
+2026-10-22 14:36:07,405 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-22 14:36:07,636 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-22 14:36:07,636 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-22 14:36:07,636 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-22 14:36:07,636 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-22 14:36:19,405 - INFO - [global] LogUploader: запускаю upload_run_logs...
+2026-10-22 14:36:19,406 - DEBUG - [global] log_uploader: START window=periodic made=-1 token=...Rjnfq
+2026-10-22 14:36:20,293 - DEBUG - [global] _api_put: GET runs/20261022_143619_fail_periodic.log -> 404
+2026-10-22 14:36:22,942 - DEBUG - [global] _api_put: PUT runs/20261022_143619_fail_periodic.log -> 201 (91869 bytes)
+2026-10-22 14:36:22,946 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261022_143619_fail_periodic.log
+2026-10-22 14:36:24,306 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_after_dungeon_click.png -> 200
+2026-10-22 14:36:26,239 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_after_dungeon_click.png -> 200 (116126 bytes)
+2026-10-22 14:36:27,199 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_found_ocr.png -> 200
+2026-10-22 14:36:29,113 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_found_ocr.png -> 200 (51087 bytes)
+2026-10-22 14:36:29,976 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_level_window.png -> 200
+2026-10-22 14:36:31,898 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_level_window.png -> 200 (55513 bytes)
+2026-10-22 14:36:32,866 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_menu_opened.png -> 200
+2026-10-22 14:36:34,863 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_menu_opened.png -> 200 (107298 bytes)
+2026-10-22 14:36:35,840 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_scroll_00.png -> 200
+2026-10-22 14:36:37,653 - INFO - [global] Проверяю обновы...
+2026-10-22 14:36:37,656 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_scroll_00.png -> 200 (47041 bytes)
+2026-10-22 14:36:38,546 - DEBUG - [global] needs_update: raw → 5.14.15
+2026-10-22 14:36:38,769 - DEBUG - [global] needs_update: API → 5.14.15
+2026-10-22 14:36:38,770 - DEBUG - [global] needs_update: лучший источник raw → 5.14.15 (из 2)
+2026-10-22 14:36:38,770 - INFO - [global] needs_update: local=(5, 14, 8) remote=(5, 14, 15) -> has_update=True
+2026-10-22 14:36:38,770 - INFO - [global] Доступна обнова! Спавню кнопку
+2026-10-22 14:36:38,796 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_scroll_03.png -> 200
+2026-10-22 14:36:40,539 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_scroll_03.png -> 200 (50123 bytes)
+2026-10-22 14:36:41,387 - DEBUG - [global] _api_put: GET debug/periodic/profiles_Dungeon_blessed_time_check.png -> 200
+2026-10-22 14:36:42,401 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-22 14:36:42,402 - DEBUG - [global] log_uploader: START window=DragStar made=0 token=...Rjnfq
+2026-10-22 14:36:42,818 - INFO - [global] [-BaseProfile-] Остановил слушалку
+2026-10-22 14:36:42,819 - DEBUG - [global] log_uploader: START window=Roxpool made=0 token=...Rjnfq
+2026-10-22 14:36:43,015 - DEBUG - [global] _api_put: PUT debug/periodic/profiles_Dungeon_blessed_time_check.png -> 200 (10365 bytes)
+2026-10-22 14:36:43,017 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 7/7 (удалено с диска: 7)
+2026-10-22 14:36:43,304 - INFO - [global] Пачка 10/10: завершена за 91с
+2026-10-22 14:36:43,404 - DEBUG - [global] _api_put: GET runs/20261022_143642_fail_DragStar.log -> 404
+2026-10-22 14:36:43,858 - DEBUG - [global] _api_put: GET runs/20261022_143642_fail_Roxpool.log -> 404
+2026-10-22 14:36:44,145 - DEBUG - [global] _api_put: GET runs/20261022_143619_fail_global.log -> 404
+2026-10-22 14:36:44,304 - INFO - [global] Прогон завершён за 918с (15.3 мин). Пачек: 10.
+2026-10-22 14:36:45,937 - DEBUG - [global] _api_put: PUT runs/20261022_143642_fail_DragStar.log -> 201 (60703 bytes)
+2026-10-22 14:36:45,939 - DEBUG - [global] log_uploader: STEP 1 (window log) -> https://github.com/StarateJI/L2Mauto/blob/bot-logs/runs/20261022_143642_fail_DragStar.log
+2026-10-22 14:36:46,516 - DEBUG - [global] _api_put: PUT runs/20261022_143619_fail_global.log -> 409 (23474 bytes)
+2026-10-22 14:36:46,516 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 5b3bfa0513b2c052434fda137770c8c11c6bc367 but expected 97adbd40a8e14f31a4db4121bc47b892d06ca676","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:36:46,518 - DEBUG - [global] log_uploader: STEP 3 (global log) -> FAILED
+2026-10-22 14:36:46,518 - DEBUG - [global] log_uploader: END window=periodic
+2026-10-22 14:36:46,518 - INFO - [global] LogUploader: upload_run_logs завершён
+2026-10-22 14:36:46,612 - DEBUG - [global] _api_put: PUT runs/20261022_143642_fail_Roxpool.log -> 409 (59659 bytes)
+2026-10-22 14:36:46,612 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 5b3bfa0513b2c052434fda137770c8c11c6bc367 but expected 97adbd40a8e14f31a4db4121bc47b892d06ca676","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:36:46,615 - DEBUG - [global] log_uploader: STEP 1 (window log) -> FAILED
+2026-10-22 14:36:46,774 - DEBUG - [global] _api_put: GET debug/DragStar/profiles_Dungeon_blessed_after_load.png -> 404
+2026-10-22 14:36:47,629 - DEBUG - [global] _api_put: GET debug/Roxpool/profiles_Dungeon_blessed_after_load.png -> 200
+2026-10-22 14:36:48,961 - DEBUG - [global] _api_put: PUT debug/DragStar/profiles_Dungeon_blessed_after_load.png -> 201 (174160 bytes)
+2026-10-22 14:36:49,494 - DEBUG - [global] _api_put: PUT debug/Roxpool/profiles_Dungeon_blessed_after_load.png -> 409 (174160 bytes)
+2026-10-22 14:36:49,494 - WARNING - [global] _api_put: PUT failed body: {"message":"is at 911b72ee8057e430ef51e2a2a5701ef65e86662f but expected 5b3bfa0513b2c052434fda137770c8c11c6bc367","documentation_url":"https://docs.github.com/rest/repos/contents#create-or-update-file
+2026-10-22 14:36:49,776 - DEBUG - [global] _api_put: GET debug/DragStar/profiles_Dungeon_blessed_after_Ур_75.png -> 404
+2026-10-22 14:36:50,372 - DEBUG - [global] _api_put: GET debug/Roxpool/profiles_Dungeon_blessed_after_Ур_75.png -> 200
+2026-10-22 14:36:51,924 - DEBUG - [global] _api_put: PUT debug/DragStar/profiles_Dungeon_blessed_after_Ур_75.png -> 201 (155062 bytes)
+2026-10-22 14:36:51,926 - DEBUG - [global] log_uploader: STEP 2 (PNGs) -> 2/2 (удалено с диска: 2)
