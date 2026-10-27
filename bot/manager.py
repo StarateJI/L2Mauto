@@ -1,0 +1,72 @@
+import asyncio
+import traceback
+from bot.clogger import log
+
+class BotManager:
+    def __init__(self):
+        self.bots = {}  # {window_nick: bot}
+
+    def get_bot(self, window_nick):
+        return self.bots.get(window_nick)
+
+    def is_running(self, window_nick):
+        bot = self.get_bot(window_nick)
+        if not bot:
+            return False
+        return getattr(bot, "running", False)
+
+    async def start_bot(self, bot_class, window_nick, window_info, settings, **kwargs):
+        if window_nick in self.bots:
+            log(f"Бот {window_nick} уже запущен, повторный запуск пропущен", level="WARNING")  # <- FIX
+            return
+
+        bot = bot_class({window_nick: window_info}, settings=settings, **kwargs)
+        bot.window_nick = window_nick
+        bot.running = True
+        self.bots[window_nick] = bot
+        bot._task = asyncio.create_task(self._run_bot(bot))
+
+    async def _graceful_stop(self, bot):
+        """Останавливает бота ровно один раз, откуда бы ни позвали."""
+        if getattr(bot, "_stopped", False):
+            return
+        bot._stopped = True
+        try:
+            await bot.on_stop()
+        except Exception as e:
+            log(f"Ошибка при остановке {bot.window_nick}: {e}", level="ERROR")
+
+    async def _run_bot(self, bot):
+        try:
+            await bot.on_start()  # await main_loop
+        except asyncio.CancelledError:
+            pass
+        except Exception as e:
+            log(f"Бот {bot.window_nick} умер: {e}\n{traceback.format_exc()}", level="ERROR")
+            await self._graceful_stop(bot)  # <- FIX: ошибки уборки не глотаем молча
+        finally:
+            bot.running = False
+            bot._task = None
+            if self.bots.get(bot.window_nick) is bot:  # <- FIX: выселяем только СЕБЯ, не тёзку
+                self.bots.pop(bot.window_nick, None)
+
+    async def stop_bot(self, window_nick):
+        bot = self.get_bot(window_nick)
+        if not bot:
+            return
+
+        task = getattr(bot, "_task", None)
+        if task is not None:
+            task.cancel()
+            try:
+                await task  # <- FIX: ждём, пока рабочий цикл реально закончится
+            except asyncio.CancelledError:
+                pass
+            except Exception:
+                pass  # уже залогировано в _run_bot
+        await self._graceful_stop(bot)  # <- FIX: уборка — после выселения, и ровно один раз
+
+        bot.running = False
+        bot._task = None
+        if self.bots.get(window_nick) is bot:  # <- FIX
+            self.bots.pop(window_nick, None)

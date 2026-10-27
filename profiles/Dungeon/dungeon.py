@@ -1,0 +1,1035 @@
+from profiles.event_driven import EventDrivenProfile
+from bot.methods.game import PartyDungeon
+from bot.events.enums import MonitorType
+from bot.clogger import log
+import asyncio
+import os
+
+import mss
+import numpy as np
+import cv2
+
+# ── Ленивый импорт pytesseract ────
+_pytesseract = None
+
+
+def _get_pytesseract():
+    global _pytesseract
+    if _pytesseract is not None:
+        return _pytesseract
+    try:
+        import pytesseract as _pt
+        for cand in (r"C:\Program Files\Tesseract-OCR\tesseract.exe",
+                     r"C:\Program Files (x86)\Tesseract-OCR\tesseract.exe",
+                     r"C:\Tesseract-OCR\tesseract.exe"):
+            if os.path.exists(cand):
+                _pt.pytesseract.tesseract_cmd = cand
+                break
+        _pytesseract = _pt
+        return _pytesseract
+    except ImportError:
+        log("Данги: pytesseract не установлен", level="WARNING")
+        return None
+    except Exception as e:
+        log(f"Данги: pytesseract init failed: {e}", level="WARNING")
+        return None
+
+
+try:
+    _sct = mss.mss()
+except AttributeError:
+    _sct = mss.MSS()
+
+
+class Dungeon(EventDrivenProfile):
+
+    EVENT_HANDLERS = {
+        "death": "_handle_death",
+    }
+
+    def __init__(self, window_info, settings=None, **kwargs):
+        self.dungeon_type = kwargs.pop("dungeon_type", "Пати данж")
+        super().__init__(window_info, settings=settings, **kwargs)
+
+    def profile_version(self):
+        return "1.0.0"
+
+    def profile_name(self):
+        return "Party Dungeon"
+
+    async def _handle_death(self):
+        log("_Анлука, помер во время пати данжа. оффаюсь", self.window_id)
+
+    async def main_loop(self):
+        try:
+            if self.dungeon_type == "Благословенная Земля":
+                result = await self._blessed_land_loop()
+            elif self.dungeon_type == "Разоренный Замок":
+                result = await self._ruined_castle_loop()
+            elif self.dungeon_type == "Остров Неистовства":
+                result = await self._island_of_fury_loop()
+            else:
+                result = await self._party_dungeon_loop()
+        finally:
+            # Залить логи в bot-logs (как после аука) — чтобы видеть Данги OCR
+            try:
+                from bot.log_uploader import upload_run_logs
+                import asyncio as _aio
+                _aio.get_event_loop().run_in_executor(
+                    None, upload_run_logs, self.window_id, 0, None
+                )
+            except Exception:
+                pass
+        return result
+
+    # ── Утилиты захвата ──
+    def _grab_window_rect(self, wx, wy, x_rel, y_rel, w, h):
+        monitor = {"left": wx + x_rel, "top": wy + y_rel, "width": w, "height": h}
+        try:
+            shot = _sct.grab(monitor)
+            arr = np.array(shot)
+            return cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
+        except Exception:
+            try:
+                local_sct = mss.mss()
+                shot = local_sct.grab(monitor)
+                arr = np.array(shot)
+                return cv2.cvtColor(arr, cv2.COLOR_BGRA2BGR)
+            except Exception:
+                return None
+
+    def _save_debug(self, name, img):
+        try:
+            if img is None:
+                return False
+            out_dir = os.path.dirname(os.path.abspath(__file__))
+            path = os.path.join(out_dir, name)
+            ok, buf = cv2.imencode(".png", img)
+            if not ok:
+                return False
+            with open(path, "wb") as f:
+                f.write(buf.tobytes())
+            log(f"Данги: сохранён {name} -> {path}", self.window_id)
+            return True
+        except Exception as e:
+            log(f"Данги: не удалось сохранить {name}: {e}", self.window_id, level="WARNING")
+            return False
+
+    def _ocr_find_text(self, gray_img, needles):
+        pt = _get_pytesseract()
+        if pt is None or gray_img is None:
+            return False, 0
+        h, w = gray_img.shape[:2]
+        # Пробуем несколько конфигураций OCR — после ребута ПК tesseract
+        # стал плохо читать мелкий текст 220×146. Разные psm + resize дают
+        # разный результат. Берём первый который найдёт needle.
+        configs = [
+            ("--psm 11", 4),   # sparse text — лучше для списков, resize x4
+            ("--psm 6", 4),    # uniform block, resize x4 (старый вариант с x2)
+            ("--psm 12", 4),   # sparse text + OSD
+            ("--psm 3", 4),    # auto, resize x4
+        ]
+        for psm, scale in configs:
+            try:
+                big = cv2.resize(gray_img, (w * scale, h * scale),
+                                 interpolation=cv2.INTER_CUBIC)
+                _, thresh = cv2.threshold(big, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+                text = pt.image_to_string(thresh, lang="rus+eng", config=psm).lower()
+                text_oneline = " | ".join(text.split())
+                log(f"Данги OCR [{psm}]: '{text_oneline[:150]}'", self.window_id)
+                for n in needles:
+                    if n in text:
+                        data = pt.image_to_data(thresh, lang="rus+eng", config=psm,
+                                                output_type=pt.Output.DICT)
+                        for i, word in enumerate(data["text"]):
+                            if n in word.lower():
+                                y_orig = data["top"][i] // scale + data["height"][i] // (scale * 2)
+                                return True, y_orig
+                        return True, h // 2
+            except Exception as e:
+                log(f"Данги: OCR {psm} ошибка: {e}", level="DEBUG")
+                continue
+        return False, 0
+
+    async def _blessed_land_loop(self):
+        """
+        Благословенная Земля — одиночный данж.
+        1. Выйти из сна (_wake_up)
+        2. Открыть меню → Подземелья
+        3. Найти "Благословенная Земля" через OCR (скролл)
+        4. Кликнуть → проверить время доступа
+        5. Нажать "Вход"
+        6. Кликнуть по стрелке Ур.75 (x=65.2%, y=73.3%)
+        7. Проверить БЕЛЫЙ ЭКРАН = загрузка данжа
+        8. Ждать 8 сек → energo.turn_on() (сон)
+        """
+        window_id = self.window_id
+        try:
+            game = PartyDungeon(self)
+            window = self.window_info[window_id]
+            wx, wy = window["Position"]
+            ww, wh = window["Width"], window["Height"]
+
+            log(f"Данги: окно wx={wx} wy={wy} {ww}x{wh}", window_id)
+
+            # Очистка старых debug PNG от прошлых прогонов (как в auction.py)
+            try:
+                out_dir = os.path.dirname(os.path.abspath(__file__))
+                for fname in os.listdir(out_dir):
+                    if fname.startswith("blessed_") and fname.endswith(".png"):
+                        try:
+                            os.remove(os.path.join(out_dir, fname))
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+            # 1. Выйти из сна
+            await self._wake_up(max_attempts=3)
+
+            # 2. Открыть меню → Подземелья
+            if not await game.wait_and_click("main_menu_gui", timeout=7):
+                log("Данги: не открыл главное меню", window_id)
+                return False
+            await asyncio.sleep(1)
+
+            if not await game.wait_and_click("dungeon_button_menu", timeout=5):
+                log("Данги: не нашёл кнопку подземелий", window_id)
+                await game.wait_and_click("main_menu_gui", timeout=2)
+                return False
+            await asyncio.sleep(2)
+            log("Данги: меню подземелий открыто", window_id)
+
+            # Скриншот после открытия
+            menu_shot = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if menu_shot is not None:
+                self._save_debug("blessed_menu_opened.png", menu_shot)
+
+            # 3. Зона списка данжей
+            list_x_rel = 0
+            list_y_rel = int(wh * 0.20)
+            list_w = int(ww * 0.55)
+            list_h = int(wh * 0.65)
+            scroll_center = (list_x_rel + list_w // 2, list_y_rel + list_h // 2)
+
+            found = False
+            click_x_rel, click_y_rel = 0, 0
+            scene_bgr = None
+
+            ocr_needles = [
+                "земля", "земл", "благословенн", "благословен",
+                "благослов", "благ", "blessed", "bless",
+            ]
+
+            MAX_SCROLL_ATTEMPTS = 15
+            for scroll_attempt in range(MAX_SCROLL_ATTEMPTS):
+                scene_bgr = self._grab_window_rect(wx, wy, list_x_rel, list_y_rel, list_w, list_h)
+                if scene_bgr is None:
+                    await self.mouse.wheel(self.window_info, [scroll_center],
+                                           direction="down", times=5)
+                    await asyncio.sleep(0.05)
+                    continue
+
+                scene_gray = cv2.cvtColor(scene_bgr, cv2.COLOR_BGR2GRAY)
+
+                if scroll_attempt % 3 == 0:
+                    self._save_debug(f"blessed_scroll_{scroll_attempt:02d}.png", scene_bgr)
+
+                ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
+
+                log(f"Данги: попытка {scroll_attempt+1}/{MAX_SCROLL_ATTEMPTS} — "
+                    f"OCR={'да' if ocr_found else 'нет'}", window_id, level="DEBUG")
+
+                if ocr_found:
+                    # Если OCR нашёл но текст в самом низу (виден краешек)
+                    if ocr_y > int(list_h * 0.85):
+                        log(f"Данги: OCR нашёл но в самом низу (ocr_y={ocr_y}, "
+                            f"list_h={list_h}) — прокручиваю ещё", window_id, level="DEBUG")
+                        await self.mouse.wheel(self.window_info, [scroll_center],
+                                               direction="down", times=3)
+                        await asyncio.sleep(0.8)
+                        scene_bgr = self._grab_window_rect(wx, wy, list_x_rel, list_y_rel, list_w, list_h)
+                        if scene_bgr is not None:
+                            scene_gray = cv2.cvtColor(scene_bgr, cv2.COLOR_BGR2GRAY)
+                            ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
+                            log(f"Данги: после прокрутки — OCR={'да' if ocr_found else 'нет'} ocr_y={ocr_y}",
+                                window_id, level="DEBUG")
+                    if ocr_found:
+                        click_x_rel = list_x_rel + int(list_w * 0.15)
+                        click_y_rel = list_y_rel + min(max(ocr_y, 10), list_h - 10)
+                        found = True
+                        log(f"Данги: найден через OCR ({click_x_rel},{click_y_rel})", window_id)
+                        self._save_debug("blessed_found_ocr.png", scene_bgr)
+                        break
+
+                await self.mouse.wheel(self.window_info, [scroll_center],
+                                       direction="down", times=5)
+                await asyncio.sleep(0.05)
+
+            if not found:
+                if scene_bgr is not None:
+                    self._save_debug("blessed_not_found.png", scene_bgr)
+                log("Данги: 'Благословенная Земля' не найдена", window_id, level="WARNING")
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+                await asyncio.sleep(1)
+                if not await self.energo.is_on():
+                    await self.energo.turn_on()
+                    await asyncio.sleep(1)
+                return False
+
+            # 4. Кликнуть по строке → проверить время доступа
+            log(f"Данги: клик по строке ({click_x_rel},{click_y_rel})", window_id)
+            await self.mouse.click(self.window_info, click_x_rel, click_y_rel)
+            await asyncio.sleep(1.5)
+            log("Данги: кликнул, проверяю время доступа", window_id)
+
+            # Скриншот после клика
+            after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if after_click is not None:
+                self._save_debug("blessed_after_dungeon_click.png", after_click)
+
+            # Проверка времени доступа
+            time_zone = self._grab_window_rect(wx, wy,
+                                                int(ww * 0.45), int(wh * 0.55),
+                                                int(ww * 0.50), int(wh * 0.13))
+            if time_zone is not None:
+                self._save_debug("blessed_time_check.png", time_zone)
+                b_tz, g_tz, r_tz = cv2.split(time_zone)
+                red_mask = (r_tz > 180) & (g_tz < 80) & (b_tz < 80)
+                red_count = int(np.sum(red_mask))
+                white_mask = (r_tz > 180) & (g_tz > 180) & (b_tz > 180)
+                white_count = int(np.sum(white_mask))
+
+                if red_count > 20 and white_count < 10:
+                    log(f"Данги: время доступа = 0 — сегодня уже был, усыпляю", window_id, level="WARNING")
+                    await game.wait_and_click("npc_global_quit_button", timeout=2)
+                    await asyncio.sleep(1)
+                    if not await self.energo.is_on():
+                        await self.energo.turn_on()
+                        await asyncio.sleep(1)
+                    return True
+                else:
+                    log(f"Данги: время доступа есть — иду в данж", window_id)
+            else:
+                log("Данги: не удалось снять зону времени доступа", window_id, level="WARNING")
+
+            # 5. Нажать "Вход"
+            await asyncio.sleep(1)
+            await self.mouse.click(self.window_info, int(ww * 0.85), int(wh * 0.90))
+            await asyncio.sleep(2)
+            log("Данги: нажал Вход", window_id)
+
+            # Скриншот окна выбора уровня
+            level_window = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if level_window is not None:
+                self._save_debug("blessed_level_window.png", level_window)
+
+            # 6. Кликнуть по стрелке последнего открытого уровня.
+            # Благ Земля: определяем последний открытый по яркости (как Замок/Остров).
+            LEVELS_Y = [
+                ("Ур.75", 0.733),
+                ("Ур.70", 0.649),
+                ("Ур.60", 0.551),
+                ("Ур.55", 0.462),
+                ("Ур.50", 0.373),
+                ("Ур.40", 0.284),
+                ("Ур.30", 0.141),
+            ]
+            ARROW_X_PCT = 0.652
+
+            # Определяем открытые уровни по яркости
+            open_levels = []
+            for level_name, level_y_pct in LEVELS_Y:
+                ax = int(ww * ARROW_X_PCT)
+                ay = int(wh * level_y_pct)
+                arrow_zone = self._grab_window_rect(wx, wy, ax - 15, ay - 10, 30, 20)
+                if arrow_zone is not None:
+                    gray = cv2.cvtColor(arrow_zone, cv2.COLOR_BGR2GRAY)
+                    mean_brightness = float(gray.mean())
+                    is_open = mean_brightness > 22
+                    log(f"Данги: {level_name} mean={mean_brightness:.0f} "
+                        f"{'ОТКРЫТ' if is_open else 'закрыт'}", window_id)
+                    if is_open:
+                        open_levels.append((level_name, level_y_pct))
+                else:
+                    open_levels.append((level_name, level_y_pct))
+
+            if not open_levels:
+                log(f"Данги: нет открытых уровней", window_id, level="WARNING")
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+                return False
+
+            # Кликаем последний открытый (open_levels[0] — сверху вниз, первый = последний)
+            target_level = open_levels[0]
+            log(f"Данги: кликаю последний открытый = {target_level[0]}", window_id)
+
+            level_name, level_y_pct = target_level
+            import random as _rnd
+            rx = _rnd.randint(-3, 3)
+            ry = _rnd.randint(-2, 2)
+            arrow_x = int(ww * ARROW_X_PCT) + rx
+            arrow_y = int(wh * level_y_pct) + ry
+
+            await self._activate()
+            await asyncio.sleep(0.3)
+
+            log(f"Данги: клик {level_name} ({arrow_x},{arrow_y}) offset=({rx},{ry})", window_id)
+            await self.mouse.click(self.window_info, arrow_x, arrow_y)
+            await asyncio.sleep(5)
+
+            after_click = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            arrow_clicked = False
+            if after_click is not None:
+                self._save_debug(f"blessed_after_{level_name.replace('.', '_')}.png", after_click)
+                gray = cv2.cvtColor(after_click, cv2.COLOR_BGR2GRAY)
+                mean_brightness = float(gray.mean())
+
+                if mean_brightness > 60:
+                    log(f"Данги: светлый экран (mean={mean_brightness:.0f}) — "
+                        f"данж запущен через {level_name}", window_id)
+                    arrow_clicked = True
+                else:
+                    log(f"Данги: окно ещё открыто (mean={mean_brightness:.0f}) — "
+                        f"{level_name} не сработал", window_id, level="WARNING")
+
+            if not arrow_clicked:
+                log("Данги: не смог кликнуть по стрелке", window_id, level="WARNING")
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+                return False
+
+            # 7. Данж запущен — ждём 8 сек и усыпляем
+            log("Данги: данж запущен, жду 8 сек на загрузку", window_id)
+            await asyncio.sleep(8)
+
+            after_load = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if after_load is not None:
+                self._save_debug("blessed_after_load.png", after_load)
+
+            # Усыпляем с retry 3 раза
+            if not await self.energo.is_on():
+                for attempt in range(3):
+                    log(f"Данги: попытка усыпления {attempt+1}/3", window_id)
+                    await self.energo.turn_on()
+                    await asyncio.sleep(2)
+                    if await self.energo.is_on():
+                        log(f"Данги: уснул с попытки {attempt+1}", window_id)
+                        break
+                    await asyncio.sleep(2)
+            else:
+                log("Данги: уже в энергорежиме", window_id)
+
+            log("Данги: Благословенная Земля запущена, окно в сне", window_id)
+            return True
+
+        except asyncio.CancelledError:
+            log("Данги: остановлен вручную", window_id)
+            raise
+        except Exception as e:
+            log(f"Данги: непредвиденная ошибка: {e}", window_id, level="ERROR")
+            try:
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+            except Exception:
+                pass
+            return False
+
+    async def _ruined_castle_loop(self):
+        """
+        Разоренный Замок — одиночный данж. Логика как в Blessed Land:
+        1. Выйти из сна
+        2. Открыть меню → Подземелья
+        3. Найти «Разоренный Замок» через OCR (скролл)
+        4. Кликнуть → проверить время доступа
+        5. Нажать «Вход»
+        6. В окне уровней выбрать ПРЕДПОСЛЕДНИЙ открытый (не последний!)
+        7. Проверить БЕЛЫЙ ЭКРАН = загрузка
+        8. Ждать 8 сек → energo.turn_on() (сон)
+        """
+        window_id = self.window_id
+        try:
+            game = PartyDungeon(self)
+            window = self.window_info[window_id]
+            wx, wy = window["Position"]
+            ww, wh = window["Width"], window["Height"]
+
+            log(f"Данги: окно wx={wx} wy={wy} {ww}x{wh}", window_id)
+
+            # Очистка старых debug PNG
+            try:
+                out_dir = os.path.dirname(os.path.abspath(__file__))
+                for fname in os.listdir(out_dir):
+                    if fname.startswith("castle_") and fname.endswith(".png"):
+                        try:
+                            os.remove(os.path.join(out_dir, fname))
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+            # 1. Выйти из сна
+            await self._wake_up(max_attempts=3)
+
+            # 2. Открыть меню → Подземелья
+            if not await game.wait_and_click("main_menu_gui", timeout=7):
+                log("Данги: не открыл главное меню", window_id)
+                return False
+            await asyncio.sleep(1)
+
+            if not await game.wait_and_click("dungeon_button_menu", timeout=5):
+                log("Данги: не нашёл кнопку подземелий", window_id)
+                await game.wait_and_click("main_menu_gui", timeout=2)
+                return False
+            await asyncio.sleep(2)
+            log("Данги: меню подземелий открыто", window_id)
+
+            menu_shot = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if menu_shot is not None:
+                self._save_debug("castle_menu_opened.png", menu_shot)
+
+            # 3. Зона списка данжей
+            list_x_rel = 0
+            list_y_rel = int(wh * 0.20)
+            list_w = int(ww * 0.55)
+            list_h = int(wh * 0.65)
+            scroll_center = (list_x_rel + list_w // 2, list_y_rel + list_h // 2)
+
+            found = False
+            click_x_rel, click_y_rel = 0, 0
+            scene_bgr = None
+
+            ocr_needles = [
+                "разоренн", "разорен", "разор", "замок", "замка", "замом",
+                "замом", "замо", "зам", "ruined", "castle",
+            ]
+
+            MAX_SCROLL_ATTEMPTS = 15
+            for scroll_attempt in range(MAX_SCROLL_ATTEMPTS):
+                scene_bgr = self._grab_window_rect(wx, wy, list_x_rel, list_y_rel, list_w, list_h)
+                if scene_bgr is None:
+                    await self.mouse.wheel(self.window_info, [scroll_center],
+                                           direction="down", times=5)
+                    await asyncio.sleep(0.05)
+                    continue
+
+                scene_gray = cv2.cvtColor(scene_bgr, cv2.COLOR_BGR2GRAY)
+
+                if scroll_attempt % 3 == 0:
+                    self._save_debug(f"castle_scroll_{scroll_attempt:02d}.png", scene_bgr)
+
+                ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
+
+                log(f"Данги: Замок попытка {scroll_attempt+1}/{MAX_SCROLL_ATTEMPTS} — "
+                    f"OCR={'да' if ocr_found else 'нет'}", window_id, level="DEBUG")
+
+                if ocr_found:
+                    if ocr_y > int(list_h * 0.85):
+                        log(f"Данги: OCR нашёл но в самом низу — прокручиваю ещё",
+                            window_id, level="DEBUG")
+                        await self.mouse.wheel(self.window_info, [scroll_center],
+                                               direction="down", times=3)
+                        await asyncio.sleep(0.8)
+                        scene_bgr = self._grab_window_rect(wx, wy, list_x_rel, list_y_rel, list_w, list_h)
+                        if scene_bgr is not None:
+                            scene_gray = cv2.cvtColor(scene_bgr, cv2.COLOR_BGR2GRAY)
+                            ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
+                    if ocr_found:
+                        click_x_rel = list_x_rel + int(list_w * 0.15)
+                        click_y_rel = list_y_rel + min(max(ocr_y, 10), list_h - 10)
+                        found = True
+                        log(f"Данги: Замок найден через OCR ({click_x_rel},{click_y_rel})", window_id)
+                        self._save_debug("castle_found_ocr.png", scene_bgr)
+                        break
+
+                await self.mouse.wheel(self.window_info, [scroll_center],
+                                       direction="down", times=5)
+                await asyncio.sleep(0.05)
+
+            if not found:
+                if scene_bgr is not None:
+                    self._save_debug("castle_not_found.png", scene_bgr)
+                log("Данги: 'Разоренный Замок' не найден", window_id, level="WARNING")
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+                await asyncio.sleep(1)
+                if not await self.energo.is_on():
+                    await self.energo.turn_on()
+                    await asyncio.sleep(1)
+                return False
+
+            # 4. Клик по строке Замка
+            log(f"Данги: клик по строке Замка ({click_x_rel},{click_y_rel})", window_id)
+            await self.mouse.click(self.window_info, click_x_rel, click_y_rel)
+            await asyncio.sleep(2)
+
+            # 5. Проверка времени доступа (как в blessed)
+            time_zone = self._grab_window_rect(wx, wy,
+                                                int(ww * 0.55), int(wh * 0.3),
+                                                int(ww * 0.4), int(wh * 0.15))
+            if time_zone is not None:
+                self._save_debug("castle_time_check.png", time_zone)
+                time_gray = cv2.cvtColor(time_zone, cv2.COLOR_BGR2GRAY)
+                time_text = self._ocr_find_text(time_gray, ["0:00", "0 ч", "0мин"])
+                if time_text[0]:
+                    log("Данги: время доступа = 0 — сегодня уже был, усыпляю", window_id, level="WARNING")
+                    await game.wait_and_click("npc_global_quit_button", timeout=2)
+                    await asyncio.sleep(1)
+                    if not await self.energo.is_on():
+                        await self.energo.turn_on()
+                    return False
+
+            # 6. Нажать «Вход» — по координатам (как в Blessed Land, без CBT)
+            # Кнопка «Вход» — X~83%, Y~89% (по скрину 2560×1440: 2127,1280)
+            await asyncio.sleep(1)
+            await self.mouse.click(self.window_info, int(ww * 0.83), int(wh * 0.89))
+            await asyncio.sleep(2)
+            log("Данги: нажал Вход (координаты)", window_id)
+
+            # 7. Окно выбора уровня — выбрать ПРЕДПОСЛЕДНИЙ открытый.
+            # Уровни Замка: Ур.40, 50, 60, 70, 80, 82, 85 (7 штук).
+            # Скрин 400×225 очень тёмный (средняя яркость ~16).
+            # Стрелки на X=261 (0.652). Уровни по Y с шагом ~20px.
+            # Порог открытости: 15 (не 50/100 — тёмная тема UI).
+            level_window = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if level_window is not None:
+                self._save_debug("castle_level_window.png", level_window)
+
+            # Y координаты уровней — ОДИНАКОВЫЕ с Островом (layout 1в1)
+            # Ур.40=0.249, Ур.50=0.332, Ур.55=0.413, Ур.60=0.495,
+            # Ур.70=0.578, Ур.78=0.659, Ур.80=0.741, Ур.82=0.822, Ур.85=0.905
+            LEVELS_Y_REVERSED = [
+                ("Ур.85", 0.905),
+                ("Ур.82", 0.822),
+                ("Ур.80", 0.741),
+                ("Ур.78", 0.659),
+                ("Ур.70", 0.578),
+                ("Ур.60", 0.495),
+                ("Ур.55", 0.413),
+                ("Ур.50", 0.332),
+                ("Ур.40", 0.249),
+            ]
+            ARROW_X_PCT = 0.652  # 261px на 400px ширине
+
+            # Определяем какие уровни открыты (по яркости зоны стрелки)
+            open_levels = []
+            for level_name, level_y_pct in LEVELS_Y_REVERSED:
+                ax = int(ww * ARROW_X_PCT)
+                ay = int(wh * level_y_pct)
+                # Зона стрелки 30×20
+                arrow_zone = self._grab_window_rect(wx, wy, ax - 15, ay - 10, 30, 20)
+                if arrow_zone is not None:
+                    gray = cv2.cvtColor(arrow_zone, cv2.COLOR_BGR2GRAY)
+                    mean_brightness = float(gray.mean())
+                    # Порог 15 — скрин тёмный (средняя яркость ~16),
+                    # открытые стрелки чуть ярче фона
+                    is_open = mean_brightness > 22
+                    log(f"Данги: {level_name} mean={mean_brightness:.0f} "
+                        f"{'ОТКРЫТ' if is_open else 'закрыт'}", window_id)
+                    if is_open:
+                        open_levels.append((level_name, level_y_pct))
+                else:
+                    open_levels.append((level_name, level_y_pct))
+
+            if len(open_levels) < 2:
+                log(f"Данги: открытых уровней < 2 ({len(open_levels)}) — не из чего выбирать",
+                    window_id, level="WARNING")
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+                return False
+
+            # open_levels[0] = последний открытый (нижний) — ПРОПУСКАЕМ
+            # open_levels[1] = предпоследний открытый — КЛИКАЕМ (один, без fallback)
+            last_open = open_levels[0]
+            target_level = open_levels[1]
+            log(f"Данги: последний открытый = {last_open[0]} (пропускаю), "
+                f"кликаю предпоследний = {target_level[0]}", window_id)
+
+            level_name, level_y_pct = target_level
+            import random as _rnd
+            rx = _rnd.randint(-3, 3)
+            ry = _rnd.randint(-2, 2)
+            arrow_x = int(ww * ARROW_X_PCT) + rx
+            arrow_y = int(wh * level_y_pct) + ry
+
+            await self._activate()
+            await asyncio.sleep(0.3)
+
+            log(f"Данги: клик {level_name} ({arrow_x},{arrow_y}) offset=({rx},{ry})", window_id)
+            await self.mouse.click(self.window_info, arrow_x, arrow_y)
+            # Ждём 10 сек — данж запускается, персонаж улетает.
+            # НЕ проверяем белый экран — в Замке он не белый (mean=47).
+            # НЕ кликаем npc_global_quit_button — это открывает меню иконок.
+            await asyncio.sleep(10)
+            log(f"Данги: Замок запущен через {level_name}", window_id)
+
+            # 8. Данж запущен — ждём 8 сек и усыпляем
+            log("Данги: Замок запущен, жду 8 сек на загрузку", window_id)
+            await asyncio.sleep(8)
+
+            after_load = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if after_load is not None:
+                self._save_debug("castle_after_load.png", after_load)
+
+            if not await self.energo.is_on():
+                await self.energo.turn_on()
+                await asyncio.sleep(1)
+            log("Данги: Разоренный Замок запущен, окно в сне", window_id)
+            return True
+
+        except asyncio.CancelledError:
+            log("Данги: остановлен вручную", window_id)
+            raise
+        except Exception as e:
+            log(f"Данги: непредвиденная ошибка Замка: {e}", window_id, level="ERROR")
+            try:
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+            except Exception:
+                pass
+            return False
+
+    async def _island_of_fury_loop(self):
+        """
+        Остров Неистовства — одиночный данж. Логика 1в1 как Замок:
+        1. Выйти из сна
+        2. Открыть меню → Подземелья
+        3. Найти «Остров Неистовства» через OCR (скролл)
+        4. Кликнуть → проверить время доступа
+        5. Нажать «Вход» (по координатам, как в Замке)
+        6. В окне уровней выбрать ПРЕДПОСЛЕДНИЙ открытый
+        7. Проверить БЕЛЫЙ ЭКРАН = загрузка
+        8. Ждать 8 сек → energo.turn_on() (сон)
+        """
+        window_id = self.window_id
+        try:
+            game = PartyDungeon(self)
+            window = self.window_info[window_id]
+            wx, wy = window["Position"]
+            ww, wh = window["Width"], window["Height"]
+
+            log(f"Данги: окно wx={wx} wy={wy} {ww}x{wh}", window_id)
+
+            # Очистка старых debug PNG
+            try:
+                out_dir = os.path.dirname(os.path.abspath(__file__))
+                for fname in os.listdir(out_dir):
+                    if fname.startswith("island_") and fname.endswith(".png"):
+                        try:
+                            os.remove(os.path.join(out_dir, fname))
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+            # 1. Выйти из сна
+            await self._wake_up(max_attempts=3)
+
+            # 2. Открыть меню → Подземелья
+            if not await game.wait_and_click("main_menu_gui", timeout=7):
+                log("Данги: не открыл главное меню", window_id)
+                return False
+            await asyncio.sleep(1)
+
+            if not await game.wait_and_click("dungeon_button_menu", timeout=5):
+                log("Данги: не нашёл кнопку подземелий", window_id)
+                await game.wait_and_click("main_menu_gui", timeout=2)
+                return False
+            await asyncio.sleep(2)
+            log("Данги: меню подземелий открыто", window_id)
+
+            menu_shot = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if menu_shot is not None:
+                self._save_debug("island_menu_opened.png", menu_shot)
+
+            # 3. Зона списка данжей
+            list_x_rel = 0
+            list_y_rel = int(wh * 0.20)
+            list_w = int(ww * 0.55)
+            list_h = int(wh * 0.65)
+            scroll_center = (list_x_rel + list_w // 2, list_y_rel + list_h // 2)
+
+            found = False
+            click_x_rel, click_y_rel = 0, 0
+            scene_bgr = None
+
+            ocr_needles = [
+                "неистовства", "неистов", "неист", "остров", "остр",
+                "ост", "island", "fury",
+            ]
+
+            MAX_SCROLL_ATTEMPTS = 15
+            for scroll_attempt in range(MAX_SCROLL_ATTEMPTS):
+                scene_bgr = self._grab_window_rect(wx, wy, list_x_rel, list_y_rel, list_w, list_h)
+                if scene_bgr is None:
+                    await self.mouse.wheel(self.window_info, [scroll_center],
+                                           direction="down", times=5)
+                    await asyncio.sleep(0.05)
+                    continue
+
+                scene_gray = cv2.cvtColor(scene_bgr, cv2.COLOR_BGR2GRAY)
+
+                if scroll_attempt % 3 == 0:
+                    self._save_debug(f"island_scroll_{scroll_attempt:02d}.png", scene_bgr)
+
+                ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
+
+                log(f"Данги: Остров попытка {scroll_attempt+1}/{MAX_SCROLL_ATTEMPTS} — "
+                    f"OCR={'да' if ocr_found else 'нет'}", window_id, level="DEBUG")
+
+                if ocr_found:
+                    if ocr_y > int(list_h * 0.85):
+                        log(f"Данги: OCR нашёл но в самом низу — прокручиваю ещё",
+                            window_id, level="DEBUG")
+                        await self.mouse.wheel(self.window_info, [scroll_center],
+                                               direction="down", times=3)
+                        await asyncio.sleep(0.8)
+                        scene_bgr = self._grab_window_rect(wx, wy, list_x_rel, list_y_rel, list_w, list_h)
+                        if scene_bgr is not None:
+                            scene_gray = cv2.cvtColor(scene_bgr, cv2.COLOR_BGR2GRAY)
+                            ocr_found, ocr_y = self._ocr_find_text(scene_gray, ocr_needles)
+                    if ocr_found:
+                        click_x_rel = list_x_rel + int(list_w * 0.15)
+                        click_y_rel = list_y_rel + min(max(ocr_y, 10), list_h - 10)
+                        found = True
+                        log(f"Данги: Остров найден через OCR ({click_x_rel},{click_y_rel})", window_id)
+                        self._save_debug("island_found_ocr.png", scene_bgr)
+                        break
+
+                await self.mouse.wheel(self.window_info, [scroll_center],
+                                       direction="down", times=5)
+                await asyncio.sleep(0.05)
+
+            if not found:
+                if scene_bgr is not None:
+                    self._save_debug("island_not_found.png", scene_bgr)
+                log("Данги: 'Остров Неистовства' не найден", window_id, level="WARNING")
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+                await asyncio.sleep(1)
+                if not await self.energo.is_on():
+                    await self.energo.turn_on()
+                    await asyncio.sleep(1)
+                return False
+
+            # 4. Клик по строке Острова
+            log(f"Данги: клик по строке Острова ({click_x_rel},{click_y_rel})", window_id)
+            await self.mouse.click(self.window_info, click_x_rel, click_y_rel)
+            await asyncio.sleep(2)
+
+            # 5. Проверка времени доступа (как в Замке)
+            time_zone = self._grab_window_rect(wx, wy,
+                                                int(ww * 0.55), int(wh * 0.3),
+                                                int(ww * 0.4), int(wh * 0.15))
+            if time_zone is not None:
+                self._save_debug("island_time_check.png", time_zone)
+                time_gray = cv2.cvtColor(time_zone, cv2.COLOR_BGR2GRAY)
+                time_text = self._ocr_find_text(time_gray, ["0:00", "0 ч", "0мин"])
+                if time_text[0]:
+                    log("Данги: время доступа = 0 — сегодня уже был, усыпляю", window_id, level="WARNING")
+                    await game.wait_and_click("npc_global_quit_button", timeout=2)
+                    await asyncio.sleep(1)
+                    if not await self.energo.is_on():
+                        await self.energo.turn_on()
+                    return False
+
+            # 6. Нажать «Вход» — по координатам (как в Замке)
+            # Кнопка «Вход» — X~83%, Y~89%
+            await asyncio.sleep(1)
+            await self.mouse.click(self.window_info, int(ww * 0.83), int(wh * 0.89))
+            await asyncio.sleep(2)
+            log("Данги: нажал Вход (координаты)", window_id)
+
+            # 7. Окно выбора уровня — выбрать ПРЕДПОСЛЕДНИЙ открытый.
+            # Уровни Острова: Ур.40, 50, 55, 60, 70, 78, 80, 83, 85 (9 штук).
+            # Скрин 400×225 тёмный. Стрелки на X=261 (0.652).
+            # Порог открытости: 15 (тёмная тема UI).
+            level_window = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if level_window is not None:
+                self._save_debug("island_level_window.png", level_window)
+
+            LEVELS_Y_REVERSED = [
+                ("Ур.85", 0.905),
+                ("Ур.82", 0.822),
+                ("Ур.80", 0.741),
+                ("Ур.78", 0.659),
+                ("Ур.70", 0.578),
+                ("Ур.60", 0.495),
+                ("Ур.55", 0.413),
+                ("Ур.50", 0.332),
+                ("Ур.40", 0.249),
+            ]
+            ARROW_X_PCT = 0.652
+
+            open_levels = []
+            for level_name, level_y_pct in LEVELS_Y_REVERSED:
+                ax = int(ww * ARROW_X_PCT)
+                ay = int(wh * level_y_pct)
+                arrow_zone = self._grab_window_rect(wx, wy, ax - 15, ay - 10, 30, 20)
+                if arrow_zone is not None:
+                    gray = cv2.cvtColor(arrow_zone, cv2.COLOR_BGR2GRAY)
+                    mean_brightness = float(gray.mean())
+                    is_open = mean_brightness > 22
+                    log(f"Данги: {level_name} mean={mean_brightness:.0f} "
+                        f"{'ОТКРЫТ' if is_open else 'закрыт'}", window_id)
+                    if is_open:
+                        open_levels.append((level_name, level_y_pct))
+                else:
+                    open_levels.append((level_name, level_y_pct))
+
+            if len(open_levels) < 2:
+                log(f"Данги: открытых уровней < 2 ({len(open_levels)}) — не из чего выбирать",
+                    window_id, level="WARNING")
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+                return False
+
+            last_open = open_levels[0]
+            target_level = open_levels[1]
+            log(f"Данги: последний открытый = {last_open[0]} (пропускаю), "
+                f"кликаю предпоследний = {target_level[0]}", window_id)
+
+            level_name, level_y_pct = target_level
+            import random as _rnd
+            rx = _rnd.randint(-3, 3)
+            ry = _rnd.randint(-2, 2)
+            arrow_x = int(ww * ARROW_X_PCT) + rx
+            arrow_y = int(wh * level_y_pct) + ry
+
+            await self._activate()
+            await asyncio.sleep(0.3)
+
+            log(f"Данги: клик {level_name} ({arrow_x},{arrow_y}) offset=({rx},{ry})", window_id)
+            await self.mouse.click(self.window_info, arrow_x, arrow_y)
+            # Ждём 10 сек — данж запускается, персонаж улетает.
+            # НЕ проверяем белый экран — на Острове он не белый (mean=47).
+            # НЕ кликаем npc_global_quit_button — это открывает меню иконок.
+            await asyncio.sleep(10)
+            log(f"Данги: Остров запущен через {level_name}", window_id)
+
+            # 8. Данж запущен — ждём 8 сек и усыпляем
+            log("Данги: Остров запущен, жду 8 сек на загрузку", window_id)
+            await asyncio.sleep(8)
+
+            after_load = self._grab_window_rect(wx, wy, 0, 0, ww, wh)
+            if after_load is not None:
+                self._save_debug("island_after_load.png", after_load)
+
+            # Усыпляем окно. turn_on кликает по energo_mode_gui (13,132) —
+            # после загрузки данжа интерфейс изменился, клик попадает мимо
+            # (на иконку меню в правом верхнем). Используем turn_on но с
+            # проверкой — если is_on() уже True, не кликаем.
+            if not await self.energo.is_on():
+                await self.energo.turn_on()
+                await asyncio.sleep(1)
+                # Проверяем — если не уснул, пробуем ещё раз через свайп
+                if not await self.energo.is_on():
+                    log("Данги: энергорежим не включился с 1-й попытки, "
+                        "пробую через свайп", window_id, level="WARNING")
+                    await self.energo.turn_off(ignore=True)
+                    await asyncio.sleep(1)
+                    await self.energo.turn_on()
+                    await asyncio.sleep(1)
+            log("Данги: Остров Неистовства запущен, окно в сне", window_id)
+            return True
+
+        except asyncio.CancelledError:
+            log("Данги: остановлен вручную", window_id)
+            raise
+        except Exception as e:
+            log(f"Данги: непредвиденная ошибка Острова: {e}", window_id, level="ERROR")
+            try:
+                await game.wait_and_click("npc_global_quit_button", timeout=2)
+            except Exception:
+                pass
+            return False
+
+    async def _party_dungeon_loop(self):
+        window_id, window = self.window_id, self.window_info[self.window_id]
+        try:
+            rip, btn = await self.combat.is_dead()
+            if rip:
+                log("Окно сдохло, не обрабатываю.", window_id)
+                await self.combat.respawn()
+                await asyncio.sleep(5)
+                if self.settings.BUY_LOOT_RIP:
+                    await self.town.buy_loot()
+                return
+
+            flaged = False
+            energo = await self.energo.is_on()
+            if energo:
+                flaged = True
+                await asyncio.sleep(0.1)
+
+            await self.tp.safe_home()
+            await asyncio.sleep(1.5)
+            await self.tp.wait_arrived()
+            dungeon = PartyDungeon(self)
+            await dungeon.party_create()
+            await asyncio.sleep(0.5)
+            await dungeon.open_dungeon()
+            await asyncio.sleep(1.5)
+            xy = await dungeon.find_dungeon()
+            if not xy:
+                log("Не нашел данжик, выхожу", window_id)
+                await dungeon.wait_and_click("main_menu_gui")
+                await asyncio.sleep(1.8)
+                await dungeon.party_leave()
+
+                if self.settings.NEED_BACK_TO_SPOT_PARTY_DUNGEON:
+                    to_spot = await self.tp.to_random_spot(self.settings.SPOT_OT, self.settings.SPOT_DO)
+                    if to_spot:
+                        return True
+                    return False
+
+                if flaged:
+                    await self.energo.turn_on()
+                    return False
+
+            started = await dungeon.start_dungeon(xy)
+            if started:
+                await self.combat.toggle_autohunt()
+                to_back = await dungeon.no_limit()
+                self.events_checker.start_monitoring(window_id, self, monitors=[MonitorType.DEATH])
+                log(to_back, window_id)
+                while True:
+                    hunt = await self.combat.is_autohunt_on()
+                    log(hunt, window_id)
+                    if not hunt:
+                        self.events_checker.stop_monitoring(window_id)
+                        rip, btn = await self.combat.is_dead()
+                        if rip:
+                            log("Анлука, помер во время пати данжа. оффаюсь", window_id)
+                            return
+                        break
+                    await asyncio.sleep(3)
+
+                await asyncio.sleep(3)
+                rip, btn = await self.combat.is_dead()
+                if rip:
+                    log("Анлука, помер во время пати данжа. оффаюсь", window_id)
+                    return
+
+                log("Успешно пробежал пати данжик закуплюсь и оффаюсь", window_id)
+                if await self.energo.is_on():
+                    await self.energo.turn_off(ignore=True)
+                    await asyncio.sleep(1)
+                    self.notify_screenshot("Закачал пати данжик, закуплюсь и оффнусь =)")
+
+                await self.mouse.click(self.window_info, 200, 188)
+                await dungeon.to_start()
+                await dungeon.party_leave()
+
+                ok, in_town, npcs = await self.town.buy_in_shop()
+                log(f"ok={ok}, town={in_town}", window_id)
+
+                if self.settings.NEED_BACK_TO_SPOT_PARTY_DUNGEON:
+                    to_spot = await self.tp.to_random_spot(self.settings.SPOT_OT, self.settings.SPOT_DO)
+                    if to_spot:
+                        return True
+                    return False
+
+                if not await self.energo.is_on():
+                    await self.energo.turn_on()
+                    await asyncio.sleep(1)
+
+                if ok:
+                    return True
+                return False
+
+        except asyncio.CancelledError:
+            log("Профиль остановлен вручную", window_id)
+            raise
