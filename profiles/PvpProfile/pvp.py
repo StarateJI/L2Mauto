@@ -808,15 +808,23 @@ class PvPDodge(EventDrivenProfile):
                                                      monitors=self.get_monitors)
             return
 
-        # Без телепорта — просто включаем энерго и автоохоту на текущем месте.
+        # Без телепорта — просто включаем автоохоту на текущем месте.
+        # ВАЖНО: energo.turn_on() включает СОН (энергосбережение), а не бой.
+        # Если бот в сне — сначала turn_off (проснуться), потом автоохота.
         log("BACK_TO_SPOT_AFTER_PVP_ANSWER=False — остаюсь на месте, "
-            "включаю энерго + автоохоту (свиток не трачу)", window_id)
-        if not await self.energo.is_on():
-            await self.energo.turn_on()
-            await asyncio.sleep(1)
+            "включаю автоохоту (свиток не трачу)", window_id)
+        if await self.energo.is_on():
+            # Бот в энергосбережении — просыпаемся
+            log("Бот в энерго — просыпаюсь (turn_off)", window_id)
+            await self.energo.turn_off()
+            await asyncio.sleep(2)
+        # Теперь бот не в сне — можно кликать автоохоту
         if not await self.combat.is_autohunt_on():
+            log("Автоохота выключена — включаю", window_id)
             await self.combat.toggle_autohunt()
             await asyncio.sleep(0.5)
+        else:
+            log("Автоохота уже включена", window_id)
         self.runtime_data.current_state = BotState.COMBAT
         self.events_checker.start_monitoring(window_id, self, monitors=self.get_monitors)
         self.notify(NotifyLevel.WARNING, "Успешно завершил пвп (без тп на спот — свиток цел)")
