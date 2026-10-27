@@ -808,26 +808,67 @@ class PvPDodge(EventDrivenProfile):
                                                      monitors=self.get_monitors)
             return
 
-        # Без телепорта — просто включаем автоохоту на текущем месте.
-        # ВАЖНО: energo.turn_on() включает СОН (энергосбережение), а не бой.
-        # Если бот в сне — сначала turn_off (проснуться), потом автоохота.
+        # Без телепорта — включаем автоохоту на текущем месте и уходим в сон.
+        # Логика повторяет to_random_spot (teleport.py): toggle_autohunt →
+        # проверка → если не включилась, fallback через turn_off/turn_on.
         log("BACK_TO_SPOT_AFTER_PVP_ANSWER=False — остаюсь на месте, "
             "включаю автоохоту (свиток не трачу)", window_id)
+
+        async def _ah() -> bool:
+            """Проверить что автобой включён + уйти в сон (как в to_random_spot)."""
+            await asyncio.sleep(0.15)
+            await self.energo.turn_on()  # уходим в сон (автоохота работает в фоне)
+            await asyncio.sleep(0.5)
+            if await self.combat.is_autohunt_on():
+                log("Автобой включён, бот в энерго — ок", window_id)
+                return True
+            return False
+
+        # Шаг 1: просыпаемся (если были в сне) чтобы кликнуть автоохоту
         if await self.energo.is_on():
-            # Бот в энергосбережении — просыпаемся
-            log("Бот в энерго — просыпаюсь (turn_off)", window_id)
+            log("Бот в энерго — просыпаюсь чтобы включить автоохоту", window_id)
             await self.energo.turn_off()
             await asyncio.sleep(2)
-        # Теперь бот не в сне — можно кликать автоохоту
-        if not await self.combat.is_autohunt_on():
-            log("Автоохота выключена — включаю", window_id)
-            await self.combat.toggle_autohunt()
-            await asyncio.sleep(0.5)
-        else:
-            log("Автоохота уже включена", window_id)
-        self.runtime_data.current_state = BotState.COMBAT
+
+        # Шаг 2: включаем автоохоту (toggle без проверки — после PVP она точно выключена)
+        await self.combat.toggle_autohunt()
+        await asyncio.sleep(0.5)
+
+        # Шаг 3: проверка + уходим в сон
+        if await _ah():
+            self.runtime_data.current_state = BotState.COMBAT
+            self.events_checker.start_monitoring(window_id, self, monitors=self.get_monitors)
+            self.notify(NotifyLevel.WARNING, "Успешно завершил пвп (без тп на спот — свиток цел)")
+            return
+
+        # Шаг 4: fallback — автобой не включился, пробуем ещё раз
+        log("Автобой не включился с первого раза — fallback", window_id, level="WARNING")
+        rip, _ = await self.combat.is_dead()
+        if rip:
+            log("Сдох в момент включения автоохоты", window_id)
+            self.runtime_data.current_state = BotState.DEATH
+            self.events_checker.start_monitoring(window_id, self, monitors=self.get_monitors)
+            return
+
+        # Просыпаемся (если уснули) → ещё раз toggle → снова сон
+        if await self.energo.is_on():
+            await self.energo.turn_off()
+            await asyncio.sleep(3)
+        await self.combat.toggle_autohunt()
+        await asyncio.sleep(1)
+        if await _ah():
+            self.runtime_data.current_state = BotState.COMBAT
+            self.events_checker.start_monitoring(window_id, self, monitors=self.get_monitors)
+            self.notify(NotifyLevel.WARNING, "Успешно завершил пвп (fallback — без тп)")
+            return
+
+        # Совсем плохо — скриншот в ТГ
+        log("Не смог включить автобой после PVP", window_id, level="ERROR")
+        self.notify_screenshot(
+            "После PVP не смог включить автобой (без тп на спот).\n"
+            "Перезапусти окно вручную."
+        )
         self.events_checker.start_monitoring(window_id, self, monitors=self.get_monitors)
-        self.notify(NotifyLevel.WARNING, "Успешно завершил пвп (без тп на спот — свиток цел)")
 
     async def handle_auction(self):
         window_id, window = self.window_id, self.window_info[self.window_id]
