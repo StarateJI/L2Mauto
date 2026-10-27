@@ -19,16 +19,16 @@ VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.txt")
 # 1. raw.githubusercontent.com — оригинал (но кеширует ~5 мин)
 # 2. GitHub API с XOR-токеном — не кеширует, нет rate limit
 REPO_VERSION_URLS = [
-    "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/bot/version.txt",
-    "https://api.github.com/repos/StarateJI/L2Mauto/contents/bot/version.txt?ref=main",
+    "https://raw.githubusercontent.com/StarateJI/L2Mauto2/main/bot/version.txt",
+    "https://api.github.com/repos/StarateJI/L2Mauto2/contents/bot/version.txt?ref=main",
 ]
-REPO_ZIP = "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip"
+REPO_ZIP = "https://github.com/StarateJI/L2Mauto2/archive/refs/heads/main.zip"
 
 # Зеркала ZIP — если github.com не отвечает, пробуем другие.
 REPO_ZIP_MIRRORS = [
-    "https://github.com/StarateJI/L2Mauto/archive/refs/heads/main.zip",
-    "https://codeload.github.com/StarateJI/L2Mauto/zip/refs/heads/main",
-    "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto@main",
+    "https://github.com/StarateJI/L2Mauto2/archive/refs/heads/main.zip",
+    "https://codeload.github.com/StarateJI/L2Mauto2/zip/refs/heads/main",
+    "https://cdn.jsdelivr.net/gh/StarateJI/L2Mauto2@main",
 ]
 
 def get_my_version():
@@ -356,7 +356,7 @@ echo Step 3c: check YOLOv8 model... >> "{root_dir}\\apply_update.log"
 if not exist "{root_dir}\\bot\\models\\item_detector.pt" (
     echo WARNING: item_detector.pt not found! >> "{root_dir}\\apply_update.log"
     if not exist "{root_dir}\\bot\\models" mkdir "{root_dir}\\bot\\models"
-    powershell -Command "Invoke-WebRequest -Uri 'https://github.com/StarateJI/L2Mauto/raw/main/bot/models/item_detector.pt' -OutFile '{root_dir}\\bot\\models\\item_detector.pt'" >> "{root_dir}\\apply_update.log" 2>&1
+    powershell -Command "Invoke-WebRequest -Uri 'https://github.com/StarateJI/L2Mauto2/raw/main/bot/models/item_detector.pt' -OutFile '{root_dir}\\bot\\models\\item_detector.pt'" >> "{root_dir}\\apply_update.log" 2>&1
     if exist "{root_dir}\\bot\\models\\item_detector.pt" (
         echo item_detector.pt downloaded successfully. >> "{root_dir}\\apply_update.log"
     ) else (
@@ -370,10 +370,10 @@ REM ---- Шаг 3d: Проверяем шаблоны для поиска дан
 echo Step 3d: check dungeon templates... >> "{root_dir}\\apply_update.log"
 if not exist "{root_dir}\\profiles\\Dungeon\\blessed_zemlya.png" (
     if not exist "{root_dir}\\profiles\\Dungeon" mkdir "{root_dir}\\profiles\\Dungeon"
-    powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/StarateJI/L2Mauto/main/profiles/Dungeon/blessed_zemlya.png' -OutFile '{root_dir}\\profiles\\Dungeon\\blessed_zemlya.png'" >> "{root_dir}\\apply_update.log" 2>&1
+    powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/StarateJI/L2Mauto2/main/profiles/Dungeon/blessed_zemlya.png' -OutFile '{root_dir}\\profiles\\Dungeon\\blessed_zemlya.png'" >> "{root_dir}\\apply_update.log" 2>&1
 )
 if not exist "{root_dir}\\profiles\\Dungeon\\blessed_land_text.png" (
-    powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/StarateJI/L2Mauto/main/profiles/Dungeon/blessed_land_text.png' -OutFile '{root_dir}\\profiles\\Dungeon\\blessed_land_text.png'" >> "{root_dir}\\apply_update.log" 2>&1
+    powershell -Command "Invoke-WebRequest -Uri 'https://raw.githubusercontent.com/StarateJI/L2Mauto2/main/profiles/Dungeon/blessed_land_text.png' -OutFile '{root_dir}\\profiles\\Dungeon\\blessed_land_text.png'" >> "{root_dir}\\apply_update.log" 2>&1
 )
 echo Step 3d done. >> "{root_dir}\\apply_update.log"
 
@@ -507,7 +507,7 @@ def _fetch_remote_filetree() -> list:
     headers = {"Accept": "application/vnd.github+json"}
     if tok:
         headers["Authorization"] = f"token {tok}"
-    url = "https://api.github.com/repos/StarateJI/L2Mauto/git/trees/main?recursive=1"
+    url = "https://api.github.com/repos/StarateJI/L2Mauto2/git/trees/main?recursive=1"
     r = requests.get(url, timeout=15, headers=headers)
     r.raise_for_status()
     data = r.json()
@@ -543,7 +543,7 @@ def update():
         # без кеша). Оставил вызов для совместимости, но он ни на что не влияет.
         try:
             log("Обнова: purge кеша jsdelivr (для fallback raw URL)...", level="DEBUG")
-            purge_url = "https://purge.jsdelivr.net/gh/StarateJI/L2Mauto@main/"
+            purge_url = "https://purge.jsdelivr.net/gh/StarateJI/L2Mauto2@main/"
             r = requests.get(purge_url, timeout=10)
             log(f"Обнова: purge статус={r.status_code}", level="DEBUG")
         except Exception as e:
@@ -589,8 +589,8 @@ def update():
         # другой stale → рассинхрон (maingui.py v5.13.16 + window_selector.py
         # старый) → TypeError: unexpected keyword argument 'show_count'.
         # Blobs API решает это НАВСЕГДА.
-        BLOB_API = "https://api.github.com/repos/StarateJI/L2Mauto/git/blobs/"
-        RAW_FALLBACK = "https://raw.githubusercontent.com/StarateJI/L2Mauto/main/"
+        BLOB_API = "https://api.github.com/repos/StarateJI/L2Mauto2/git/blobs/"
+        RAW_FALLBACK = "https://raw.githubusercontent.com/StarateJI/L2Mauto2/main/"
 
         def _download_blob(filepath: str, sha: str):
             """Скачать файл по SHA через Git Blobs API. Всегда свежий."""
