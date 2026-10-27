@@ -52,6 +52,10 @@ class BaseSettings:
     NEED_SHOP_AFTER_RIP: bool
     NEED_SHOP_AFTER_PVP_EVADE: bool
     NEED_BACK_TO_SPOT_PARTY_DUNGEON: bool
+    # PVP «ответ»: возвращаться ли на спот телепортом после успешного PVP.
+    # False (по умолчанию) — бот остаётся на месте, просто включает автоохоту.
+    # Каждый телепорт ест свиток, поэтому по умолчанию выключено.
+    BACK_TO_SPOT_AFTER_PVP_ANSWER: bool
     USE_STASH: bool
     USE_SHOP: bool
     USE_SELLER: bool
@@ -255,6 +259,7 @@ default_values = {
     "NEED_SHOP_AFTER_RIP": True,
     "NEED_SHOP_AFTER_PVP_EVADE": True,
     "NEED_BACK_TO_SPOT_PARTY_DUNGEON": True,
+    "BACK_TO_SPOT_AFTER_PVP_ANSWER": False,
     "USE_STASH": True,
     "USE_SHOP": True,
     "USE_SELLER": True,

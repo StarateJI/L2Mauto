@@ -224,6 +224,7 @@ class Editor(QDialog):
             "NEED_SHOP_AFTER_RIP": settings.NEED_SHOP_AFTER_RIP,
             "NEED_SHOP_AFTER_PVP_EVADE": settings.NEED_SHOP_AFTER_PVP_EVADE,
             "NEED_BACK_TO_SPOT_PARTY_DUNGEON": settings.NEED_BACK_TO_SPOT_PARTY_DUNGEON,
+            "BACK_TO_SPOT_AFTER_PVP_ANSWER": getattr(settings, "BACK_TO_SPOT_AFTER_PVP_ANSWER", False),
             "USE_STASH": settings.USE_STASH,
             "USE_SHOP": settings.USE_SHOP,
             "USE_SELLER": settings.USE_SELLER,
@@ -518,6 +519,7 @@ class Editor(QDialog):
                         "NEED_CLAIM_CLAN", "NEED_CLAIM_ALI", "NEED_CLAIM_BATTLE_PASS",
                         "NEED_CLAIM_DONATE_SHOP", "NEED_SHOP_AFTER_RIP",
                         "NEED_SHOP_AFTER_PVP_EVADE", "NEED_BACK_TO_SPOT_PARTY_DUNGEON",
+                        "BACK_TO_SPOT_AFTER_PVP_ANSWER",
                         "USE_STASH", "USE_SHOP", "USE_SELLER", "BUY_VIA_SCHEDULER"]:
                 self.settings.__dict__[key] = self.widgets[key].isChecked()
 

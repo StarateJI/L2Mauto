@@ -789,19 +789,37 @@ class PvPDodge(EventDrivenProfile):
             return
 
         self.events_checker.stop_monitoring(window_id)
-        to_spot = await self.tp.to_random_spot(self.settings.SPOT_OT,
-                                                self.settings.SPOT_DO)
-        if to_spot:
-            self.runtime_data.current_state = BotState.COMBAT
-            self.events_checker.start_monitoring(window_id, self, monitors=self.get_monitors)
-            self.notify(NotifyLevel.WARNING, "Успешно завершил пвп, вероятно кого-то убил?")
-        else:
-            log("Не смог тпнуться на спот, если включено тг - смотри скриншот.")
-            await asyncio.sleep(4)
-            self.notify_screenshot("После ответа пвп не смог тпнуться на спот, #важно")
-            self.events_checker.start_monitoring(window_id, self,
-                                                 monitors=self.get_monitors)
+
+        # Возвращаться ли на спот телепортом после успешного PVP.
+        # По умолчанию False — НЕ тратим свитки, просто включаем автоохоту на месте.
+        if self.settings.BACK_TO_SPOT_AFTER_PVP_ANSWER:
+            to_spot = await self.tp.to_random_spot(self.settings.SPOT_OT,
+                                                    self.settings.SPOT_DO)
+            if to_spot:
+                self.runtime_data.current_state = BotState.COMBAT
+                self.events_checker.start_monitoring(window_id, self, monitors=self.get_monitors)
+                self.notify(NotifyLevel.WARNING, "Успешно завершил пвп, вероятно кого-то убил?")
+            else:
+                log("Не смог тпнуться на спот, если включено тг - смотри скриншот.",
+                    window_id)
+                await asyncio.sleep(4)
+                self.notify_screenshot("После ответа пвп не смог тпнуться на спот, #важно")
+                self.events_checker.start_monitoring(window_id, self,
+                                                     monitors=self.get_monitors)
             return
+
+        # Без телепорта — просто включаем энерго и автоохоту на текущем месте.
+        log("BACK_TO_SPOT_AFTER_PVP_ANSWER=False — остаюсь на месте, "
+            "включаю энерго + автоохоту (свиток не трачу)", window_id)
+        if not await self.energo.is_on():
+            await self.energo.turn_on()
+            await asyncio.sleep(1)
+        if not await self.combat.is_autohunt_on():
+            await self.combat.toggle_autohunt()
+            await asyncio.sleep(0.5)
+        self.runtime_data.current_state = BotState.COMBAT
+        self.events_checker.start_monitoring(window_id, self, monitors=self.get_monitors)
+        self.notify(NotifyLevel.WARNING, "Успешно завершил пвп (без тп на спот — свиток цел)")
 
     async def handle_auction(self):
         window_id, window = self.window_id, self.window_info[self.window_id]
