@@ -1440,6 +1440,25 @@ class Auction(GameAction):
         log(f"Аук: моя цена = {my_price} (опора={min_price}, источник={price_source})",
             self.window_id)
 
+        # ⚠️ КРИТИЧНАЯ ЗАЩИТА: бот НЕ должен продавать предмет за 10 алмазов!
+        # Если my_price == 10 (или < 10) — это значит OCR ошибся (прочитал
+        # 100 как 10, или мин цена = 10 что нереально для реального предмета).
+        # Бот уже терял предметы продавая за 10 вместо 100.
+        # СТОП, не выставлять, сообщить в ТГ.
+        if my_price <= 10:
+            log(f"Аук: my_price={my_price} ≤ 10 — КРИТИЧНО, OCR наверное "
+                f"ошибся. СТОП, НЕ выставляю предмет.",
+                self.window_id, level="ERROR")
+            self.profile.notify("error",
+                               f"Аук: цена {my_price} ≤ 10 — предмет НЕ выставлен "
+                               f"(защита от ошибки OCR)")
+            self.profile.notify_screenshot(
+                f"Аук: цена {my_price} ≤ 10 — предмет НЕ выставлен "
+                f"(опора={min_price}, источник={price_source})")
+            await self._click(*BTN_CLOSE)
+            await asyncio.sleep(1)
+            return 'error'
+
         # 7. Ввести цену (дебаг-скриншот numpad ДО ввода — для проверки координат)
         try:
             numpad_shot = self._grab((530, 340, 110, 130))
