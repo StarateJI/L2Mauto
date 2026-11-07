@@ -143,6 +143,77 @@ class Auction(GameAction):
     """Перестановка лотов аукциона: снять -> найти -> выставить с ценой min-1."""
 
     # ──────────────────────────────────────────────────────────────────────
+    # СТАРЫЙ РЕЖИМ: «Перевыставить всё» кнопкой игры (как на боте v5.0.x)
+    # Игра сама перевыставляет все просроченные лоты разом — быстро,
+    # без снятия каждого лота и без OCR цен.
+    # ──────────────────────────────────────────────────────────────────────
+    async def reregister_all(self) -> bool:
+        """
+        Старый режим: вкладка «Продажа» → «Выбрать все» → «Перевыставить» → ОК.
+        Игра сама перевыставляет все просроченные лоты.
+        Восстановлено из v5.0.x (git commit 5bbfcf3).
+        """
+        log("Аук (старый режим): перевыставление кнопкой игры", self.window_id)
+
+        if not await self.wait_and_click("main_menu_gui", timeout=7):
+            log("Аук: не удалось открыть главное меню", self.window_id, level="ERROR")
+            return False
+
+        if not await self.wait_and_click("auction_menu", timeout=4):
+            log("Аук: не удалось ткнуть по auction_menu", self.window_id, level="ERROR")
+            await self.wait_and_click("main_menu_gui", timeout=3)
+            return False
+
+        await asyncio.sleep(0.3)
+        xy, rgb = parseCBT("auction_nalog", profile=self.profile)
+        if not await self.profile.check_pixel(xy, rgb, timeout=DELAY_WAIT_AUCTION, thr=4):
+            log("Аук: не прогрузился аук =( Пробую выйти в меню", self.window_id, level="ERROR")
+            await self.wait_and_click("main_menu_gui", timeout=1)
+            return False
+
+        try_success = True
+
+        # Вкладка «Продажа»
+        if not await self.wait_and_click("auction_sell_page", timeout=10):
+            log("Аук: не удалось ткнуть по auction_sell_page", self.window_id, level="ERROR")
+            try_success = False
+        else:
+            await asyncio.sleep(3)
+
+        await asyncio.sleep(DELAY_WAIT_AUCTION)
+
+        # «Выбрать все» (выделяет все просроченные лоты)
+        if try_success and not await self.wait_and_click("auction_sell_select_all_active", timeout=5):
+            log("Аук: не удалось ткнуть по auction_sell_select_all_active", self.window_id, level="ERROR")
+            try_success = False
+
+        # «Перевыставить» (встроенная кнопка игры)
+        if try_success and not await self.wait_and_click("auction_sell_reregister_active", timeout=5):
+            log("Аук: не удалось ткнуть по auction_sell_reregister_active", self.window_id, level="ERROR")
+            try_success = False
+
+        # Подтверждение
+        if try_success and not await self.wait_and_click("auction_sell_reregister_confirm", timeout=5):
+            log("Аук: не удалось ткнуть по auction_sell_reregister_confirm", self.window_id, level="ERROR")
+            try_success = False
+
+        await asyncio.sleep(0.3)
+
+        # Ждём пока «Выбрать все» станет НЕАКТИВНОЙ (серой) = всё перевыставлено
+        succ = False
+        if try_success:
+            xy, rgb = parseCBT("auction_sell_select_all_inactive", profile=self.profile)
+            succ = await self.profile.check_pixel(xy, rgb, timeout=70, thr=0)
+
+        if succ:
+            log("Аук (старый режим): успешно перевыставил всё!", self.window_id)
+        else:
+            log("Аук (старый режим): не удалось перевыставить", self.window_id, level="WARNING")
+
+        await self.wait_and_click("main_menu_gui", timeout=1)
+        return succ
+
+    # ──────────────────────────────────────────────────────────────────────
     # ТОЧКА ВХОДА (вызывается из profiles/Auction/auction.py и pvp.py)
     # ──────────────────────────────────────────────────────────────────────
     async def reregister(self) -> bool:

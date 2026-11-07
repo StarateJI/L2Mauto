@@ -457,6 +457,9 @@ class NedoGui(QWidget):
         # Синтез — 5 категорий, можно выбрать любые комбинации (множественный выбор)
         synth_categories = (["Класс", "Агатионы", "Облик", "Транспорт", "Артефакты"]
                              if profile_name == "Synthesis" else None)
+        # Аук — переключатель режима: Выставить / Перевыставить (exclusive)
+        auction_modes = (["Выставить", "Перевыставить"]
+                         if profile_name == "Auction" else None)
 
         # Значения по умолчанию — из cache (запоминаются)
         from gui.cache import load_cache, save_cache as _save_cache
@@ -465,6 +468,8 @@ class NedoGui(QWidget):
         default_dungeon = _cache.get("DungeonType", "Пати данж") if dungeon_types else None
         # Для синтеза — запоминаем какие категории выбрали (по умолчанию все 5)
         default_synth = _cache.get("SynthCategories") if synth_categories else None
+        # Для аука — запоминаем режим (по умолчанию Выставить)
+        default_auction_mode = _cache.get("AuctionMode", "Выставить") if auction_modes else None
 
         selector = WindowSelectorDialog(
             profile_name, windows, parent=self,
@@ -474,6 +479,8 @@ class NedoGui(QWidget):
             default_dungeon_type=default_dungeon,
             synth_categories=synth_categories,
             default_synth=default_synth,
+            auction_modes=auction_modes,
+            default_auction_mode=default_auction_mode,
         )
         if selector.exec_() != WindowSelectorDialog.Accepted:
             return
@@ -509,6 +516,13 @@ class NedoGui(QWidget):
             _cache["SynthCategories"] = selected_synth
             _save_cache(_cache)
             batch_kwargs["synth_categories"] = selected_synth
+
+        # Аук — передаём выбранный режим в batch_kwargs
+        if auction_modes:
+            selected_mode = selector.get_auction_mode()
+            _cache["AuctionMode"] = selected_mode
+            _save_cache(_cache)
+            batch_kwargs["auction_mode"] = selected_mode
 
         # PvPDodge — запускает все выбранные окна сразу (без батчей)
         if profile_name == "PvPDodge":

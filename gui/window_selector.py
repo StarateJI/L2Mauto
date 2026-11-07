@@ -196,6 +196,8 @@ class WindowSelectorDialog(QDialog):
       default_dungeon_type: выбранный по умолчанию тип данжа
       synth_categories: список категорий синтеза (только для Synthesis)
       default_synth: какие выбраны по умолчанию
+      auction_modes: список режимов аука (только для Auction)
+      default_auction_mode: выбранный по умолчанию режим
     """
 
     def __init__(self, scenario_name: str, all_windows: List[str],
@@ -205,16 +207,21 @@ class WindowSelectorDialog(QDialog):
                  default_count: int = 2,
                  default_dungeon_type: Optional[str] = None,
                  synth_categories: Optional[List[str]] = None,
-                 default_synth: Optional[List[str]] = None):
+                 default_synth: Optional[List[str]] = None,
+                 auction_modes: Optional[List[str]] = None,
+                 default_auction_mode: Optional[str] = None):
         super().__init__(parent)
         self.scenario_name = scenario_name
         self.all_windows = all_windows
         self.buttons: List[WindowButton] = []
         self.dungeon_types = dungeon_types or []
         self.synth_categories = synth_categories or []
+        self.auction_modes = auction_modes or []
         self._dungeon_btn_group: Optional[QButtonGroup] = None
         self._dungeon_btns: List[DungeonTypeButton] = []
         self._synth_checks: List[QCheckBox] = []
+        self._auction_btn_group: Optional[QButtonGroup] = None
+        self._auction_btns: List[DungeonTypeButton] = []
         self._count_spin: Optional[QSpinBox] = None
 
         self.setWindowTitle(f"Запуск — {scenario_name}")
@@ -291,11 +298,12 @@ class WindowSelectorDialog(QDialog):
         scroll.setWidget(scroll_content)
         layout.addWidget(scroll, stretch=1)
 
-        # ── Панель настроек (количество + тип данжа + категории синтеза) ──
-        if show_count or dungeon_types or synth_categories:
+        # ── Панель настроек (количество + тип данжа + категории синтеза + режим аука) ──
+        if show_count or dungeon_types or synth_categories or auction_modes:
             self._build_settings_panel(layout, show_count, dungeon_types,
                                        default_count, default_dungeon_type,
-                                       synth_categories, default_synth)
+                                       synth_categories, default_synth,
+                                       auction_modes, default_auction_mode)
 
         self._update_count_label()
 
@@ -365,8 +373,10 @@ class WindowSelectorDialog(QDialog):
                               default_count: int,
                               default_dungeon_type: Optional[str],
                               synth_categories: Optional[List[str]] = None,
-                              default_synth: Optional[List[str]] = None):
-        """Панель настроек: сколько одновременно + тип данжа + категории синтеза."""
+                              default_synth: Optional[List[str]] = None,
+                              auction_modes: Optional[List[str]] = None,
+                              default_auction_mode: Optional[str] = None):
+        """Панель настроек: сколько одновременно + тип данжа + категории синтеза + режим аука."""
         panel = QFrame()
         panel.setStyleSheet("""
             QFrame {
@@ -506,6 +516,34 @@ class WindowSelectorDialog(QDialog):
                 self._synth_checks.append(cb)
             panel_layout.addLayout(synth_grid)
 
+        # ── Режим аука (exclusive выбор — Выставить / Перевыставить) ──
+        if auction_modes:
+            sep = QFrame()
+            sep.setFrameShape(QFrame.HLine)
+            sep.setStyleSheet("color: #3d3d52; max-height: 1px;")
+            panel_layout.addWidget(sep)
+
+            lbl_a = QLabel("🔨 Режим аука:")
+            lbl_a.setStyleSheet(
+                "color: #71717a; font-size: 10pt; font-weight: 600;"
+            )
+            panel_layout.addWidget(lbl_a)
+
+            auction_row = QHBoxLayout()
+            self._auction_btn_group = QButtonGroup(self)
+            self._auction_btn_group.setExclusive(True)
+
+            for am in auction_modes:
+                is_default = (default_auction_mode == am) or (
+                    default_auction_mode is None and am == auction_modes[0]
+                )
+                abtn = DungeonTypeButton(am, selected=is_default)
+                self._auction_btn_group.addButton(abtn)
+                self._auction_btns.append(abtn)
+                auction_row.addWidget(abtn)
+            auction_row.addStretch()
+            panel_layout.addLayout(auction_row)
+
         layout.addWidget(panel)
 
     def _update_count_label(self):
@@ -560,3 +598,15 @@ class WindowSelectorDialog(QDialog):
         if not self.synth_categories:
             return None
         return [cb.text() for cb in self._synth_checks if cb.isChecked()]
+
+    def get_auction_mode(self) -> Optional[str]:
+        """Выбранный режим аука (None если панель не показана).
+
+        Exclusive выбор — 'Выставить' или 'Перевыставить'.
+        """
+        if not self.auction_modes:
+            return None
+        checked = self._auction_btn_group.checkedButton()
+        if checked is None:
+            return self.auction_modes[0]
+        return checked.text()
